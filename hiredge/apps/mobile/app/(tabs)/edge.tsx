@@ -173,7 +173,8 @@ export default function EdgeScreen() {
 
       {/* Input */}
       <View style={{
-        flexDirection: 'row', alignItems: 'flex-end', padding: 12,
+        flexDirection: 'row', alignItems: 'flex-end',
+        paddingHorizontal: 12, paddingTop: 12, paddingBottom: 88,
         backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#E9ECEF', gap: 8,
       }}>
         <TextInput

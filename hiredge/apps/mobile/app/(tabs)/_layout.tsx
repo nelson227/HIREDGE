@@ -73,16 +73,7 @@ export default function TabsLayout() {
         options={{
           title: 'EDGE',
           tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 44,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: focused ? '#6C5CE7' : '#F0EEFF',
-            }}>
-              <Ionicons name="sparkles" size={20} color={focused ? '#fff' : '#6C5CE7'} />
-            </View>
+            <TabIcon name="sparkles-outline" focusedName="sparkles" focused={focused} color={color} />
           ),
         }}
       />
