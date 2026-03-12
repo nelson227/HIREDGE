@@ -164,13 +164,27 @@ export default function EdgeScreen() {
     },
   });
 
+  // Auto-select latest conversation on first load
+  useEffect(() => {
+    if (activeConversationId === null && conversations && conversations.length > 0) {
+      setActiveConversationId(conversations[0].id);
+    }
+  }, [conversations]);
+
   // ─── Conversation management ────────────────────────────
   const handleNewConversation = useCallback(async () => {
-    setActiveConversationId(null);
+    try {
+      const { data } = await api.post('/edge/conversations');
+      const newConv = data.data;
+      setActiveConversationId(newConv.id);
+      queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
+      // Clear the history cache for this new empty conversation
+      queryClient.setQueryData(['edgeHistory', newConv.id], []);
+    } catch { /* silent */ }
     setDrawerOpen(false);
     setInput('');
     setAttachment(null);
-  }, []);
+  }, [queryClient]);
 
   const handleSwitchConversation = useCallback((convId: string) => {
     setActiveConversationId(convId);
@@ -185,7 +199,14 @@ export default function EdgeScreen() {
       queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
       queryClient.removeQueries({ queryKey: ['edgeHistory', convId] });
       if (activeConversationId === convId) {
-        setActiveConversationId(null);
+        // Switch to the next available conversation or create new
+        const convs = queryClient.getQueryData<Conversation[]>(['edgeConversations']);
+        const remaining = convs?.filter(c => c.id !== convId);
+        if (remaining && remaining.length > 0) {
+          setActiveConversationId(remaining[0].id);
+        } else {
+          setActiveConversationId(null);
+        }
       }
     } catch { /* silent */ }
   }, [activeConversationId, queryClient]);
