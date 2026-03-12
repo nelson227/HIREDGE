@@ -53,11 +53,19 @@ interface EdgeContext {
 export class EdgeService {
   private readonly MAX_CONTEXT_MESSAGES = 10;
 
-  async chat(userId: string, message: string): Promise<{
+  async chat(userId: string, message: string, imageBase64?: string): Promise<{
     message: string;
     actions?: any[];
     suggestedFollowups?: string[];
   }> {
+    // If an image is attached, use the vision model directly
+    if (imageBase64 && openai) {
+      const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false });
+      const response = await this.analyzeImage(message, imageBase64, context);
+      await this.saveMessages(userId, message, response.message);
+      return response;
+    }
+
     // 1. Detect intent
     const intent = await this.detectIntent(userId, message);
 
@@ -71,6 +79,59 @@ export class EdgeService {
     await this.saveMessages(userId, message, response.message);
 
     return response;
+  }
+
+  private async analyzeImage(message: string, imageBase64: string, context: EdgeContext) {
+    try {
+      // Clean the base64 — extract the raw data if it includes the data URI prefix
+      const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1]! : imageBase64;
+      const mimeMatch = imageBase64.match(/^data:(image\/[a-zA-Z+]+);/);
+      const mimeType = mimeMatch?.[1] ?? 'image/jpeg';
+
+      const completion = await openai!.chat.completions.create({
+        model: 'llama-4-scout-17b-16e-instruct',
+        temperature: 0.5,
+        max_tokens: 1500,
+        messages: [
+          {
+            role: 'system',
+            content: `Tu es EDGE, l'assistant IA d'HIREDGE (app de recherche d'emploi).
+Tu peux voir et analyser les images envoyées par l'utilisateur.
+Analyse l'image en détail et réponds à la question de l'utilisateur.
+Si c'est un CV, un document professionnel ou une offre d'emploi, donne une analyse utile.
+Si c'est un screenshot, décris ce que tu vois.
+Réponds toujours en français de manière amicale et professionnelle.
+
+PROFIL UTILISATEUR : ${context.userProfile?.firstName ?? ''} ${context.userProfile?.lastName ?? ''}`,
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: `data:${mimeType};base64,${base64Data}` },
+              },
+              {
+                type: 'text',
+                text: message || "Que vois-tu sur cette image ? Donne-moi une analyse détaillée.",
+              },
+            ] as any,
+          },
+        ],
+      });
+
+      const content = completion.choices[0]?.message?.content ?? "Je n'ai pas pu analyser cette image.";
+      return {
+        message: content,
+        suggestedFollowups: ['Analyse mon CV', 'Chercher des offres', 'Préparer un entretien'],
+      };
+    } catch (err: any) {
+      console.error('Vision analysis error:', err?.message ?? err);
+      return {
+        message: "Désolé, je n'ai pas pu analyser cette image. Essaie avec une image plus petite ou décris-moi ce qu'elle contient.",
+        suggestedFollowups: ['Décris ton image', 'Chercher des offres', 'Génère mon CV'],
+      };
+    }
   }
 
   private async detectIntent(userId: string, message: string): Promise<DetectedIntent> {

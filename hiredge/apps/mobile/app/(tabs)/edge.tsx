@@ -78,14 +78,21 @@ export default function EdgeScreen() {
   const sendMutation = useMutation({
     mutationFn: async (payload: { message: string; attachment?: Attachment }) => {
       let finalMessage = payload.message;
+      let imageBase64: string | undefined;
       if (payload.attachment) {
         if (payload.attachment.type === 'document' && payload.attachment.content) {
           finalMessage = `[📄 Document joint : ${payload.attachment.name}]\n\n${payload.attachment.content}\n\n---\n${payload.message}`;
-        } else if (payload.attachment.type === 'image') {
-          finalMessage = `[🖼️ Image jointe : ${payload.attachment.name}]\n\n${payload.message}`;
+        } else if (payload.attachment.type === 'image' && payload.attachment.uri) {
+          // Send image as base64 for vision analysis
+          imageBase64 = payload.attachment.uri; // already a data URL from FileReader.readAsDataURL
+          if (!finalMessage.trim()) {
+            finalMessage = `Analyse cette image : ${payload.attachment.name}`;
+          }
         }
       }
-      const { data } = await api.post('/edge/chat', { message: finalMessage });
+      const body: any = { message: finalMessage };
+      if (imageBase64) body.imageBase64 = imageBase64;
+      const { data } = await api.post('/edge/chat', body);
       return { ...data.data, _attachment: payload.attachment };
     },
     onMutate: async (payload) => {

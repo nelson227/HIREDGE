@@ -139,6 +139,7 @@ export const simulationMessageSchema = z.object({
 // --- Edge Chat Schema ---
 export const edgeChatSchema = z.object({
   message: z.string().min(1).max(15000),
+  imageBase64: z.string().max(5_000_000).optional(), // base64 encoded image data (max ~3.7MB)
 });
 
 // --- Notification Preferences ---

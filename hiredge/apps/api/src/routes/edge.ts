@@ -17,7 +17,7 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const response = await edgeService.chat(request.user.id, parsed.data.message);
+      const response = await edgeService.chat(request.user.id, parsed.data.message, parsed.data.imageBase64);
       return reply.send({ success: true, data: response });
     } catch (err) {
       if (err instanceof AppError) {
