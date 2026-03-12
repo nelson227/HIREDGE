@@ -10,7 +10,10 @@ const isLLMEnabled =
   !env.OPENAI_API_KEY.startsWith('sk-...');
 
 const openai = isLLMEnabled
-  ? new OpenAI({ apiKey: env.OPENAI_API_KEY })
+  ? new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      baseURL: 'https://api.groq.com/openai/v1',
+    })
   : null;
 
 // Intent types matching AGENTS.md specification
@@ -75,7 +78,7 @@ export class EdgeService {
       const recentMessages = await this.getRecentMessages(userId, 3);
       try {
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'llama-3.3-70b-versatile',
           temperature: 0,
           max_tokens: 200,
           messages: [
@@ -237,7 +240,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
       try {
         const systemPrompt = this.buildSystemPrompt(context, intent);
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'llama-3.3-70b-versatile',
           temperature: 0.7,
           max_tokens: 800,
           messages: [
