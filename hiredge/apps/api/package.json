@@ -1,0 +1,51 @@
+{
+  "name": "@hiredge/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx src/db/seed.ts",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@hiredge/shared": "*",
+    "@prisma/client": "^5.20.0",
+    "fastify": "^4.28.0",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/helmet": "^11.1.0",
+    "@fastify/jwt": "^8.0.0",
+    "@fastify/multipart": "^8.3.0",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/websocket": "^10.0.0",
+    "bcryptjs": "^2.4.3",
+    "zod": "^3.23.0",
+    "openai": "^4.60.0",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@pinecone-database/pinecone": "^3.0.0",
+    "ioredis": "^5.4.0",
+    "bullmq": "^5.12.0",
+    "nanoid": "^5.0.0",
+    "dayjs": "^1.11.0",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0",
+    "nodemailer": "^6.9.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.0",
+    "prisma": "^5.20.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "tsc-alias": "^1.8.0",
+    "rimraf": "^6.0.0"
+  }
+}

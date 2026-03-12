@@ -1,0 +1,29 @@
+{
+  "name": "hiredge",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "clean": "turbo clean",
+    "dev:api": "turbo dev --filter=@hiredge/api",
+    "dev:mobile": "turbo dev --filter=@hiredge/mobile",
+    "db:push": "turbo db:push --filter=@hiredge/api",
+    "db:generate": "turbo db:generate --filter=@hiredge/api",
+    "db:migrate": "turbo db:migrate --filter=@hiredge/api",
+    "db:seed": "turbo db:seed --filter=@hiredge/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.5.0"
+  },
+  "packageManager": "npm@10.8.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

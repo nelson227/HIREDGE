@@ -1,0 +1,521 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// UTILISATEURS
+// ============================================================
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  passwordHash     String
+  role             UserRole         @default(CANDIDATE)
+  subscriptionTier SubscriptionTier @default(FREE)
+  locale           String           @default("fr")
+  isEmailVerified  Boolean          @default(false)
+  lastActiveAt     DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  candidateProfile CandidateProfile?
+  scout            Scout?
+  recruiterProfile RecruiterProfile?
+  notifications    Notification[]
+  chatMessages     EdgeChatMessage[]
+  sessions         Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ============================================================
+// PROFILS CANDIDATS
+// ============================================================
+
+model CandidateProfile {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  firstName        String
+  lastName         String
+  title            String           @default("")
+  bio              String?
+  avatarUrl        String?
+  locationCity     String?
+  locationCountry  String?          @db.Char(2)
+  remotePreference RemotePreference @default(HYBRID)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String           @default("EUR") @db.Char(3)
+  yearsExperience  Float            @default(0)
+  preparationScore Int              @default(0)
+  onboardingDone   Boolean          @default(false)
+  cvUrl            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills        Skill[]
+  experiences   Experience[]
+  education     Education[]
+  applications  Application[]
+  squadMember   SquadMember?
+  simulations   InterviewSimulation[]
+  scoutConversationsAsCandidate ScoutConversation[] @relation("CandidateConversations")
+
+  @@map("candidate_profiles")
+}
+
+model Skill {
+  id          String     @id @default(uuid())
+  candidateId String
+  name        String
+  level       SkillLevel @default(INTERMEDIATE)
+  years       Float      @default(0)
+  createdAt   DateTime   @default(now())
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("skills")
+}
+
+model Experience {
+  id          String    @id @default(uuid())
+  candidateId String
+  companyName String
+  title       String
+  startDate   DateTime
+  endDate     DateTime?
+  description String
+  isCurrent   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("experiences")
+}
+
+model Education {
+  id          String   @id @default(uuid())
+  candidateId String
+  institution String
+  degree      String
+  field       String
+  year        Int
+  createdAt   DateTime @default(now())
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("education")
+}
+
+// ============================================================
+// OFFRES D'EMPLOI
+// ============================================================
+
+model Company {
+  id                         String   @id @default(uuid())
+  name                       String
+  website                    String?
+  logoUrl                    String?
+  industry                   String?
+  sizeRange                  String?
+  location                   String?
+  glassdoorRating            Float?
+  cultureSummary             String?
+  avgRecruitmentDurationDays Int?
+  avgResponseRate            Float?
+  avgSalaryJson              Json?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  jobs              Job[]
+  scouts            Scout[]
+  collectiveInsights CollectiveInsight[]
+
+  @@map("companies")
+}
+
+model Job {
+  id              String          @id @default(uuid())
+  title           String
+  companyId       String
+  description     String
+  requirements    String[]
+  niceToHave      String[]
+  benefits        String[]
+  salaryMin       Int?
+  salaryMax       Int?
+  salaryCurrency  String          @default("EUR") @db.Char(3)
+  locationCity    String?
+  locationCountry String?         @db.Char(2)
+  remoteType      RemotePreference @default(ONSITE)
+  contractType    ContractType    @default(CDI)
+  sourcePlatform  String?
+  sourceUrl       String?
+  isActive        Boolean         @default(true)
+  isGhost         Boolean         @default(false)
+  isScam          Boolean         @default(false)
+  scrapedAt       DateTime        @default(now())
+  expiresAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  applications Application[]
+  simulations  InterviewSimulation[]
+
+  @@index([companyId])
+  @@index([isActive, isScam, isGhost])
+  @@index([contractType])
+  @@index([locationCountry, locationCity])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
+// ============================================================
+// CANDIDATURES
+// ============================================================
+
+model Application {
+  id                 String            @id @default(uuid())
+  candidateId        String
+  jobId              String
+  status             ApplicationStatus @default(DRAFT)
+  matchScore         Int               @default(0)
+  coverLetterText    String?
+  cvVersionUrl       String?
+  companyAnalysisJson Json?
+  sentAt             DateTime?
+  lastStatusChangeAt DateTime?
+  nextFollowupDate   DateTime?
+  rejectionReason    String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job       Job              @relation(fields: [jobId], references: [id])
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId, status])
+  @@index([jobId])
+  @@map("applications")
+}
+
+// ============================================================
+// ESCOUADES
+// ============================================================
+
+model Squad {
+  id          String      @id @default(uuid())
+  name        String
+  domain      String
+  level       String
+  status      SquadStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  dissolvedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  members  SquadMember[]
+  messages SquadMessage[]
+
+  @@index([status])
+  @@map("squads")
+}
+
+model SquadMember {
+  id          String          @id @default(uuid())
+  squadId     String
+  candidateId String          @unique
+  role        SquadMemberRole @default(MEMBER)
+  isActive    Boolean         @default(true)
+  joinedAt    DateTime        @default(now())
+  leftAt      DateTime?
+
+  squad     Squad            @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([squadId, isActive])
+  @@map("squad_members")
+}
+
+model SquadMessage {
+  id              String           @id @default(uuid())
+  squadId         String
+  senderId        String
+  contentText     String?
+  contentAudioUrl String?
+  messageType     SquadMessageType @default(TEXT)
+  createdAt       DateTime         @default(now())
+
+  squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
+
+  @@index([squadId, createdAt])
+  @@map("squad_messages")
+}
+
+// ============================================================
+// ÉCLAIREURS
+// ============================================================
+
+model Scout {
+  id                String      @id @default(uuid())
+  userId            String      @unique
+  companyId         String
+  isVerified        Boolean     @default(false)
+  anonymousAlias    String
+  credits           Int         @default(0)
+  ratingAvg         Float       @default(0)
+  ratingCount       Int         @default(0)
+  hiredDate         DateTime
+  status            ScoutStatus @default(ACTIVE)
+  questionnaireJson Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company           @relation(fields: [companyId], references: [id])
+  conversations ScoutConversation[]
+
+  @@index([companyId, status])
+  @@map("scouts")
+}
+
+model ScoutConversation {
+  id          String   @id @default(uuid())
+  scoutId     String
+  candidateId String
+  jobId       String?
+  createdAt   DateTime @default(now())
+
+  scout     Scout            @relation(fields: [scoutId], references: [id], onDelete: Cascade)
+  candidate CandidateProfile @relation("CandidateConversations", fields: [candidateId], references: [id], onDelete: Cascade)
+  messages  ScoutMessage[]
+
+  @@index([scoutId])
+  @@index([candidateId])
+  @@map("scout_conversations")
+}
+
+model ScoutMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderType     SenderType
+  content        String
+  createdAt      DateTime @default(now())
+
+  conversation ScoutConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("scout_messages")
+}
+
+// ============================================================
+// SIMULATIONS D'ENTRETIEN
+// ============================================================
+
+model InterviewSimulation {
+  id              String        @id @default(uuid())
+  candidateId     String
+  jobId           String?
+  type            InterviewType @default(HR)
+  durationSeconds Int           @default(0)
+  score           Int           @default(0)
+  transcriptJson  Json?
+  analysisJson    Json?
+  audioUrl        String?
+  status          SimStatus     @default(IN_PROGRESS)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job       Job?             @relation(fields: [jobId], references: [id])
+
+  @@index([candidateId, createdAt])
+  @@map("interview_simulations")
+}
+
+// ============================================================
+// INTELLIGENCE COLLECTIVE
+// ============================================================
+
+model CollectiveInsight {
+  id              String      @id @default(uuid())
+  companyId       String
+  insightType     InsightType
+  contentJson     Json
+  sourceCount     Int         @default(1)
+  confidenceScore Float       @default(0.5)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, insightType])
+  @@map("collective_insights")
+}
+
+// ============================================================
+// AGENT EDGE — Conversations
+// ============================================================
+
+model EdgeChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  role      ChatRole
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("edge_chat_messages")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id       String   @id @default(uuid())
+  userId   String
+  type     String
+  title    String
+  body     String
+  dataJson Json?
+  isRead   Boolean  @default(false)
+  sentAt   DateTime @default(now())
+  readAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, sentAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  CANDIDATE
+  SCOUT
+  RECRUITER
+  ADMIN
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+}
+
+enum RemotePreference {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum ContractType {
+  CDI
+  CDD
+  FREELANCE
+  STAGE
+  ALTERNANCE
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SENT
+  VIEWED
+  INTERVIEW
+  OFFER
+  ACCEPTED
+  REJECTED
+}
+
+enum SquadStatus {
+  ACTIVE
+  DISSOLVED
+}
+
+enum SquadMemberRole {
+  MEMBER
+  CHAMPION
+}
+
+enum SquadMessageType {
+  TEXT
+  VOICE
+  SYSTEM
+  CELEBRATION
+}
+
+enum ScoutStatus {
+  ACTIVE
+  PROBATION
+  SUSPENDED
+}
+
+enum SenderType {
+  SCOUT
+  CANDIDATE
+}
+
+enum InterviewType {
+  HR
+  TECHNICAL
+  CASE
+  CULTURE
+  NEGOTIATION
+}
+
+enum SimStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum InsightType {
+  INTERVIEW_QUESTION
+  SALARY_DATA
+  PROCESS_INFO
+  TIMING_PATTERN
+  CULTURE_INFO
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
