@@ -128,7 +128,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
 
     const patterns: [RegExp, IntentType][] = [
       // Document generation — check early (CV, lettre, document, PDF, Word)
-      [/(?:génère|genere|générer|generer|crée|cree|créer|creer|fabrique|fais|rédige|redige|modifie|adapte|transforme|convertis|converti).*?(?:cv|curriculum|lettre|document|pdf|word|docx|résumé|resume)|(?:cv|lettre).*?(?:format|standard|norme|style).*?(?:france|français|canada|canadien|québec|américain)/i, 'GENERATE_DOCUMENT'],
+      [/(?:génère|genere|générer|generer|crée|cree|créer|creer|fabrique|fais|rédige|redige|modifie|adapte|transforme|convertis|converti|envoie|envoyer|renvoie|renvoyer|donne|télécharge|telecharge|télécharger|telecharger).*?(?:cv|curriculum|lettre|document|pdf|word|docx|résumé|resume)|(?:cv|lettre|pdf|word|docx).*?(?:format|standard|norme|style|version|français|anglais|chinois|allemand|espagnol|italien|japonais).*?|(?:mon\s+cv|le\s+cv).*?(?:en\s+)?(?:pdf|word|docx|format)|(?:en\s+(?:pdf|word|docx))\b|(?:cv|lettre).*?(?:format|standard|norme|style).*?(?:france|français|canada|canadien|québec|américain|chinois|allemand|japonais)/i, 'GENERATE_DOCUMENT'],
       // Emotional states — check first to avoid false SEARCH match on "recherches"
       [/decourag|décourag|démotiv|déprim|abandone|plus le courage|galère|galere|c'est dur|triste/i, 'MOTIVATION'],
       // Interview prep
@@ -679,9 +679,29 @@ RÈGLES CRITIQUES DU JSON :
     });
 
     const raw = completion.choices[0]!.message.content ?? '{}';
-    // Try to extract JSON from possible markdown code blocks
-    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, raw];
-    const parsed = JSON.parse(jsonMatch[1]!.trim());
+    // Try to extract JSON from possible markdown code blocks or raw JSON
+    let jsonStr = raw;
+    const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1]!;
+    } else {
+      // Try to find JSON object in the response
+      const jsonObjectMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) {
+        jsonStr = jsonObjectMatch[0];
+      }
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonStr.trim());
+    } catch {
+      // LLM returned non-JSON text — return it as a message with a retry suggestion
+      return {
+        message: raw.length > 20 ? raw.slice(0, 800) : "Je n'ai pas pu structurer le document. Réessaie en précisant le pays.",
+        suggestedFollowups: ['Génère mon CV format France', 'Génère mon CV format Chine', 'Écris une lettre de motivation'],
+      };
+    }
 
     if (parsed.documentType === 'cv' && parsed.cvData) {
       return {
