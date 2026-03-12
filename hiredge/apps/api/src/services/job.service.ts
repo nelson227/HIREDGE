@@ -22,44 +22,69 @@ export class JobService {
     const limit = Math.min(filters.limit ?? 20, 50);
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      status: 'ACTIVE',
-    };
+    const where: any = { status: 'ACTIVE' };
+    // Build AND conditions so multiple OR clauses don't overwrite each other
+    const andConditions: any[] = [];
 
     if (filters.query) {
-      where.OR = [
-        { title: { contains: filters.query, mode: 'insensitive' } },
-        { description: { contains: filters.query, mode: 'insensitive' } },
-        { company: { name: { contains: filters.query, mode: 'insensitive' } } },
-      ];
+      // SQLite: contains translates to LIKE '%…%', case-insensitive for ASCII by default
+      andConditions.push({
+        OR: [
+          { title: { contains: filters.query } },
+          { description: { contains: filters.query } },
+          { company: { name: { contains: filters.query } } },
+        ],
+      });
     }
 
     if (filters.location) {
-      where.location = { contains: filters.location, mode: 'insensitive' };
+      // SQLite LIKE is case-insensitive for ASCII — no mode needed
+      andConditions.push({ location: { contains: filters.location } });
     }
 
     if (filters.contractType) {
-      where.contractType = filters.contractType;
+      // The seed stores English values (FULL_TIME, CONTRACT).
+      // Map the French UI labels to all plausible DB equivalents.
+      const contractMap: Record<string, string[]> = {
+        CDI:        ['FULL_TIME', 'CDI', 'full_time'],
+        CDD:        ['CONTRACT', 'CDD', 'PART_TIME', 'part_time'],
+        freelance:  ['FREELANCE', 'CONTRACT', 'freelance'],
+        stage:      ['INTERNSHIP', 'STAGE', 'stage'],
+        alternance: ['ALTERNANCE', 'alternance'],
+      };
+      const mapped = contractMap[filters.contractType] ?? [filters.contractType];
+      andConditions.push({ contractType: { in: mapped } });
     }
 
     if (filters.remote !== undefined) {
-      where.remote = filters.remote;
+      andConditions.push({ remote: filters.remote });
     }
 
     if (filters.salaryMin) {
-      where.salaryMax = { gte: filters.salaryMin };
-    }
-
-    if (filters.salaryMax) {
-      where.salaryMin = { lte: filters.salaryMax };
+      // Match jobs where max salary is at or above the user's minimum expectation
+      andConditions.push({ salaryMax: { gte: filters.salaryMin } });
     }
 
     if (filters.experienceLevel) {
-      where.experienceLevel = filters.experienceLevel;
+      // The Job model has no string experienceLevel field — match against title keywords
+      const levelKeywords: Record<string, string[]> = {
+        junior: ['junior', 'entry', 'graduate'],
+        mid:    ['mid', 'intermediate', 'confirmé'],
+        senior: ['senior', 'experienced'],
+        lead:   ['lead', 'principal', 'staff'],
+      };
+      const kws = levelKeywords[filters.experienceLevel] ?? [];
+      if (kws.length > 0) {
+        andConditions.push({ OR: kws.map(k => ({ title: { contains: k } })) });
+      }
     }
 
     if (filters.postedAfter) {
-      where.postedAt = { gte: filters.postedAfter };
+      andConditions.push({ postedAt: { gte: filters.postedAfter } });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     const [jobs, total] = await Promise.all([
