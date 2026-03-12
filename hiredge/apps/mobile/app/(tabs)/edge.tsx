@@ -316,24 +316,36 @@ export default function EdgeScreen() {
 
       {/* Input */}
       <View style={{
-        paddingHorizontal: 12, paddingTop: 10, paddingBottom: 88,
-        backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#E9ECEF',
+        paddingHorizontal: 12, paddingTop: 12, paddingBottom: 88,
+        backgroundColor: '#F0EEFF',
+        borderTopWidth: 2, borderColor: '#D8D1FF',
+        shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.08, shadowRadius: 12, elevation: 8,
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+        <View style={{
+          flexDirection: 'row', alignItems: 'flex-end', gap: 8,
+          backgroundColor: '#fff', borderRadius: 24, borderWidth: 1.5,
+          borderColor: '#D8D1FF', paddingHorizontal: 8, paddingVertical: 6,
+          shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+        }}>
           {/* Attach */}
           <TouchableOpacity
             onPress={() => Platform.OS === 'web' && fileInputRef.current?.click()}
-            style={{ width: 36, height: 36, justifyContent: 'center', alignItems: 'center' }}
+            style={{
+              width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
+              backgroundColor: '#F0EEFF',
+            }}
           >
-            <Ionicons name="attach" size={22} color="#ADB5BD" />
+            <Ionicons name="attach" size={20} color="#6C5CE7" />
           </TouchableOpacity>
 
           {/* Text input */}
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Parle à EDGE... (Entrée pour envoyer)"
-            placeholderTextColor="#ADB5BD"
+            placeholder="Parle à EDGE..."
+            placeholderTextColor="#B2ACDD"
             multiline
             maxLength={2000}
             onKeyPress={(e: any) => {
@@ -343,9 +355,8 @@ export default function EdgeScreen() {
               }
             }}
             style={{
-              flex: 1, backgroundColor: '#F1F3F5', borderRadius: 20,
-              paddingHorizontal: 16, paddingVertical: 10, fontSize: 15,
-              maxHeight: 120, color: '#2D3436',
+              flex: 1, fontSize: 15, maxHeight: 120,
+              color: '#2D3436', paddingVertical: 6,
             }}
           />
 
@@ -354,10 +365,10 @@ export default function EdgeScreen() {
             onPress={handleVoice}
             style={{
               width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
-              backgroundColor: isRecording ? '#FF6B6B' : 'transparent',
+              backgroundColor: isRecording ? '#FF6B6B' : '#F0EEFF',
             }}
           >
-            <Ionicons name={isRecording ? 'stop-circle' : 'mic-outline'} size={22} color={isRecording ? '#fff' : '#ADB5BD'} />
+            <Ionicons name={isRecording ? 'stop-circle' : 'mic-outline'} size={20} color={isRecording ? '#fff' : '#6C5CE7'} />
           </TouchableOpacity>
 
           {/* Send */}
@@ -365,16 +376,16 @@ export default function EdgeScreen() {
             onPress={handleSend}
             disabled={(!input.trim() && !attachment) || sendMutation.isPending}
             style={{
-              width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
-              backgroundColor: (input.trim() || attachment) ? '#6C5CE7' : '#E9ECEF',
+              width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center',
+              backgroundColor: (input.trim() || attachment) ? '#6C5CE7' : '#D8D1FF',
             }}
           >
-            <Ionicons name="send" size={18} color={(input.trim() || attachment) ? '#fff' : '#ADB5BD'} />
+            <Ionicons name="send" size={17} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: 11, color: '#CED4DA', marginTop: 4, marginLeft: 44 }}>
-          Entrée pour envoyer · Shift+Entrée pour aller à la ligne · 📎 documents, images
+        <Text style={{ fontSize: 11, color: '#9B8FCC', marginTop: 6, textAlign: 'center' }}>
+          ↵ Entrée pour envoyer · Shift+↵ nouvelle ligne · 📎 documents &amp; images
         </Text>
       </View>
     </KeyboardAvoidingView>
