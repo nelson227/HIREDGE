@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
 import { storage } from './storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (Platform.OS === 'web' ? '/api/v1' : 'http://localhost:3000/api/v1');
@@ -41,9 +42,10 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — logout
+        // Refresh failed — logout and redirect to login
         await storage.deleteItem('accessToken');
         await storage.deleteItem('refreshToken');
+        router.replace('/(auth)/login');
       }
     }
 

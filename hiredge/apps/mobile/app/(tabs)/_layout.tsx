@@ -1,6 +1,8 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
+import { useEffect } from 'react';
+import { useAuthStore } from '../../stores/auth.store';
 
 function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName: any; focused: boolean; color: string }) {
   return (
@@ -18,6 +20,13 @@ function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName
 }
 
 export default function TabsLayout() {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, isLoading]);
   return (
     <Tabs
       screenOptions={{
