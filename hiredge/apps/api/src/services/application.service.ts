@@ -19,7 +19,7 @@ export class ApplicationService {
       thisMonth.setHours(0, 0, 0, 0);
 
       const count = await prisma.application.count({
-        where: { userId, createdAt: { gte: thisMonth } },
+        where: { userId: userId, createdAt: { gte: thisMonth } },
       });
 
       if (count >= APPLICATION_LIMITS.FREE_MONTHLY) {
@@ -33,7 +33,7 @@ export class ApplicationService {
 
     // Check if already applied
     const existing = await prisma.application.findFirst({
-      where: { userId, jobId: data.jobId },
+      where: { userId: userId, jobId: data.jobId },
     });
     if (existing) {
       throw new AppError('ALREADY_APPLIED', 'Vous avez déjà postulé à cette offre', 409);
@@ -45,12 +45,10 @@ export class ApplicationService {
 
     const application = await prisma.application.create({
       data: {
-        userId,
+        userId: userId,
         jobId: data.jobId,
         status: 'DRAFT',
-        coverLetterContent: data.coverLetterContent,
-        cvVersion: data.cvVersion,
-        notes: data.notes,
+        notes: data.notes ?? null,
       },
       include: {
         job: {
@@ -71,7 +69,7 @@ export class ApplicationService {
     const limit = Math.min(filters.limit ?? 20, 50);
     const skip = (page - 1) * limit;
 
-    const where: any = { userId };
+    const where: any = { userId: userId };
     if (filters.status) {
       where.status = filters.status;
     }
@@ -99,7 +97,7 @@ export class ApplicationService {
 
   async getApplicationById(userId: string, applicationId: string) {
     const application = await prisma.application.findFirst({
-      where: { id: applicationId, userId },
+      where: { id: applicationId, userId: userId },
       include: {
         job: { include: { company: true } },
       },
@@ -116,7 +114,7 @@ export class ApplicationService {
     followUpDate?: string;
   }) {
     const application = await prisma.application.findFirst({
-      where: { id: applicationId, userId },
+      where: { id: applicationId, userId: userId },
     });
     if (!application) throw new AppError('APPLICATION_NOT_FOUND', 'Candidature introuvable', 404);
 
@@ -140,7 +138,7 @@ export class ApplicationService {
 
   async deleteApplication(userId: string, applicationId: string) {
     const application = await prisma.application.findFirst({
-      where: { id: applicationId, userId },
+      where: { id: applicationId, userId: userId },
     });
     if (!application) throw new AppError('APPLICATION_NOT_FOUND', 'Candidature introuvable', 404);
 
@@ -176,7 +174,7 @@ export class ApplicationService {
     const responded = await prisma.application.count({
       where: {
         userId,
-        status: { in: ['INTERVIEW_SCHEDULED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED'] },
+        status: { in: ['INTERVIEW_SCHEDULED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED'] as any[] },
       },
     });
 

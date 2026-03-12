@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import { createServer } from 'http';
 import { env } from './config/env';
 import prisma from './db/prisma';
 import { authenticate } from './middleware/auth';
@@ -27,9 +26,6 @@ async function buildServer() {
   const app = Fastify({
     logger: {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
-      transport: env.NODE_ENV !== 'production'
-        ? { target: 'pino-pretty', options: { colorize: true } }
-        : undefined,
     },
     trustProxy: true,
   });
@@ -90,13 +86,11 @@ async function start() {
   const app = await buildServer();
 
   try {
-    await app.ready();
-    const httpServer = createServer(app.server);
-    initializeWebSocket(httpServer);
+    // Initialize Socket.IO on Fastify's internal HTTP server BEFORE listening
+    initializeWebSocket(app.server);
 
-    httpServer.listen(env.PORT, '0.0.0.0', () => {
-      app.log.info(`🚀 HIREDGE API + WebSocket running on port ${env.PORT}`);
-    });
+    await app.listen({ port: env.PORT, host: '0.0.0.0' });
+    app.log.info(`🚀 HIREDGE API + WebSocket running on port ${env.PORT}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

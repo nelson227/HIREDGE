@@ -100,12 +100,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const experience = await profileService.addExperience(request.user.id, {
-        company: parsed.data.companyName,
+        company: parsed.data.company,
         title: parsed.data.title,
         description: parsed.data.description,
         startDate: parsed.data.startDate,
         endDate: parsed.data.endDate ?? undefined,
-        current: parsed.data.isCurrent,
+        current: parsed.data.current,
       });
       return reply.status(201).send({ success: true, data: experience });
     } catch (err) {

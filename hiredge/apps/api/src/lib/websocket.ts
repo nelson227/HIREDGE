@@ -41,7 +41,7 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
     // Join squad room
     socket.on('squad:join', async (squadId: string) => {
       const member = await prisma.squadMember.findFirst({
-        where: { squadId, userId, status: { in: ['ACTIVE', 'LEADER'] } },
+        where: { squadId, userId, isActive: true },
       });
       if (!member) {
         socket.emit('error', { message: 'Not a member of this squad' });
@@ -61,7 +61,7 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
       if (!content?.trim()) return;
 
       const member = await prisma.squadMember.findFirst({
-        where: { squadId, userId, status: { in: ['ACTIVE', 'LEADER'] } },
+        where: { squadId, userId, isActive: true },
       });
       if (!member) return;
 
@@ -73,7 +73,7 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
           type: 'TEXT',
         },
         include: {
-          user: { select: { id: true, fullName: true } },
+          user: { select: { id: true } },
         },
       });
 

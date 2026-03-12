@@ -77,11 +77,10 @@ export class InterviewSimService {
         jobTitle: data.jobTitle ?? profile?.title ?? 'Candidat',
         status: 'IN_PROGRESS',
         config: {
-          character,
+          character: character as any,
           difficulty: data.difficulty ?? 2,
           totalQuestions: data.type === 'TECHNICAL' ? 8 : 6,
-        },
-        messages: [],
+        } as any,
       },
     });
 
@@ -98,7 +97,7 @@ export class InterviewSimService {
     await prisma.interviewSimulation.update({
       where: { id: simulation.id },
       data: {
-        messages: [
+        transcriptJson: [
           { role: 'interviewer', content: opening, phase: 'WARMUP', timestamp: new Date().toISOString() },
         ],
       },
@@ -122,7 +121,7 @@ export class InterviewSimService {
     }
 
     const config = simulation.config as any;
-    const messages = (simulation.messages as any[]) ?? [];
+    const messages = ((simulation.transcriptJson as any[]) ?? []);
     const character = config.character as InterviewCharacter;
     const questionCount = messages.filter((m: any) => m.role === 'interviewer').length;
     const totalQuestions = config.totalQuestions ?? 6;
@@ -160,10 +159,9 @@ export class InterviewSimService {
         where: { id: simulationId },
         data: {
           status: 'COMPLETED',
-          messages,
-          overallScore: debrief.overallScore,
-          analysis: debrief.analysis,
-          completedAt: new Date(),
+          transcriptJson: messages,
+          score: debrief.overallScore,
+          analysisJson: debrief.analysis,
         },
       });
 
@@ -199,7 +197,7 @@ export class InterviewSimService {
 
     await prisma.interviewSimulation.update({
       where: { id: simulationId },
-      data: { messages },
+      data: { transcriptJson: messages },
     });
 
     return {
@@ -224,9 +222,8 @@ export class InterviewSimService {
         companyName: true,
         jobTitle: true,
         status: true,
-        overallScore: true,
+        score: true,
         createdAt: true,
-        completedAt: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 20,

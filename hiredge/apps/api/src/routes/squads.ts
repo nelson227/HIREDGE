@@ -95,8 +95,8 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const message = await squadService.sendMessage(request.user.id, id, {
-        content: parsed.data.contentText ?? '',
-        type: parsed.data.messageType,
+        content: parsed.data.content,
+        type: parsed.data.type,
       });
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {

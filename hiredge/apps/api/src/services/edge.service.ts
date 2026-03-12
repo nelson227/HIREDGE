@@ -273,8 +273,8 @@ Limite ta réponse à 3-4 phrases max sauf si l'utilisateur demande plus de dét
   private async saveMessages(userId: string, userMessage: string, assistantMessage: string) {
     await prisma.edgeChatMessage.createMany({
       data: [
-        { userId, role: 'USER', content: userMessage },
-        { userId, role: 'ASSISTANT', content: assistantMessage },
+        { userId, role: 'user', content: userMessage },
+        { userId, role: 'assistant', content: assistantMessage },
       ],
     });
   }

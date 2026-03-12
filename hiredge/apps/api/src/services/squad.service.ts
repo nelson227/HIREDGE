@@ -85,7 +85,7 @@ export class SquadService {
         await prisma.squad.update({ where: { id: squadId }, data: { status: 'DISSOLVED' } });
       } else {
         await prisma.squadMember.update({
-          where: { id: remainingMembers[0].id },
+          where: { id: remainingMembers[0]!.id },
           data: { role: 'LEADER' },
         });
       }
@@ -156,12 +156,12 @@ export class SquadService {
     const message = await prisma.squadMessage.create({
       data: {
         squadId,
-        authorId: userId,
+        userId,
         content: data.content,
         type: (data.type as any) ?? 'TEXT',
       },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             candidateProfile: { select: { firstName: true, lastName: true, avatarUrl: true } },
@@ -180,7 +180,7 @@ export class SquadService {
     const messages = await prisma.squadMessage.findMany({
       where: { squadId, ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}) },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             candidateProfile: { select: { firstName: true, lastName: true, avatarUrl: true } },

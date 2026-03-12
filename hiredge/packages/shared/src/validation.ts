@@ -40,8 +40,8 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   title: z.string().max(200).optional(),
   bio: z.string().max(2000).optional(),
-  locationCity: z.string().max(100).optional(),
-  locationCountry: z.string().length(2).optional(),
+  city: z.string().max(100).optional(),
+  country: z.string().length(2).optional(),
   remotePreference: z.enum(['remote', 'hybrid', 'onsite']).optional(),
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
@@ -52,23 +52,26 @@ export const updateProfileSchema = z.object({
 export const addSkillSchema = z.object({
   name: z.string().min(1).max(100),
   level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
-  years: z.number().min(0).max(50),
+  yearsOfExperience: z.number().min(0).max(50).optional(),
 });
 
 export const addExperienceSchema = z.object({
-  companyName: z.string().min(1).max(200),
+  company: z.string().min(1).max(200),
   title: z.string().min(1).max(200),
   startDate: z.string(),
   endDate: z.string().nullable().optional(),
-  description: z.string().max(5000),
-  isCurrent: z.boolean().default(false),
+  description: z.string().max(5000).optional(),
+  current: z.boolean().default(false),
+  location: z.string().max(200).optional(),
 });
 
 export const addEducationSchema = z.object({
   institution: z.string().min(1).max(200),
   degree: z.string().min(1).max(200),
   field: z.string().min(1).max(200),
-  year: z.number().min(1950).max(2030),
+  startDate: z.string().optional(),
+  endDate: z.string().nullable().optional(),
+  current: z.boolean().default(false),
 });
 
 // --- Job Schemas ---
@@ -89,21 +92,20 @@ export const createApplicationSchema = z.object({
 });
 
 export const updateApplicationSchema = z.object({
-  coverLetterText: z.string().max(10000).optional(),
+  coverLetterContent: z.string().max(10000).optional(),
   notes: z.string().max(5000).optional(),
 });
 
 export const updateApplicationStatusSchema = z.object({
-  status: z.enum(['draft', 'sent', 'viewed', 'interview', 'offer', 'accepted', 'rejected']),
+  status: z.enum(['DRAFT', 'SENT', 'VIEWED', 'INTERVIEW_SCHEDULED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED']),
   interviewDate: z.string().datetime().optional(),
   notes: z.string().max(5000).optional(),
 });
 
 // --- Squad Schemas ---
 export const sendSquadMessageSchema = z.object({
-  contentText: z.string().min(1).max(5000).optional(),
-  contentAudioUrl: z.string().url().optional(),
-  messageType: z.enum(['text', 'voice']).default('text'),
+  content: z.string().min(1).max(5000),
+  type: z.enum(['TEXT', 'VOICE', 'SYSTEM']).default('TEXT'),
 });
 
 // --- Scout Schemas ---

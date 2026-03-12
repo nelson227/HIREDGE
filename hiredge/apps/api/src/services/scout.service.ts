@@ -166,7 +166,7 @@ export class ScoutService {
         },
         _count: { select: { messages: true } },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     return conversations;

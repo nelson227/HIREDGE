@@ -83,7 +83,7 @@ const notificationWorker = new Worker(
       });
 
       const title = jobs.length === 1
-        ? `Nouvelle offre : ${jobs[0].title}`
+        ? `Nouvelle offre : ${jobs[0]?.title ?? ''}`
         : `${jobs.length} nouvelles offres correspondent à ton profil`;
 
       const notification = await prisma.notification.create({
