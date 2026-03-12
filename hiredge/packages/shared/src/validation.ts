@@ -84,6 +84,9 @@ export const searchJobsSchema = z.object({
   contract: z.enum(['CDI', 'CDD', 'freelance', 'stage', 'alternance']).optional(),
   location: z.string().optional(),
   q: z.string().optional(),
+  salaryMin: z.coerce.number().min(0).optional(),
+  experienceLevel: z.enum(['junior', 'mid', 'senior', 'lead']).optional(),
+  postedAfter: z.string().optional(),
 });
 
 // --- Application Schemas ---

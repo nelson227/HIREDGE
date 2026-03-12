@@ -14,6 +14,7 @@ export class JobService {
     salaryMin?: number;
     salaryMax?: number;
     experienceLevel?: string;
+    postedAfter?: Date;
     page?: number;
     limit?: number;
   }) {
@@ -55,6 +56,10 @@ export class JobService {
 
     if (filters.experienceLevel) {
       where.experienceLevel = filters.experienceLevel;
+    }
+
+    if (filters.postedAfter) {
+      where.postedAt = { gte: filters.postedAfter };
     }
 
     const [jobs, total] = await Promise.all([
