@@ -89,7 +89,7 @@ export class EdgeService {
       const mimeType = mimeMatch?.[1] ?? 'image/jpeg';
 
       const completion = await openai!.chat.completions.create({
-        model: 'llama-4-scout-17b-16e-instruct',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.5,
         max_tokens: 1500,
         messages: [

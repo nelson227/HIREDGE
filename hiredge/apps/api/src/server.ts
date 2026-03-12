@@ -28,6 +28,7 @@ async function buildServer() {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
     },
     trustProxy: true,
+    bodyLimit: 10 * 1024 * 1024, // 10MB for image uploads
   });
 
   // Plugins
