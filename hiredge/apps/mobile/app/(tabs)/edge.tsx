@@ -301,6 +301,17 @@ export default function EdgeScreen() {
 
   const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
 
+  // Parse messages that contain embedded document content (from server history)
+  // Pattern: [📄 Document joint : filename]\n\n<content>\n\n---\n<user message>
+  const parseMessageContent = (content: string): { fileName: string | null; userText: string } => {
+    const match = content.match(/^\[📄 Document joint : (.+?)\]\n\n[\s\S]*?\n\n---\n(.*)$/s);
+    if (match) return { fileName: match[1], userText: match[2] || '' };
+    // Also handle case where user typed nothing (just sent the file)
+    const matchNoText = content.match(/^\[📄 Document joint : (.+?)\]\n\n[\s\S]+$/);
+    if (matchNoText && !content.includes('\n\n---\n')) return { fileName: matchNoText[1], userText: '' };
+    return { fileName: null, userText: content };
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: '#F8F9FA' }}
@@ -347,7 +358,12 @@ export default function EdgeScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16, paddingBottom: 8, flexGrow: 1 }}
         ListEmptyComponent={<WelcomeMessage />}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          const parsed = item.role === 'user' ? parseMessageContent(item.content) : null;
+          const hasEmbeddedDoc = parsed?.fileName != null;
+          const displayContent = hasEmbeddedDoc ? parsed!.userText : item.content;
+          const embeddedFileName = parsed?.fileName ?? null;
+          return (
           <View style={{
             alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
             maxWidth: '80%', marginBottom: 10,
@@ -360,14 +376,16 @@ export default function EdgeScreen() {
                 resizeMode="cover"
               />
             )}
-            {item.attachment?.type === 'document' && (
+            {(item.attachment?.type === 'document' || hasEmbeddedDoc) && (
               <View style={{
                 flexDirection: 'row', alignItems: 'center', gap: 6,
                 backgroundColor: '#F0EEFF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
                 marginBottom: 4, borderWidth: 1, borderColor: '#D8D1FF',
               }}>
                 <Ionicons name="document-text-outline" size={16} color="#6C5CE7" />
-                <Text style={{ fontSize: 12, color: '#6C5CE7', fontWeight: '600' }}>{item.attachment.name}</Text>
+                <Text style={{ fontSize: 12, color: '#6C5CE7', fontWeight: '600' }}>
+                  {item.attachment?.name ?? embeddedFileName}
+                </Text>
               </View>
             )}
             <View style={{
@@ -381,7 +399,7 @@ export default function EdgeScreen() {
               <Text style={{
                 color: item.role === 'user' ? '#fff' : '#2D3436', fontSize: 15, lineHeight: 22,
               }}>
-                {item.content}
+                {displayContent || (hasEmbeddedDoc ? 'Fichier envoyé' : item.content)}
               </Text>
             </View>
             <Text style={{ color: '#CED4DA', fontSize: 10, marginTop: 2, textAlign: item.role === 'user' ? 'right' : 'left' }}>
@@ -431,7 +449,7 @@ export default function EdgeScreen() {
               </View>
             )}
           </View>
-        )}
+        );}}
       />
 
       {/* Suggestions */}
