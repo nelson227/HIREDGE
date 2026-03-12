@@ -504,8 +504,8 @@ export default function EdgeScreen() {
       }}>
         <View style={{
           flexDirection: 'row', alignItems: 'flex-end', gap: 8,
-          backgroundColor: '#fff', borderRadius: 24, borderWidth: 1.5,
-          borderColor: '#D8D1FF', paddingHorizontal: 8, paddingVertical: 6,
+          backgroundColor: '#fff', borderRadius: 28, borderWidth: 1.5,
+          borderColor: '#D8D1FF', paddingHorizontal: 12, paddingVertical: 10,
           shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
         }}>
@@ -536,7 +536,7 @@ export default function EdgeScreen() {
             }}
             style={{
               flex: 1, fontSize: 15, maxHeight: 120,
-              color: '#2D3436', paddingVertical: 6,
+              color: '#2D3436', paddingVertical: 8, paddingHorizontal: 4,
             }}
           />
 
