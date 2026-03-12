@@ -138,7 +138,7 @@ export const simulationMessageSchema = z.object({
 
 // --- Edge Chat Schema ---
 export const edgeChatSchema = z.object({
-  message: z.string().min(1).max(5000),
+  message: z.string().min(1).max(15000),
 });
 
 // --- Notification Preferences ---

@@ -1,8 +1,34 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
+
+// Load PDF.js from CDN at runtime (avoids Metro bundler issues)
+let pdfjsLib: any = null;
+const PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174';
+async function loadPdfJs(): Promise<any> {
+  if (pdfjsLib) return pdfjsLib;
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  if ((window as any).pdfjsLib) {
+    pdfjsLib = (window as any).pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `${PDF_CDN}/pdf.worker.min.js`;
+    return pdfjsLib;
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `${PDF_CDN}/pdf.min.js`;
+    script.onload = () => {
+      pdfjsLib = (window as any).pdfjsLib;
+      if (pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `${PDF_CDN}/pdf.worker.min.js`;
+      }
+      resolve(pdfjsLib);
+    };
+    script.onerror = () => reject(new Error('Failed to load PDF.js'));
+    document.head.appendChild(script);
+  });
+}
 
 interface Attachment {
   type: 'image' | 'document';
@@ -27,6 +53,7 @@ export default function EdgeScreen() {
   const [input, setInput] = useState('');
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const fileInputRef = useRef<any>(null);
   const recognitionRef = useRef<any>(null);
@@ -128,26 +155,64 @@ export default function EdgeScreen() {
     setIsRecording(true);
   };
 
+  // Extract text from PDF using PDF.js (loaded from CDN)
+  const extractPdfText = async (file: File): Promise<string> => {
+    const lib = await loadPdfJs();
+    if (!lib) throw new Error('PDF.js not available');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+    const pages: string[] = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      pages.push(pageText);
+    }
+    return pages.join('\n\n');
+  };
+
   // File picker
-  const handleFilePickerChange = (e: any) => {
+  const handleFilePickerChange = async (e: any) => {
     const file: File = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
+
     const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isDocx = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
+
     if (isImage) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         setAttachment({ type: 'image', name: file.name, uri: ev.target?.result as string });
       };
       reader.readAsDataURL(file);
+    } else if (isPdf) {
+      setIsProcessingFile(true);
+      try {
+        const text = await extractPdfText(file);
+        if (!text.trim()) {
+          alert('Ce PDF ne contient pas de texte extractible (peut-être un scan/image).');
+          setIsProcessingFile(false);
+          return;
+        }
+        setAttachment({ type: 'document', name: file.name, content: text.slice(0, 12000) });
+      } catch {
+        alert('Impossible de lire ce PDF. Essaie un autre fichier.');
+      } finally {
+        setIsProcessingFile(false);
+      }
+    } else if (isDocx) {
+      alert('Les fichiers .doc/.docx ne sont pas encore supportés. Convertis-le en PDF ou .txt.');
     } else {
+      // Text-based files: .txt, .md, .json, .csv
       const reader = new FileReader();
       reader.onload = (ev) => {
         const content = ev.target?.result as string;
-        setAttachment({ type: 'document', name: file.name, content: content.slice(0, 8000) });
+        setAttachment({ type: 'document', name: file.name, content: content.slice(0, 12000) });
       };
       reader.readAsText(file);
     }
-    e.target.value = '';
   };
 
   // Export conversation
@@ -295,6 +360,15 @@ export default function EdgeScreen() {
       )}
 
       {/* Attachment preview bar */}
+      {isProcessingFile && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10,
+          backgroundColor: '#F0EEFF', borderTopWidth: 1, borderColor: '#D8D1FF', gap: 8,
+        }}>
+          <ActivityIndicator size="small" color="#6C5CE7" />
+          <Text style={{ fontSize: 13, color: '#6C5CE7', fontWeight: '500' }}>Extraction du texte du PDF...</Text>
+        </View>
+      )}
       {attachment && (
         <View style={{
           flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8,
