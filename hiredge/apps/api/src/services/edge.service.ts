@@ -472,13 +472,29 @@ ${JSON.stringify(context.userProfile, null, 2)}
 CONVERSATION RÉCENTE (peut contenir le contenu d'un document envoyé par l'utilisateur) :
 ${context.recentMessages.slice(-6).map((m: any) => `[${m.role}]: ${m.content.slice(0, 3000)}`).join('\n')}
 
-RÈGLES :
+RÈGLES FONDAMENTALES :
 - Génère un document COMPLET et PROFESSIONNEL
 - Utilise UNIQUEMENT les infos fournies par l'utilisateur, NE FABRIQUE RIEN
 - Si des infos manquent, mets des placeholders comme "[Votre email]" ou "[À compléter]"
 - DÉTECTE le pays cible dans le message (explicite ou implicite) et adapte le format
-- Remplis TOUJOURS le champ "targetCountry" avec le code ISO du pays cible
-- Adapte la LANGUE du contenu au pays cible
+
+⚠️ RÈGLE ABSOLUE DE LANGUE ET DIFFÉRENCIATION :
+- Le contenu du CV DOIT ÊTRE ÉCRIT DANS LA LANGUE DU PAYS CIBLE :
+  • FR/BE/CH/QC/MA/SN → tout en FRANÇAIS
+  • US/UK/CA/AU/AE/IN → tout en ANGLAIS
+  • DE → tout en ALLEMAND (Berufserfahrung, Ausbildung, etc.)
+  • ES → tout en ESPAGNOL
+  • IT → tout en ITALIEN
+  • JP → tout en JAPONAIS
+  • BR → tout en PORTUGAIS
+  • NL → tout en NÉERLANDAIS
+  • CN → tout en CHINOIS SIMPLIFIÉ (简体中文)
+  • KR → tout en CORÉEN
+  • RU → tout en RUSSE
+  • SE → tout en SUÉDOIS
+  • PL → tout en POLONAIS
+- Chaque pays DOIT produire un CV DIFFÉRENT en termes de : langue, structure, sections incluses, style de rédaction, et informations personnelles.
+- NE PAS simplement traduire le même CV. ADAPTE véritablement le style, le format et le contenu au pays.
 
 ════════════════════════════════════════════════════════
 GUIDE COMPLET DES FORMATS DE CV PAR PAYS
@@ -486,13 +502,12 @@ GUIDE COMPLET DES FORMATS DE CV PAR PAYS
 
 🇫🇷 FRANCE (FR)
 - Nom : CV
-- Photo : optionnelle mais courante
-- Infos perso : date de naissance, nationalité, permis de conduire (courants). PAS de N° sécu ni statut marital
+- Photo : NON (tendance moderne, non obligatoire, éviter sauf si demandé)
+- Infos perso : NOM seulement requis. Pas d'âge, pas de photo, pas de statut marital en standard
 - Format : anti-chronologique, 1 page (junior) à 2 pages max
 - Résumé en haut ("Profil"), résultats chiffrés
-- PAS de "References available upon request"
 - Langues avec niveaux (B2, C1) ou descriptif
-- Sections en français : Profil, Expérience Professionnelle, Formation, Compétences, Langues
+- En FRANÇAIS : Profil, Expérience Professionnelle, Formation, Compétences, Langues
 - Style sobre et élégant
 
 🇺🇸 USA (US)
@@ -501,131 +516,132 @@ GUIDE COMPLET DES FORMATS DE CV PAR PAYS
 - Infos perso : AUCUNE (pas d'âge, nationalité, statut marital, genre, photo)
 - Format : 1 page (junior/mid), 2 max (senior), reverse chronological
 - Focus RÉSULTATS : verbe d'action + résultat chiffré ("Increased revenue by 35%")
-- "References available upon request" : souvent omis aujourd'hui
-- Sections en anglais : Summary, Professional Experience, Education, Skills
-- GPA si récent diplômé et > 3.5. Pas d'intitulé "CV" en haut
+- En ANGLAIS : Summary, Professional Experience, Education, Skills
+- GPA si récent diplômé et > 3.5
 
 🇨🇦 CANADA anglophone (CA)
 - Nom : Resume
 - Photo : NON
 - Infos perso : NON (pas d'âge, genre, statut)
-- Format : 1-2 pages, reverse chronological ou combination
-- Similaire au US mais "References available upon request" encore courant
-- Mentionner statut de travail si pertinent
+- Format : 1-2 pages, reverse chronological
+- En ANGLAIS : similaire au US mais "References available upon request" encore courant
 
 🇨🇦 QUÉBEC (QC)
 - Nom : CV
-- Photo : NON généralement
-- Format : 1-2 pages, anti-chronologique
+- Photo : NON
 - BILINGUISME : toujours mettre en avant (français + anglais)
-- Structure nord-américaine, langue française
-- Sections en français
+- Structure nord-américaine, en FRANÇAIS
 
 🇬🇧 ROYAUME-UNI (UK)
 - Nom : CV
 - Photo : NON
-- Infos perso : NON (Equality Act 2010)
-- Format : 2 pages standard (c'est la norme, pas 1)
-- "Personal Profile" en haut (court paragraphe)
-- Sections : Personal Profile, Work Experience, Education, Key Skills
+- Format : 2 pages standard
+- En ANGLAIS : Personal Profile, Work Experience, Education, Key Skills
 - References avec 2 contacts ou "Available upon request"
-- Hobbies/Interests courants et acceptés
 
 🇩🇪 ALLEMAGNE (DE)
 - Nom : Lebenslauf
-- Photo : OUI, professionnelle OBLIGATOIRE (Bewerbungsfoto) — en haut à droite
-- Infos perso : date de naissance, nationalité, état civil (courants)
-- Format : 1-2 pages, extrêmement structuré, anti-chronologique
-- SIGNATURE manuscrite + date en bas (Unterschrift und Datum) — OBLIGATOIRE
-- Sections en allemand : Persönliche Daten, Profil, Berufserfahrung, Ausbildung, Kenntnisse, Sprachen
-- Très factuel et précis, certifications valorisées
+- Photo : OUI obligatoire (Bewerbungsfoto)
+- Infos perso : date de naissance, nationalité, état civil
+- SIGNATURE manuscrite + date en bas — OBLIGATOIRE
+- En ALLEMAND : Persönliche Daten, Profil, Berufserfahrung, Ausbildung, Kenntnisse, Sprachen
 
 🇨🇭 SUISSE (CH)
-- Nom : CV / Lebenslauf selon la région
-- Photo : OUI, professionnelle
-- Infos perso : date de naissance, nationalité, PERMIS DE TRAVAIL (B, C, G) — CRUCIAL
-- Format : 1-2 pages
-- LANGUES : section très importante (pays quadrilingue FR/DE/IT/EN)
-- Toujours mentionner le permis de séjour/travail
+- Photo : OUI
+- Infos perso : nationalité, PERMIS DE TRAVAIL (B, C, G) — CRUCIAL
+- LANGUES très importantes (FR/DE/IT/EN)
 
 🇧🇪 BELGIQUE (BE)
-- Nom : CV
-- Photo : courante
-- Infos perso : date de naissance, nationalité
+- Photo : NON (tendance moderne)
 - LANGUES : crucial (FR/NL/EN minimum)
-- Europass accepté mais pas obligatoire
 
 🇳🇱 PAYS-BAS (NL)
-- Nom : CV
-- Photo : OUI courante
+- Photo : OUI
 - Infos perso : date de naissance, nationalité
-- Format : 1-2 pages, concis et DIRECT
-- Sections en néerlandais : Profiel, Werkervaring, Opleiding, Vaardigheden, Talen
+- En NÉERLANDAIS : Profiel, Werkervaring, Opleiding, Vaardigheden, Talen
 
 🇪🇸 ESPAGNE (ES)
-- Nom : Currículum Vitae
 - Photo : OUI
-- Infos perso : date de naissance, nationalité, DNI/NIE
-- Europass encore courant
-- Sections en espagnol : Perfil Profesional, Experiencia Profesional, Formación Académica, Competencias, Idiomas
+- Infos perso : date de naissance, DNI/NIE
+- En ESPAGNOL : Perfil Profesional, Experiencia Profesional, Formación Académica, Competencias, Idiomas
 
 🇮🇹 ITALIE (IT)
-- Nom : Curriculum Vitae
 - Photo : OUI
-- Infos perso : date de naissance, nationalité
-- Europass très répandu (souvent exigé dans le public)
 - OBLIGATOIRE en bas : "Autorizzo il trattamento dei dati personali ai sensi del D.Lgs. 196/2003"
 - SIGNATURE + date en bas
+- En ITALIEN : Profilo, Esperienza Professionale, Istruzione, Competenze, Lingue
 
 🇯🇵 JAPON (JP)
-- Nom : 履歴書 (Rirekisho) standard, 職務経歴書 (Shokumu Keirekisho) détaillé
-- Photo : OUI (3x4cm, fond blanc, en haut à droite)
-- Infos perso : date de naissance, genre, nationalité, adresse complète + code postal
-- Format : standardisé en TABLEAU, très structuré
-- Signature/sceau (hanko) en haut
-- Raisons de départ de chaque poste mentionnées
+- Photo : OUI (3x4cm, fond blanc)
+- Infos perso : date de naissance, genre, nationalité, adresse complète
+- Format : très structuré, en tableau
+- En JAPONAIS : 職務概要, 職務経歴, 学歴, スキル, 語学力, 資格
 
 🇦🇺 AUSTRALIE (AU)
-- Nom : Resume ou CV
 - Photo : NON
-- Infos perso : NON (sauf visa/droit de travail si non-citoyen)
 - Format : 2-3 pages (plus long que US/Canada)
-- "Referees" : section OBLIGATOIRE avec 2-3 contacts NOMMÉS (pas "upon request")
+- "Referees" : section OBLIGATOIRE avec 2-3 contacts NOMMÉS
+- En ANGLAIS
 
 🇮🇳 INDE (IN)
-- Nom : Resume ou CV
 - Photo : OUI
 - Infos perso : date de naissance, nationalité, état civil
-- Format : 2-3 pages
-- "Declaration" en bas : "I hereby declare that the information furnished above is true to the best of my knowledge."
-- SIGNATURE + date + lieu en bas
+- "Declaration" en bas : "I hereby declare that the information furnished above is true..."
+- SIGNATURE + date + lieu
+- En ANGLAIS
 
-🇦🇪 ÉMIRATS / MOYEN-ORIENT (AE)
-- Nom : CV
+🇦🇪 ÉMIRATS (AE)
 - Photo : OUI
-- Infos perso : date de naissance, nationalité, visa/statut de résidence
-- Mentionner le statut de visa/sponsor
-- Format : 2 pages
+- Infos perso : nationalité, visa/sponsor
+- En ANGLAIS
 
 🇧🇷 BRÉSIL (BR)
-- Nom : Currículo
-- Photo : courante (mais déclinante)
-- Infos perso : date de naissance, état civil, nationalité
-- Objectif professionnel en haut
-- Sections en portugais : Objetivo, Experiência Profissional, Formação Acadêmica, Competências, Idiomas
+- Photo : non (tendance récente)
+- En PORTUGAIS : Objetivo, Experiência Profissional, Formação Acadêmica, Competências, Idiomas
 
-🇲🇦 MAROC / MAGHREB (MA)
-- Nom : CV
+🇲🇦 MAROC (MA)
 - Photo : OUI
-- Infos perso : date de naissance, nationalité, situation familiale
-- Format français, 1-2 pages
-- Langues : arabe, français, anglais/espagnol
+- Infos perso : date de naissance, situation familiale
+- En FRANÇAIS : Langues (arabe, français, anglais/espagnol)
 
 🇸🇳 AFRIQUE DE L'OUEST FRANCOPHONE (SN)
-- Nom : CV
 - Photo : OUI
-- Infos perso : date de naissance, nationalité, situation matrimoniale
-- Format français, 1-2 pages, références souvent incluses
+- Infos perso : date de naissance, situation matrimoniale
+- Références souvent incluses
+- En FRANÇAIS
+
+🇨🇳 CHINE (CN)
+- Nom : 简历 (Jiǎnlì)
+- Photo : OUI obligatoire
+- Infos perso : date de naissance, genre, nationalité, hukou (户口), état civil, ethnie parfois
+- Format : 1-2 pages, très structuré, souvent avec tableau
+- En CHINOIS SIMPLIFIÉ (简体中文) : 个人简介, 工作经历, 教育背景, 专业技能, 语言能力, 证书, 兴趣爱好
+- Inclure le parti politique si membre du PCC (courant dans le public)
+- Diplômes très valorisés avec classement universitaire
+
+🇰🇷 CORÉE DU SUD (KR)
+- Nom : 이력서 (Iryeokseo)
+- Photo : OUI obligatoire
+- Infos perso : date de naissance, genre, adresse complète, état civil
+- Format : très standardisé, tableau
+- En CORÉEN : 자기소개, 경력, 학력, 보유 기술, 어학, 자격증
+
+🇷🇺 RUSSIE (RU)
+- Nom : Резюме (Rezyume)
+- Photo : OUI courante
+- Infos perso : date de naissance, nationalité
+- En RUSSE : Профиль, Опыт работы, Образование, Навыки, Языки
+
+🇸🇪 SUÈDE (SE)
+- Photo : NON
+- Infos perso : NON (loi anti-discrimination stricte)
+- En SUÉDOIS : Profil, Arbetslivserfarenhet, Utbildning, Kompetenser, Språk
+
+🇵🇱 POLOGNE (PL)
+- Photo : OUI courante
+- Infos perso : date de naissance
+- OBLIGATOIRE : clause RGPD en bas ("Wyrażam zgodę na przetwarzanie moich danych osobowych...")
+- En POLONAIS : Profil zawodowy, Doświadczenie zawodowe, Wykształcenie, Umiejętności, Języki
 
 ════════════════════════════════════════════════════════
 
@@ -637,11 +653,11 @@ Tu DOIS répondre avec un JSON valide (pas de markdown, pas de texte autour) dan
   "cvData": {
     "targetCountry": "XX",
     "personalInfo": { "firstName": "", "lastName": "", "title": "", "email": "", "phone": "", "address": "", "linkedin": "", "portfolio": "", "dateOfBirth": "" ou null, "nationality": "" ou null, "maritalStatus": "" ou null, "drivingLicense": "" ou null, "visaStatus": "" ou null, "photo": true/false },
-    "summary": "Résumé/Profil/Objective selon le pays",
-    "experiences": [{ "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "highlights": ["..."] }],
-    "education": [{ "degree": "", "institution": "", "year": "", "details": "" }],
+    "summary": "Résumé/Profil/Objective DANS LA LANGUE DU PAYS CIBLE",
+    "experiences": [{ "title": "DANS LA LANGUE DU PAYS", "company": "", "location": "", "startDate": "", "endDate": "", "highlights": ["DANS LA LANGUE DU PAYS"] }],
+    "education": [{ "degree": "DANS LA LANGUE DU PAYS", "institution": "", "year": "", "details": "" }],
     "skills": ["..."],
-    "languages": [{ "name": "", "level": "" }],
+    "languages": [{ "name": "DANS LA LANGUE DU PAYS", "level": "" }],
     "certifications": ["..."],
     "interests": ["..."],
     "references": [{ "name": "", "title": "", "company": "", "contact": "" }] ou "Available upon request" ou null,
@@ -650,14 +666,13 @@ Tu DOIS répondre avec un JSON valide (pas de markdown, pas de texte autour) dan
   "letterContent": "..." // seulement si documentType = "cover_letter"
 }
 
-RÈGLES CRITIQUES :
+RÈGLES CRITIQUES DU JSON :
 - targetCountry = code ISO du pays cible DÉTECTÉ dans la demande (FR par défaut)
-- photo = true SEULEMENT si le pays l'attend (FR, DE, JP, IT, ES, NL, BE, CH, IN, AE, BR, MA, SN)
-- dateOfBirth, nationality, etc. SEULEMENT si le pays le demande
-- declaration SEULEMENT pour l'Inde (IN)
+- photo = true SEULEMENT si le pays l'attend : DE, JP, CH, NL, ES, IT, IN, AE, MA, SN, CN, KR, RU, PL (PAS la France, PAS le US/UK/CA/AU/SE)
+- dateOfBirth, nationality, etc. = SEULEMENT si le pays les inclut normalement
+- declaration = SEULEMENT pour l'Inde (IN)
 - references : inclure si le pays l'attend (UK, CA, AU, IN, AE, SN)
-- Adapte la LANGUE du contenu au pays cible (anglais pour US/UK/AU/CA, français pour FR/BE/CH/QC/MA/SN, allemand pour DE, etc.)
-- Adapte le STYLE au pays (verbes d'action + chiffres pour US, sobre pour FR, très structuré pour DE)`,
+- TOUT le texte du CV (summary, highlights, degree, skills descriptions) DOIT être dans la LANGUE du pays cible, PAS en français sauf si le pays est francophone`,
         },
         { role: 'user', content: message },
       ],
