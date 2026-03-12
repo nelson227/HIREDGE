@@ -29,7 +29,8 @@ type IntentType =
   | 'MOTIVATION'
   | 'GENERAL_CHAT'
   | 'PROFILE_UPDATE'
-  | 'SALARY_INFO';
+  | 'SALARY_INFO'
+  | 'GENERATE_DOCUMENT';
 
 interface DetectedIntent {
   intent: IntentType;
@@ -86,7 +87,7 @@ export class EdgeService {
               role: 'system',
               content: `Tu es un détecteur d'intentions pour HIREDGE, une app de recherche d'emploi.
 Analyse le message et retourne un JSON avec:
-- intent: SEARCH_JOBS | CHECK_STATUS | PREPARE_APPLICATION | INTERVIEW_PREP | SQUAD_INFO | SCOUT_QUESTION | GET_STATS | GET_COMPANY_INFO | MOTIVATION | GENERAL_CHAT | PROFILE_UPDATE | SALARY_INFO
+- intent: SEARCH_JOBS | CHECK_STATUS | PREPARE_APPLICATION | INTERVIEW_PREP | SQUAD_INFO | SCOUT_QUESTION | GET_STATS | GET_COMPANY_INFO | MOTIVATION | GENERAL_CHAT | PROFILE_UPDATE | SALARY_INFO | GENERATE_DOCUMENT
 - confidence: 0 à 1
 - entities: { company?, jobTitle?, location?, applicationId? }
 - requiresToolCall: boolean
@@ -126,6 +127,8 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
     const jobTitle = jobMatch?.[1]?.trim();
 
     const patterns: [RegExp, IntentType][] = [
+      // Document generation — check early (CV, lettre, document, PDF, Word)
+      [/(?:génère|genere|générer|generer|crée|cree|créer|creer|fabrique|fais|rédige|redige|modifie|adapte|transforme|convertis|converti).*?(?:cv|curriculum|lettre|document|pdf|word|docx|résumé|resume)|(?:cv|lettre).*?(?:format|standard|norme|style).*?(?:france|français|canada|canadien|québec|américain)/i, 'GENERATE_DOCUMENT'],
       // Emotional states — check first to avoid false SEARCH match on "recherches"
       [/decourag|décourag|démotiv|déprim|abandone|plus le courage|galère|galere|c'est dur|triste/i, 'MOTIVATION'],
       // Interview prep
@@ -235,6 +238,18 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
     intent: DetectedIntent,
     context: EdgeContext,
   ) {
+    // --- Document generation path (needs special LLM call with structured output) ---
+    if (intent.intent === 'GENERATE_DOCUMENT' && openai) {
+      try {
+        return await this.generateDocument(message, context);
+      } catch {
+        return {
+          message: "Désolé, je n'ai pas pu générer le document. Réessaie en précisant quel type de document tu veux (CV, lettre de motivation) et pour quel pays/standard.",
+          suggestedFollowups: ['Génère un CV format France', 'Génère une lettre de motivation', 'Adapte mon CV pour le Canada'],
+        };
+      }
+    }
+
     // --- LLM path ---
     if (openai) {
       try {
@@ -339,6 +354,10 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         return `Pour préparer ton dossier complet chez **${company}**, j'aurais besoin que tu accèdes à la fiche offre et cliques "Postuler avec EDGE". Je préparerai alors : CV adapté, lettre de motivation personnalisée, et un brief entreprise. Cette fonctionnalité arrive très bientôt !`;
       }
 
+      case 'GENERATE_DOCUMENT': {
+        return `Pour générer ton document, j'ai besoin de l'IA activée. En attendant, envoie-moi ton CV en PDF ou texte et dis-moi quel format tu veux (ex: "Adapte mon CV aux standards France"). Assure-toi que la clé API Groq est bien configurée.`;
+      }
+
       case 'SQUAD_INFO': {
         const squad = context.intentData as any;
         if (!squad) {
@@ -405,6 +424,7 @@ Limite ta réponse à 3-4 phrases max sauf si l'utilisateur demande plus de dét
       SQUAD_INFO: ['Voir les messages', 'Mes co-équipiers', 'Défi de la semaine'],
       GET_STATS: ['Détail par entreprise', 'Améliorer mon taux', 'Objectif de la semaine'],
       GENERAL_CHAT: ['Chercher des offres', 'Mes candidatures', 'Préparer un entretien'],
+      GENERATE_DOCUMENT: ['Télécharger en PDF', 'Télécharger en Word', 'Adapter pour un autre pays'],
     };
 
     return (followups[intent] ?? followups['GENERAL_CHAT']) as string[];
@@ -432,6 +452,80 @@ Limite ta réponse à 3-4 phrases max sauf si l'utilisateur demande plus de dét
       take: limit,
     });
     return messages.reverse();
+  }
+
+  private async generateDocument(message: string, context: EdgeContext) {
+    const completion = await openai!.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.4,
+      max_tokens: 4000,
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un expert en rédaction de CV et documents professionnels.
+L'utilisateur te demande de générer ou adapter un document.
+
+PROFIL UTILISATEUR :
+${JSON.stringify(context.userProfile, null, 2)}
+
+CONVERSATION RÉCENTE (peut contenir le contenu d'un document envoyé par l'utilisateur) :
+${context.recentMessages.slice(-6).map((m: any) => `[${m.role}]: ${m.content.slice(0, 3000)}`).join('\n')}
+
+RÈGLES :
+- Génère un document COMPLET et PROFESSIONNEL
+- Utilise UNIQUEMENT les infos fournies par l'utilisateur, NE FABRIQUE RIEN
+- Si des infos manquent, mets des placeholders comme "[Votre email]" ou "[À compléter]"
+- Adapte le format selon le standard demandé (France, Canada, USA, etc.)
+
+Différences clés :
+• France : photo optionnelle, état civil, format anti-chronologique, 1-2 pages, pas de "references upon request"
+• Canada/USA : pas de photo, pas d'âge, focus skills, format fonctionnel ou hybride, "references available upon request"
+• Québec : mix franco-canadien, importance du bilinguisme
+
+Tu DOIS répondre avec un JSON valide (pas de markdown, pas de texte autour) dans CE format exact :
+{
+  "documentType": "cv" | "cover_letter",
+  "summary": "Courte phrase décrivant ce que tu as généré",
+  "cvData": { // seulement si documentType = "cv"
+    "personalInfo": { "firstName": "", "lastName": "", "title": "", "email": "", "phone": "", "address": "", "linkedin": "", "portfolio": "" },
+    "summary": "Résumé professionnel",
+    "experiences": [{ "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "highlights": ["..."] }],
+    "education": [{ "degree": "", "institution": "", "year": "", "details": "" }],
+    "skills": ["..."],
+    "languages": [{ "name": "", "level": "" }],
+    "certifications": ["..."],
+    "interests": ["..."]
+  },
+  "letterContent": "..." // seulement si documentType = "cover_letter", texte complet de la lettre
+}`,
+        },
+        { role: 'user', content: message },
+      ],
+    });
+
+    const raw = completion.choices[0]!.message.content ?? '{}';
+    // Try to extract JSON from possible markdown code blocks
+    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, raw];
+    const parsed = JSON.parse(jsonMatch[1]!.trim());
+
+    if (parsed.documentType === 'cv' && parsed.cvData) {
+      return {
+        message: `✅ ${parsed.summary ?? "J'ai généré ton CV !"} Tu peux le télécharger en PDF ou Word ci-dessous.`,
+        actions: [{ type: 'DOWNLOAD_DOCUMENT', documentType: 'cv', data: parsed.cvData }],
+        suggestedFollowups: ['Télécharger en PDF', 'Télécharger en Word', 'Modifie la section expériences', 'Adapte-le pour le Canada'],
+      };
+    } else if (parsed.documentType === 'cover_letter' && parsed.letterContent) {
+      return {
+        message: `✅ ${parsed.summary ?? "Voici ta lettre de motivation !"} Tu peux la télécharger ci-dessous.`,
+        actions: [{ type: 'DOWNLOAD_DOCUMENT', documentType: 'cover_letter', data: { content: parsed.letterContent, personalInfo: parsed.cvData?.personalInfo ?? context.userProfile } }],
+        suggestedFollowups: ['Télécharger en PDF', 'Télécharger en Word', 'Rends-la plus formelle', 'Ajoute mes compétences techniques'],
+      };
+    }
+
+    return {
+      message: parsed.summary ?? "J'ai traité ta demande mais je n'ai pas pu structurer le document. Peux-tu reformuler ?",
+      suggestedFollowups: ['Génère un CV format France', 'Écris une lettre de motivation'],
+    };
   }
 
   private async saveMessages(userId: string, userMessage: string, assistantMessage: string) {

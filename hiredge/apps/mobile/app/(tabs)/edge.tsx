@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
+import { generatePDF, generateWord, downloadBlob, type CVData } from '../../lib/document-generator';
 
 // Load PDF.js from CDN at runtime (avoids Metro bundler issues)
 let pdfjsLib: any = null;
@@ -42,10 +43,14 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   attachment?: Attachment;
-  actions?: any[];
+  actions?: ChatAction[];
   suggestedFollowups?: string[];
   createdAt: string;
 }
+
+type ChatAction =
+  | { type: 'NAVIGATE'; screen: string }
+  | { type: 'DOWNLOAD_DOCUMENT'; documentType: 'cv' | 'cover_letter'; data: any };
 
 declare var window: any;
 
@@ -54,6 +59,7 @@ export default function EdgeScreen() {
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const fileInputRef = useRef<any>(null);
   const recognitionRef = useRef<any>(null);
@@ -153,6 +159,63 @@ export default function EdgeScreen() {
     recognition.onend = () => setIsRecording(false);
     recognition.start();
     setIsRecording(true);
+  };
+
+  // Document download handlers
+  const handleDownloadPDF = async (action: ChatAction & { type: 'DOWNLOAD_DOCUMENT' }) => {
+    if (downloadingFormat) return;
+    setDownloadingFormat('pdf');
+    try {
+      if (action.documentType === 'cv') {
+        const blob = generatePDF(action.data as CVData);
+        const name = `${(action.data as CVData).personalInfo?.firstName ?? 'CV'}_${(action.data as CVData).personalInfo?.lastName ?? ''}_CV`.replace(/\s+/g, '_');
+        downloadBlob(blob, `${name}.pdf`);
+      } else {
+        // Cover letter as simple PDF
+        const { jsPDF } = await import('jspdf');
+        const doc = new jsPDF();
+        const margin = 20;
+        const contentWidth = doc.internal.pageSize.getWidth() - margin * 2;
+        doc.setFontSize(11);
+        const lines = doc.splitTextToSize(action.data.content, contentWidth);
+        let y = 25;
+        for (const line of lines) {
+          if (y > 275) { doc.addPage(); y = 20; }
+          doc.text(line, margin, y);
+          y += 5.5;
+        }
+        downloadBlob(doc.output('blob'), 'Lettre_de_motivation.pdf');
+      }
+    } catch (err) {
+      alert('Erreur lors de la génération du PDF. Réessaie.');
+    } finally {
+      setDownloadingFormat(null);
+    }
+  };
+
+  const handleDownloadWord = async (action: ChatAction & { type: 'DOWNLOAD_DOCUMENT' }) => {
+    if (downloadingFormat) return;
+    setDownloadingFormat('word');
+    try {
+      if (action.documentType === 'cv') {
+        const blob = await generateWord(action.data as CVData);
+        const name = `${(action.data as CVData).personalInfo?.firstName ?? 'CV'}_${(action.data as CVData).personalInfo?.lastName ?? ''}_CV`.replace(/\s+/g, '_');
+        downloadBlob(blob, `${name}.docx`);
+      } else {
+        // Cover letter as simple .docx
+        const { Document, Packer, Paragraph, TextRun } = await import('docx');
+        const paragraphs = (action.data.content as string).split('\n').map(
+          (line: string) => new Paragraph({ children: [new TextRun({ text: line, size: 22, font: 'Calibri' })], spacing: { after: 120 } })
+        );
+        const docFile = new Document({ sections: [{ children: paragraphs }] });
+        const blob = await Packer.toBlob(docFile);
+        downloadBlob(blob, 'Lettre_de_motivation.docx');
+      }
+    } catch (err) {
+      alert('Erreur lors de la génération du Word. Réessaie.');
+    } finally {
+      setDownloadingFormat(null);
+    }
   };
 
   // Extract text from PDF using PDF.js (loaded from CDN)
@@ -324,6 +387,49 @@ export default function EdgeScreen() {
             <Text style={{ color: '#CED4DA', fontSize: 10, marginTop: 2, textAlign: item.role === 'user' ? 'right' : 'left' }}>
               {formatTime(item.createdAt)}
             </Text>
+            {/* Download buttons for generated documents */}
+            {item.role === 'assistant' && item.actions?.some((a: any) => a.type === 'DOWNLOAD_DOCUMENT') && (
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                {item.actions!.filter((a: any) => a.type === 'DOWNLOAD_DOCUMENT').map((action: any, i: number) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => handleDownloadPDF(action)}
+                      disabled={!!downloadingFormat}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 6,
+                        backgroundColor: '#E74C3C', borderRadius: 12,
+                        paddingHorizontal: 14, paddingVertical: 9,
+                        opacity: downloadingFormat === 'pdf' ? 0.6 : 1,
+                      }}
+                    >
+                      {downloadingFormat === 'pdf' ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Ionicons name="document-text" size={16} color="#fff" />
+                      )}
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>PDF</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDownloadWord(action)}
+                      disabled={!!downloadingFormat}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 6,
+                        backgroundColor: '#2B5797', borderRadius: 12,
+                        paddingHorizontal: 14, paddingVertical: 9,
+                        opacity: downloadingFormat === 'word' ? 0.6 : 1,
+                      }}
+                    >
+                      {downloadingFormat === 'word' ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Ionicons name="document" size={16} color="#fff" />
+                      )}
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Word</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
       />
