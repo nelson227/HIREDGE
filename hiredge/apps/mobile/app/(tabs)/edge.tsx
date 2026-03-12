@@ -1,21 +1,35 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
 
+interface Attachment {
+  type: 'image' | 'document';
+  name: string;
+  content?: string;
+  uri?: string;
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  attachment?: Attachment;
   actions?: any[];
   suggestedFollowups?: string[];
   createdAt: string;
 }
 
+declare var window: any;
+
 export default function EdgeScreen() {
   const [input, setInput] = useState('');
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const fileInputRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
   const queryClient = useQueryClient();
 
   const { data: history } = useQuery({
@@ -29,17 +43,26 @@ export default function EdgeScreen() {
   const messages = history ?? [];
 
   const sendMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const { data } = await api.post('/edge/chat', { message });
-      return data.data;
+    mutationFn: async (payload: { message: string; attachment?: Attachment }) => {
+      let finalMessage = payload.message;
+      if (payload.attachment) {
+        if (payload.attachment.type === 'document' && payload.attachment.content) {
+          finalMessage = `[📄 Document joint : ${payload.attachment.name}]\n\n${payload.attachment.content}\n\n---\n${payload.message}`;
+        } else if (payload.attachment.type === 'image') {
+          finalMessage = `[🖼️ Image jointe : ${payload.attachment.name}]\n\n${payload.message}`;
+        }
+      }
+      const { data } = await api.post('/edge/chat', { message: finalMessage });
+      return { ...data.data, _attachment: payload.attachment };
     },
-    onMutate: async (message) => {
+    onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: ['edgeHistory'] });
       const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory']) ?? [];
       const optimistic: ChatMessage = {
         id: `temp-${Date.now()}`,
         role: 'user',
-        content: message,
+        content: payload.message,
+        attachment: payload.attachment ?? undefined,
         createdAt: new Date().toISOString(),
       };
       queryClient.setQueryData(['edgeHistory'], [...prev, optimistic]);
@@ -57,7 +80,7 @@ export default function EdgeScreen() {
       };
       queryClient.setQueryData(['edgeHistory'], [...prev, assistantMsg]);
     },
-    onError: (_err, _msg, context) => {
+    onError: (_err, _payload, context) => {
       if (context?.prev) {
         queryClient.setQueryData(['edgeHistory'], context.prev);
       }
@@ -66,14 +89,80 @@ export default function EdgeScreen() {
 
   const handleSend = () => {
     const text = input.trim();
-    if (!text || sendMutation.isPending) return;
+    if ((!text && !attachment) || sendMutation.isPending) return;
     setInput('');
-    sendMutation.mutate(text);
+    setAttachment(null);
+    sendMutation.mutate({ message: text || (attachment ? `Analyse ce fichier : ${attachment.name}` : ''), attachment: attachment ?? undefined });
   };
 
   const handleSuggestion = (text: string) => {
     if (sendMutation.isPending) return;
-    sendMutation.mutate(text);
+    sendMutation.mutate({ message: text });
+  };
+
+  // Voice input via Web Speech API
+  const handleVoice = () => {
+    if (!Platform.OS === undefined && typeof window === 'undefined') return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      alert('Reconnaissance vocale non supportée. Utilise Chrome ou Edge.');
+      return;
+    }
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+    const recognition = new SR();
+    recognitionRef.current = recognition;
+    recognition.lang = 'fr-FR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setInput((prev) => (prev ? prev + ' ' + transcript : transcript));
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  // File picker
+  const handleFilePickerChange = (e: any) => {
+    const file: File = e.target.files?.[0];
+    if (!file) return;
+    const isImage = file.type.startsWith('image/');
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAttachment({ type: 'image', name: file.name, uri: ev.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result as string;
+        setAttachment({ type: 'document', name: file.name, content: content.slice(0, 8000) });
+      };
+      reader.readAsText(file);
+    }
+    e.target.value = '';
+  };
+
+  // Export conversation
+  const handleExport = () => {
+    if (typeof window === 'undefined') return;
+    const lines = messages.map((m) =>
+      `[${formatTime(m.createdAt)}] ${m.role === 'user' ? 'Moi' : 'EDGE'} :\n${m.content}`
+    ).join('\n\n');
+    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation-edge-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -101,11 +190,27 @@ export default function EdgeScreen() {
         }}>
           <Text style={{ fontSize: 20 }}>🧠</Text>
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>EDGE</Text>
           <Text style={{ color: '#A29BFE', fontSize: 12 }}>Ton compagnon de recherche</Text>
         </View>
+        {messages.length > 0 && (
+          <TouchableOpacity onPress={handleExport} style={{ padding: 6 }}>
+            <Ionicons name="download-outline" size={22} color="#A29BFE" />
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Hidden file input for web */}
+      {Platform.OS === 'web' && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,.md,.json,.csv,.pdf,.doc,.docx,image/*"
+          style={{ display: 'none' }}
+          onChange={handleFilePickerChange}
+        />
+      )}
 
       {/* Messages */}
       <FlatList
@@ -119,6 +224,24 @@ export default function EdgeScreen() {
             alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
             maxWidth: '80%', marginBottom: 10,
           }}>
+            {/* Attachment preview */}
+            {item.attachment?.type === 'image' && item.attachment.uri && (
+              <Image
+                source={{ uri: item.attachment.uri }}
+                style={{ width: 180, height: 120, borderRadius: 12, marginBottom: 4 }}
+                resizeMode="cover"
+              />
+            )}
+            {item.attachment?.type === 'document' && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: '#F0EEFF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
+                marginBottom: 4, borderWidth: 1, borderColor: '#D8D1FF',
+              }}>
+                <Ionicons name="document-text-outline" size={16} color="#6C5CE7" />
+                <Text style={{ fontSize: 12, color: '#6C5CE7', fontWeight: '600' }}>{item.attachment.name}</Text>
+              </View>
+            )}
             <View style={{
               backgroundColor: item.role === 'user' ? '#6C5CE7' : '#fff',
               borderRadius: 16,
@@ -171,35 +294,88 @@ export default function EdgeScreen() {
         </View>
       )}
 
+      {/* Attachment preview bar */}
+      {attachment && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8,
+          backgroundColor: '#F0EEFF', borderTopWidth: 1, borderColor: '#D8D1FF', gap: 8,
+        }}>
+          {attachment.type === 'image' && attachment.uri ? (
+            <Image source={{ uri: attachment.uri }} style={{ width: 40, height: 40, borderRadius: 6 }} />
+          ) : (
+            <Ionicons name="document-text" size={24} color="#6C5CE7" />
+          )}
+          <Text style={{ flex: 1, fontSize: 13, color: '#6C5CE7', fontWeight: '500' }} numberOfLines={1}>
+            {attachment.name}
+          </Text>
+          <TouchableOpacity onPress={() => setAttachment(null)}>
+            <Ionicons name="close-circle" size={20} color="#6C5CE7" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Input */}
       <View style={{
-        flexDirection: 'row', alignItems: 'flex-end',
-        paddingHorizontal: 12, paddingTop: 12, paddingBottom: 88,
-        backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#E9ECEF', gap: 8,
+        paddingHorizontal: 12, paddingTop: 10, paddingBottom: 88,
+        backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#E9ECEF',
       }}>
-        <TextInput
-          value={input}
-          onChangeText={setInput}
-          placeholder="Parle à EDGE..."
-          placeholderTextColor="#ADB5BD"
-          multiline
-          maxLength={1000}
-          style={{
-            flex: 1, backgroundColor: '#F1F3F5', borderRadius: 20,
-            paddingHorizontal: 16, paddingVertical: 10, fontSize: 15,
-            maxHeight: 100, color: '#2D3436',
-          }}
-        />
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={!input.trim() || sendMutation.isPending}
-          style={{
-            width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
-            backgroundColor: input.trim() ? '#6C5CE7' : '#E9ECEF',
-          }}
-        >
-          <Ionicons name="send" size={18} color={input.trim() ? '#fff' : '#ADB5BD'} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          {/* Attach */}
+          <TouchableOpacity
+            onPress={() => Platform.OS === 'web' && fileInputRef.current?.click()}
+            style={{ width: 36, height: 36, justifyContent: 'center', alignItems: 'center' }}
+          >
+            <Ionicons name="attach" size={22} color="#ADB5BD" />
+          </TouchableOpacity>
+
+          {/* Text input */}
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="Parle à EDGE... (Entrée pour envoyer)"
+            placeholderTextColor="#ADB5BD"
+            multiline
+            maxLength={2000}
+            onKeyPress={(e: any) => {
+              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+                e.preventDefault?.();
+                handleSend();
+              }
+            }}
+            style={{
+              flex: 1, backgroundColor: '#F1F3F5', borderRadius: 20,
+              paddingHorizontal: 16, paddingVertical: 10, fontSize: 15,
+              maxHeight: 120, color: '#2D3436',
+            }}
+          />
+
+          {/* Micro */}
+          <TouchableOpacity
+            onPress={handleVoice}
+            style={{
+              width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
+              backgroundColor: isRecording ? '#FF6B6B' : 'transparent',
+            }}
+          >
+            <Ionicons name={isRecording ? 'stop-circle' : 'mic-outline'} size={22} color={isRecording ? '#fff' : '#ADB5BD'} />
+          </TouchableOpacity>
+
+          {/* Send */}
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={(!input.trim() && !attachment) || sendMutation.isPending}
+            style={{
+              width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
+              backgroundColor: (input.trim() || attachment) ? '#6C5CE7' : '#E9ECEF',
+            }}
+          >
+            <Ionicons name="send" size={18} color={(input.trim() || attachment) ? '#fff' : '#ADB5BD'} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={{ fontSize: 11, color: '#CED4DA', marginTop: 4, marginLeft: 44 }}>
+          Entrée pour envoyer · Shift+Entrée pour aller à la ligne · 📎 documents, images
+        </Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -226,6 +402,9 @@ function WelcomeMessage() {
         <SuggestionChip text="🎭 Lance une simulation d'entretien" />
         <SuggestionChip text="📊 Mes statistiques de recherche" />
       </View>
+      <Text style={{ fontSize: 12, color: '#CED4DA', marginTop: 16, textAlign: 'center' }}>
+        💡 Astuce : envoie un document (CV, offre) ou une photo pour que je l'analyse
+      </Text>
     </View>
   );
 }
