@@ -31,8 +31,17 @@
       "expo-font",
       "expo-secure-store"
     ],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c4fb6ab-40e8-43b7-a342-288e3a7756e8"
+      }
     }
   }
 }
