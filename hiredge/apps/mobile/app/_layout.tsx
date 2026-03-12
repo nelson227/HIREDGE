@@ -26,9 +26,16 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="job/[id]" />
         <Stack.Screen name="interview/index" />
         <Stack.Screen name="interview/[id]" />
+        <Stack.Screen name="applications" />
+        <Stack.Screen name="application/[id]" />
+        <Stack.Screen name="scouts" />
+        <Stack.Screen name="scout/[id]" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="settings" />
         <Stack.Screen name="notifications" />
       </Stack>
     </QueryClientProvider>

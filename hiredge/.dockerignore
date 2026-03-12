@@ -1,0 +1,9 @@
+node_modules
+.git
+*.md
+.env*
+apps/mobile
+dist
+coverage
+.turbo
+*.log

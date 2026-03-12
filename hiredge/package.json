@@ -16,7 +16,14 @@
     "db:push": "turbo db:push --filter=@hiredge/api",
     "db:generate": "turbo db:generate --filter=@hiredge/api",
     "db:migrate": "turbo db:migrate --filter=@hiredge/api",
-    "db:seed": "turbo db:seed --filter=@hiredge/api"
+    "db:seed": "turbo db:seed --filter=@hiredge/api",
+    "test": "turbo test",
+    "test:api": "cd apps/api && npx vitest run",
+    "test:mobile": "cd apps/mobile && npx vitest run",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:logs": "docker compose logs -f api"
   },
   "devDependencies": {
     "turbo": "^2.3.0",
