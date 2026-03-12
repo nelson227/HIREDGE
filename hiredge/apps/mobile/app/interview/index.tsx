@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import api from '../../lib/api';
 
 const INTERVIEW_TYPES = [
   { key: 'RH', label: 'Entretien RH', icon: '👤', desc: 'Motivation, parcours, soft skills' },

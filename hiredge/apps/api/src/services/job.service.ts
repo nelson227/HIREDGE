@@ -68,8 +68,15 @@ export class JobService {
       prisma.job.count({ where }),
     ]);
 
+    const parsed = jobs.map((j: any) => ({
+      ...j,
+      requiredSkills: typeof j.requiredSkills === 'string' ? JSON.parse(j.requiredSkills || '[]') : (j.requiredSkills ?? []),
+      niceToHave: typeof j.niceToHave === 'string' ? JSON.parse(j.niceToHave || '[]') : (j.niceToHave ?? []),
+      benefits: typeof j.benefits === 'string' ? JSON.parse(j.benefits || '[]') : (j.benefits ?? []),
+    }));
+
     return {
-      jobs,
+      jobs: parsed,
       pagination: {
         page,
         limit,
@@ -93,8 +100,15 @@ export class JobService {
 
     if (!job) throw new AppError('JOB_NOT_FOUND', 'Offre introuvable', 404);
 
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(job));
-    return job;
+    const enriched = {
+      ...job,
+      requiredSkills: typeof job.requiredSkills === 'string' ? JSON.parse(job.requiredSkills || '[]') : (job.requiredSkills ?? []),
+      niceToHave: typeof (job as any).niceToHave === 'string' ? JSON.parse((job as any).niceToHave || '[]') : ((job as any).niceToHave ?? []),
+      benefits: typeof (job as any).benefits === 'string' ? JSON.parse((job as any).benefits || '[]') : ((job as any).benefits ?? []),
+    };
+
+    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(enriched));
+    return enriched;
   }
 
   async getMatchedJobs(userId: string, limit: number = 20) {

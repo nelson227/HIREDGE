@@ -40,14 +40,19 @@ export default function TabsLayout() {
         name="edge"
         options={{
           title: 'EDGE',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-ellipses" size={size + 4} color="#6C5CE7" />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name="chatbubble-ellipses"
+              size={size + 4}
+              color={focused ? '#6C5CE7' : '#ADB5BD'}
+              style={focused ? {
+                backgroundColor: '#F0EEFF',
+                borderRadius: 20,
+                padding: 4,
+                overflow: 'hidden',
+              } : undefined}
+            />
           ),
-          tabBarIconStyle: {
-            backgroundColor: '#F0EEFF',
-            borderRadius: 20,
-            padding: 4,
-          },
         }}
       />
       <Tabs.Screen

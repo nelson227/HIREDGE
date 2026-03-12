@@ -29,16 +29,18 @@ export default function JobsScreen() {
       params.set('page', String(pageParam));
       params.set('limit', '20');
       const { data } = await api.get(`/jobs/search?${params}`);
-      return data.data;
+      return data; // { success, data: jobs[], pagination }
     },
     getNextPageParam: (lastPage: any) => {
-      if (lastPage.page < lastPage.totalPages) return lastPage.page + 1;
+      const pagination = lastPage.pagination;
+      if (!pagination) return undefined;
+      if (pagination.page < pagination.totalPages) return pagination.page + 1;
       return undefined;
     },
     initialPageParam: 1,
   });
 
-  const jobs = data?.pages.flatMap((p: any) => p.items) ?? [];
+  const jobs = data?.pages.flatMap((p: any) => p.data ?? p.jobs ?? []).filter(Boolean) ?? [];
 
   const renderJob = useCallback(({ item }: { item: any }) => (
     <TouchableOpacity
@@ -153,7 +155,7 @@ export default function JobsScreen() {
         <FlatList
           data={jobs}
           renderItem={renderJob}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item?.id ?? String(index)}
           contentContainerStyle={{ paddingTop: 12, paddingBottom: 32 }}
           onEndReached={() => hasNextPage && fetchNextPage()}
           onEndReachedThreshold={0.3}

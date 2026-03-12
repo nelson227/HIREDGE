@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../lib/storage';
 import api from '../lib/api';
 
 interface User {
@@ -29,8 +29,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post('/auth/login', { email, password });
     if (!data.success) throw new Error(data.error?.message ?? 'Echec de connexion');
 
-    await SecureStore.setItemAsync('accessToken', data.data.accessToken);
-    await SecureStore.setItemAsync('refreshToken', data.data.refreshToken);
+    await storage.setItem('accessToken', data.data.accessToken);
+    await storage.setItem('refreshToken', data.data.refreshToken);
 
     set({ user: data.data.user, isAuthenticated: true });
   },
@@ -39,28 +39,28 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post('/auth/register', { email, password, role });
     if (!data.success) throw new Error(data.error?.message ?? 'Echec d\'inscription');
 
-    await SecureStore.setItemAsync('accessToken', data.data.accessToken);
-    await SecureStore.setItemAsync('refreshToken', data.data.refreshToken);
+    await storage.setItem('accessToken', data.data.accessToken);
+    await storage.setItem('refreshToken', data.data.refreshToken);
 
     set({ user: data.data.user, isAuthenticated: true });
   },
 
   logout: async () => {
     try {
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
+      const refreshToken = await storage.getItem('refreshToken');
       await api.post('/auth/logout', { refreshToken });
     } catch {
       // Silent fail on logout API
     }
 
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
+    await storage.deleteItem('accessToken');
+    await storage.deleteItem('refreshToken');
     set({ user: null, isAuthenticated: false });
   },
 
   loadSession: async () => {
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
+      const token = await storage.getItem('accessToken');
       if (!token) {
         set({ isLoading: false });
         return;

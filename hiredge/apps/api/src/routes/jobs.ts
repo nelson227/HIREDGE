@@ -4,10 +4,7 @@ import { jobService } from '../services/job.service';
 import { AppError } from '../services/auth.service';
 
 const jobRoutes: FastifyPluginAsync = async (fastify) => {
-  // All job routes require authentication
-  fastify.addHook('preHandler', fastify.authenticate);
-
-  // GET /jobs/search
+  // GET /jobs/search — public (no auth needed to browse jobs)
   fastify.get('/search', async (request, reply) => {
     const parsed = searchJobsSchema.safeParse(request.query);
     if (!parsed.success) {
@@ -18,7 +15,8 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const result = await jobService.searchJobs(request.user.id, {
+      const userId = (request as any).user?.id;
+      const result = await jobService.searchJobs(userId ?? '', {
         query: parsed.data.q,
         location: parsed.data.location,
         contractType: parsed.data.contract,
@@ -38,8 +36,8 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /jobs/recommended
-  fastify.get('/recommended', async (request, reply) => {
+  // GET /jobs/recommended — auth required
+  fastify.get('/recommended', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { limit } = request.query as { limit?: string };
 
     try {
