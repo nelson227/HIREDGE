@@ -53,32 +53,91 @@ interface EdgeContext {
 export class EdgeService {
   private readonly MAX_CONTEXT_MESSAGES = 10;
 
-  async chat(userId: string, message: string, imageBase64?: string): Promise<{
+  async chat(userId: string, message: string, imageBase64?: string, conversationId?: string | null): Promise<{
     message: string;
     actions?: any[];
     suggestedFollowups?: string[];
+    conversationId?: string;
   }> {
+    // Resolve or create conversation
+    const convId = await this.resolveConversation(userId, conversationId);
+
     // If an image is attached, use the vision model directly
     if (imageBase64 && openai) {
-      const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false });
+      const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false }, convId);
       const response = await this.analyzeImage(message, imageBase64, context);
-      await this.saveMessages(userId, message, response.message);
-      return response;
+      await this.saveMessages(userId, message, response.message, convId);
+      this.autoTitleConversation(convId, message).catch(() => {});
+      return { ...response, conversationId: convId };
     }
 
     // 1. Detect intent
-    const intent = await this.detectIntent(userId, message);
+    const intent = await this.detectIntent(userId, message, convId);
 
     // 2. Build context
-    const context = await this.buildContext(userId, intent);
+    const context = await this.buildContext(userId, intent, convId);
 
     // 3. Generate response
     const response = await this.generateResponse(userId, message, intent, context);
 
     // 4. Save messages
-    await this.saveMessages(userId, message, response.message);
+    await this.saveMessages(userId, message, response.message, convId);
 
-    return response;
+    // 5. Auto-title new conversations
+    this.autoTitleConversation(convId, message).catch(() => {});
+
+    return { ...response, conversationId: convId };
+  }
+
+  /** Resolve an existing conversation or create a new one */
+  private async resolveConversation(userId: string, conversationId?: string | null): Promise<string> {
+    if (conversationId) {
+      // Verify ownership
+      const conv = await prisma.edgeConversation.findFirst({
+        where: { id: conversationId, userId },
+        select: { id: true },
+      });
+      if (conv) {
+        // Touch updatedAt
+        await prisma.edgeConversation.update({ where: { id: conv.id }, data: { updatedAt: new Date() } });
+        return conv.id;
+      }
+    }
+    // Create new conversation
+    const conv = await prisma.edgeConversation.create({ data: { userId } });
+    return conv.id;
+  }
+
+  /** Auto-generate title from the first user message (fire-and-forget) */
+  private async autoTitleConversation(conversationId: string, userMessage: string) {
+    const conv = await prisma.edgeConversation.findUnique({
+      where: { id: conversationId },
+      select: { title: true, _count: { select: { messages: true } } },
+    });
+    // Only auto-title on first exchange (2 messages = 1 user + 1 assistant)
+    if (!conv || conv._count.messages > 2 || conv.title !== 'Nouvelle conversation') return;
+
+    if (openai) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0,
+          max_tokens: 30,
+          messages: [
+            { role: 'system', content: 'Génère un titre court (max 6 mots) pour cette conversation. Réponds UNIQUEMENT avec le titre, sans guillemets.' },
+            { role: 'user', content: userMessage },
+          ],
+        });
+        const title = completion.choices[0]?.message?.content?.trim()?.slice(0, 100);
+        if (title) {
+          await prisma.edgeConversation.update({ where: { id: conversationId }, data: { title } });
+        }
+      } catch { /* best-effort */ }
+    } else {
+      // Fallback: first 50 chars of user message
+      const title = userMessage.slice(0, 50) + (userMessage.length > 50 ? '...' : '');
+      await prisma.edgeConversation.update({ where: { id: conversationId }, data: { title } });
+    }
   }
 
   private async analyzeImage(message: string, imageBase64: string, context: EdgeContext) {
@@ -135,10 +194,10 @@ PROFIL UTILISATEUR : ${context.userProfile?.firstName ?? ''} ${context.userProfi
     }
   }
 
-  private async detectIntent(userId: string, message: string): Promise<DetectedIntent> {
+  private async detectIntent(userId: string, message: string, conversationId?: string): Promise<DetectedIntent> {
     // --- LLM path ---
     if (openai) {
-      const recentMessages = await this.getRecentMessages(userId, 3);
+      const recentMessages = await this.getRecentMessages(userId, 3, conversationId);
       try {
         const completion = await openai.chat.completions.create({
           model: 'llama-3.3-70b-versatile',
@@ -224,13 +283,13 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
     return { intent: 'GENERAL_CHAT', confidence: 0.5, entities: {}, requiresToolCall: false };
   }
 
-  private async buildContext(userId: string, intent: DetectedIntent): Promise<EdgeContext> {
+  private async buildContext(userId: string, intent: DetectedIntent, conversationId?: string): Promise<EdgeContext> {
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId },
       include: { skills: true, experiences: { take: 3, orderBy: { startDate: 'desc' } } },
     });
 
-    const recentMessages = await this.getRecentMessages(userId, this.MAX_CONTEXT_MESSAGES);
+    const recentMessages = await this.getRecentMessages(userId, this.MAX_CONTEXT_MESSAGES, conversationId);
 
     let intentData: any = null;
 
@@ -534,9 +593,9 @@ Limite ta réponse à 3-4 phrases max sauf si l'utilisateur demande plus de dét
     }
   }
 
-  private async getRecentMessages(userId: string, limit: number) {
+  private async getRecentMessages(userId: string, limit: number, conversationId?: string) {
     const messages = await prisma.edgeChatMessage.findMany({
-      where: { userId },
+      where: { userId, ...(conversationId ? { conversationId } : {}) },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
@@ -812,11 +871,11 @@ RÈGLES CRITIQUES DU JSON :
     };
   }
 
-  private async saveMessages(userId: string, userMessage: string, assistantMessage: string) {
+  private async saveMessages(userId: string, userMessage: string, assistantMessage: string, conversationId?: string) {
     await prisma.edgeChatMessage.createMany({
       data: [
-        { userId, role: 'user', content: userMessage },
-        { userId, role: 'assistant', content: assistantMessage },
+        { userId, role: 'user', content: userMessage, conversationId },
+        { userId, role: 'assistant', content: assistantMessage, conversationId },
       ],
     });
   }

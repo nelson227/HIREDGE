@@ -27,6 +27,7 @@ model User {
   scout              Scout?
   notifications      Notification[]
   chatMessages       EdgeChatMessage[]
+  edgeConversations  EdgeConversation[]
   sessions           Session[]
   applications       Application[]
   squadMembers       SquadMember[]
@@ -406,17 +407,37 @@ model CollectiveInsight {
 // AGENT EDGE â€” Conversations
 // ============================================================
 
-model EdgeChatMessage {
+model EdgeConversation {
   id        String   @id @default(uuid())
   userId    String
-  role      String
-  content   String
-  metadata  String?
+  title     String   @default("Nouvelle conversation")
+  summary   String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages EdgeChatMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([userId, isActive])
+  @@map("edge_conversations")
+}
+
+model EdgeChatMessage {
+  id             String   @id @default(uuid())
+  userId         String
+  conversationId String?
+  role           String
+  content        String
+  metadata       String?
+  createdAt      DateTime @default(now())
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation EdgeConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([conversationId, createdAt])
   @@map("edge_chat_messages")
 }
 

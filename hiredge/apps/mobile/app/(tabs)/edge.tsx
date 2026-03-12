@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
-import { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, ActivityIndicator, ScrollView, Modal, Animated } from 'react-native';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
@@ -52,6 +52,15 @@ type ChatAction =
   | { type: 'NAVIGATE'; screen: string }
   | { type: 'DOWNLOAD_DOCUMENT'; documentType: 'cv' | 'cover_letter'; data: any };
 
+interface Conversation {
+  id: string;
+  title: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: { messages: number };
+}
+
 declare var window: any;
 
 export default function EdgeScreen() {
@@ -60,15 +69,32 @@ export default function EdgeScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingConvId, setEditingConvId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const fileInputRef = useRef<any>(null);
   const recognitionRef = useRef<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: history } = useQuery({
-    queryKey: ['edgeHistory'],
+  // ─── Conversations list ────────────────────────────────
+  const { data: conversations } = useQuery({
+    queryKey: ['edgeConversations'],
     queryFn: async () => {
-      const { data } = await api.get('/edge/history?limit=50');
+      const { data } = await api.get('/edge/conversations');
+      return data.data as Conversation[];
+    },
+  });
+
+  // ─── Messages for active conversation ──────────────────
+  const { data: history } = useQuery({
+    queryKey: ['edgeHistory', activeConversationId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set('limit', '50');
+      if (activeConversationId) params.set('conversationId', activeConversationId);
+      const { data } = await api.get(`/edge/history?${params}`);
       return data.data as ChatMessage[];
     },
   });
@@ -92,12 +118,13 @@ export default function EdgeScreen() {
       }
       const body: any = { message: finalMessage };
       if (imageBase64) body.imageBase64 = imageBase64;
+      if (activeConversationId) body.conversationId = activeConversationId;
       const { data } = await api.post('/edge/chat', body);
       return { ...data.data, _attachment: payload.attachment };
     },
     onMutate: async (payload) => {
-      await queryClient.cancelQueries({ queryKey: ['edgeHistory'] });
-      const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory']) ?? [];
+      await queryClient.cancelQueries({ queryKey: ['edgeHistory', activeConversationId] });
+      const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory', activeConversationId]) ?? [];
       const optimistic: ChatMessage = {
         id: `temp-${Date.now()}`,
         role: 'user',
@@ -105,11 +132,19 @@ export default function EdgeScreen() {
         attachment: payload.attachment ?? undefined,
         createdAt: new Date().toISOString(),
       };
-      queryClient.setQueryData(['edgeHistory'], [...prev, optimistic]);
+      queryClient.setQueryData(['edgeHistory', activeConversationId], [...prev, optimistic]);
       return { prev };
     },
     onSuccess: (response) => {
-      const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory']) ?? [];
+      // If the server created/returned a conversationId, track it
+      if (response.conversationId && response.conversationId !== activeConversationId) {
+        setActiveConversationId(response.conversationId);
+        // Move optimistic messages to the new conversation key
+        const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory', activeConversationId]) ?? [];
+        queryClient.setQueryData(['edgeHistory', response.conversationId], prev);
+      }
+      const convKey = response.conversationId ?? activeConversationId;
+      const prev = queryClient.getQueryData<ChatMessage[]>(['edgeHistory', convKey]) ?? [];
       const assistantMsg: ChatMessage = {
         id: response.id ?? `resp-${Date.now()}`,
         role: 'assistant',
@@ -118,14 +153,50 @@ export default function EdgeScreen() {
         suggestedFollowups: response.suggestedFollowups,
         createdAt: new Date().toISOString(),
       };
-      queryClient.setQueryData(['edgeHistory'], [...prev, assistantMsg]);
+      queryClient.setQueryData(['edgeHistory', convKey], [...prev, assistantMsg]);
+      // Refresh conversations list (new conv or updated title)
+      queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
     },
     onError: (_err, _payload, context) => {
       if (context?.prev) {
-        queryClient.setQueryData(['edgeHistory'], context.prev);
+        queryClient.setQueryData(['edgeHistory', activeConversationId], context.prev);
       }
     },
   });
+
+  // ─── Conversation management ────────────────────────────
+  const handleNewConversation = useCallback(async () => {
+    setActiveConversationId(null);
+    setDrawerOpen(false);
+    setInput('');
+    setAttachment(null);
+  }, []);
+
+  const handleSwitchConversation = useCallback((convId: string) => {
+    setActiveConversationId(convId);
+    setDrawerOpen(false);
+    setInput('');
+    setAttachment(null);
+  }, []);
+
+  const handleDeleteConversation = useCallback(async (convId: string) => {
+    try {
+      await api.delete(`/edge/conversations/${encodeURIComponent(convId)}`);
+      queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
+      queryClient.removeQueries({ queryKey: ['edgeHistory', convId] });
+      if (activeConversationId === convId) {
+        setActiveConversationId(null);
+      }
+    } catch { /* silent */ }
+  }, [activeConversationId, queryClient]);
+
+  const handleRenameConversation = useCallback(async (convId: string, title: string) => {
+    try {
+      await api.patch(`/edge/conversations/${encodeURIComponent(convId)}`, { title });
+      queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
+      setEditingConvId(null);
+    } catch { /* silent */ }
+  }, [queryClient]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -330,6 +401,9 @@ export default function EdgeScreen() {
         backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20,
         flexDirection: 'row', alignItems: 'center', gap: 12,
       }}>
+        <TouchableOpacity onPress={() => setDrawerOpen(true)} style={{ padding: 4 }}>
+          <Ionicons name="menu-outline" size={24} color="#fff" />
+        </TouchableOpacity>
         <View style={{
           width: 40, height: 40, borderRadius: 20, backgroundColor: '#A29BFE',
           justifyContent: 'center', alignItems: 'center',
@@ -338,14 +412,126 @@ export default function EdgeScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>EDGE</Text>
-          <Text style={{ color: '#A29BFE', fontSize: 12 }}>Ton compagnon de recherche</Text>
+          <Text style={{ color: '#A29BFE', fontSize: 12 }} numberOfLines={1}>
+            {activeConversationId && conversations?.find(c => c.id === activeConversationId)?.title || 'Nouvelle conversation'}
+          </Text>
         </View>
+        <TouchableOpacity onPress={handleNewConversation} style={{ padding: 6 }}>
+          <Ionicons name="create-outline" size={22} color="#A29BFE" />
+        </TouchableOpacity>
         {messages.length > 0 && (
           <TouchableOpacity onPress={handleExport} style={{ padding: 6 }}>
             <Ionicons name="download-outline" size={22} color="#A29BFE" />
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Conversation Drawer */}
+      <Modal visible={drawerOpen} animationType="slide" transparent>
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={{
+            width: 300, maxWidth: '80%', backgroundColor: '#1E1B4B', flex: 1,
+            paddingTop: 60, paddingBottom: 40,
+          }}>
+            {/* Drawer header */}
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderColor: '#312E81',
+            }}>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Conversations</Text>
+              <TouchableOpacity onPress={() => setDrawerOpen(false)}>
+                <Ionicons name="close" size={24} color="#A29BFE" />
+              </TouchableOpacity>
+            </View>
+
+            {/* New conversation button */}
+            <TouchableOpacity
+              onPress={handleNewConversation}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 10,
+                margin: 12, paddingHorizontal: 14, paddingVertical: 12,
+                backgroundColor: '#6C5CE7', borderRadius: 12,
+              }}
+            >
+              <Ionicons name="add-circle-outline" size={20} color="#fff" />
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 15 }}>Nouvelle conversation</Text>
+            </TouchableOpacity>
+
+            {/* Conversations list */}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 8 }}>
+              {(conversations ?? []).map((conv) => {
+                const isActive = conv.id === activeConversationId;
+                const isEditing = editingConvId === conv.id;
+                return (
+                  <TouchableOpacity
+                    key={conv.id}
+                    onPress={() => handleSwitchConversation(conv.id)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 10,
+                      paddingHorizontal: 12, paddingVertical: 12, marginVertical: 2,
+                      backgroundColor: isActive ? '#312E81' : 'transparent',
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={isActive ? '#A29BFE' : '#6366F1'} />
+                    {isEditing ? (
+                      <TextInput
+                        autoFocus
+                        value={editingTitle}
+                        onChangeText={setEditingTitle}
+                        onBlur={() => { handleRenameConversation(conv.id, editingTitle); }}
+                        onSubmitEditing={() => { handleRenameConversation(conv.id, editingTitle); }}
+                        style={{
+                          flex: 1, color: '#fff', fontSize: 14, borderBottomWidth: 1,
+                          borderColor: '#A29BFE', paddingVertical: 2,
+                        }}
+                        maxLength={200}
+                      />
+                    ) : (
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: isActive ? '600' : '400' }} numberOfLines={1}>
+                          {conv.title}
+                        </Text>
+                        <Text style={{ color: '#6366F1', fontSize: 11, marginTop: 2 }}>
+                          {conv._count.messages} msg · {formatDate(conv.updatedAt)}
+                        </Text>
+                      </View>
+                    )}
+                    {!isEditing && (
+                      <View style={{ flexDirection: 'row', gap: 4 }}>
+                        <TouchableOpacity
+                          onPress={(e) => { e.stopPropagation?.(); setEditingConvId(conv.id); setEditingTitle(conv.title); }}
+                          hitSlop={8}
+                        >
+                          <Ionicons name="pencil-outline" size={14} color="#6366F1" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={(e) => { e.stopPropagation?.(); handleDeleteConversation(conv.id); }}
+                          hitSlop={8}
+                        >
+                          <Ionicons name="trash-outline" size={14} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              {(!conversations || conversations.length === 0) && (
+                <Text style={{ color: '#6366F1', textAlign: 'center', marginTop: 32, fontSize: 14 }}>
+                  Aucune conversation{'\n'}Envoie ton premier message !
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Tap outside to close */}
+          <TouchableOpacity
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+            activeOpacity={1}
+            onPress={() => setDrawerOpen(false)}
+          />
+        </View>
+      </Modal>
 
       {/* Hidden file input for web */}
       {Platform.OS === 'web' && (
@@ -639,4 +825,18 @@ function SuggestionChip({ text }: { text: string }) {
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "à l'instant";
+  if (diffMins < 60) return `il y a ${diffMins}min`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `il y a ${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `il y a ${diffDays}j`;
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
