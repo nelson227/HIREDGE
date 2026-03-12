@@ -127,7 +127,8 @@ export class JobService {
 
     // Step 2: Rule-based scoring
     const scored = candidates.map((job: any) => {
-      const skillScore = this.computeSkillOverlap(userSkillNames, job.requiredSkills);
+      const jobSkills: string[] = typeof job.requiredSkills === 'string' ? JSON.parse(job.requiredSkills || '[]') : [];
+      const skillScore = this.computeSkillOverlap(userSkillNames, jobSkills);
       const experienceScore = this.computeExperienceMatch(totalExperienceYears, job.experienceMin, job.experienceMax);
       const salaryScore = this.computeSalaryMatch(profile.salaryMin, profile.salaryMax, job.salaryMin, job.salaryMax);
       const locationScore = this.computeLocationScore(profile.city, job.location, profile.remotePreference, job.remote);

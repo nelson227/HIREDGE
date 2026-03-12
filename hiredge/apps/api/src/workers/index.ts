@@ -36,7 +36,7 @@ const matchingWorker = new Worker(
     const userSkills = new Set(user.skills.map((s: { name: string }) => s.name.toLowerCase()));
 
     const scored = jobs.map((j: any) => {
-      const requiredSkills = (j.requiredSkills as string[]) ?? [];
+      const requiredSkills: string[] = typeof j.requiredSkills === 'string' ? JSON.parse(j.requiredSkills || '[]') : (j.requiredSkills ?? []);
       const matchedSkills = requiredSkills.filter((s) => userSkills.has(s.toLowerCase()));
       const skillScore = requiredSkills.length > 0 ? matchedSkills.length / requiredSkills.length : 0;
 

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,8 +15,8 @@ model User {
   id               String           @id @default(uuid())
   email            String           @unique
   passwordHash     String
-  role             UserRole         @default(CANDIDATE)
-  subscriptionTier SubscriptionTier @default(FREE)
+  role             String           @default("CANDIDATE")
+  subscriptionTier String           @default("FREE")
   locale           String           @default("fr")
   isEmailVerified  Boolean          @default(false)
   lastActiveAt     DateTime?
@@ -66,14 +66,14 @@ model CandidateProfile {
   avatarUrl        String?
   phone            String?
   city             String?
-  country          String?          @db.Char(2)
+  country          String?
   linkedinUrl      String?
   portfolioUrl     String?
   availableFrom    DateTime?
-  remotePreference RemotePreference @default(HYBRID)
+  remotePreference String           @default("HYBRID")
   salaryMin        Int?
   salaryMax        Int?
-  salaryCurrency   String           @default("EUR") @db.Char(3)
+  salaryCurrency   String           @default("EUR")
   yearsExperience  Float            @default(0)
   preparationScore Int              @default(0)
   completionScore  Int              @default(0)
@@ -94,7 +94,7 @@ model Skill {
   id                String     @id @default(uuid())
   profileId         String
   name              String
-  level             SkillLevel @default(INTERMEDIATE)
+  level             String     @default("INTERMEDIATE")
   yearsOfExperience Float?
   createdAt         DateTime   @default(now())
 
@@ -155,7 +155,7 @@ model Company {
   cultureSummary             String?
   avgRecruitmentDurationDays Int?
   avgResponseRate            Float?
-  avgSalaryJson              Json?
+  avgSalaryJson              String?
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
@@ -171,17 +171,17 @@ model Job {
   title           String
   companyId       String
   description     String       @default("")
-  requiredSkills  String[]
-  niceToHave      String[]
-  benefits        String[]
+  requiredSkills  String       @default("[]")
+  niceToHave      String       @default("[]")
+  benefits        String       @default("[]")
   salaryMin       Int?
   salaryMax       Int?
-  salaryCurrency  String       @default("EUR") @db.Char(3)
+  salaryCurrency  String       @default("EUR")
   location        String?
   locationCity    String?
-  locationCountry String?      @db.Char(2)
+  locationCountry String?
   remote          Boolean      @default(false)
-  contractType    ContractType @default(CDI)
+  contractType    String       @default("CDI")
   status          String       @default("ACTIVE")
   externalId      String?
   source          String?
@@ -214,7 +214,7 @@ model Application {
   id                 String            @id @default(uuid())
   userId             String
   jobId              String
-  status             ApplicationStatus @default(DRAFT)
+  status             String            @default("DRAFT")
   matchScore         Int               @default(0)
   coverLetterContent String?
   cvVersion          String?
@@ -244,7 +244,7 @@ model Squad {
   description String?
   industry    String?
   maxMembers  Int         @default(8)
-  status      SquadStatus @default(FORMING)
+  status      String      @default("FORMING")
   createdAt   DateTime    @default(now())
   dissolvedAt DateTime?
   updatedAt   DateTime    @updatedAt
@@ -260,7 +260,7 @@ model SquadMember {
   id       String          @id @default(uuid())
   squadId  String
   userId   String
-  role     SquadMemberRole @default(MEMBER)
+  role     String          @default("MEMBER")
   isActive Boolean         @default(true)
   joinedAt DateTime        @default(now())
   leftAt   DateTime?
@@ -279,7 +279,7 @@ model SquadMessage {
   userId    String
   content   String
   audioUrl  String?
-  type      SquadMessageType @default(TEXT)
+  type      String           @default("TEXT")
   createdAt DateTime         @default(now())
 
   squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
@@ -309,8 +309,8 @@ model Scout {
   ratingCount    Int         @default(0)
   isVerified     Boolean     @default(false)
   hiredDate      DateTime?
-  status         ScoutStatus @default(PENDING)
-  questionnaireJson Json?
+  status         String      @default("PENDING")
+  questionnaireJson String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
@@ -343,7 +343,7 @@ model ScoutMessage {
   id             String     @id @default(uuid())
   conversationId String
   senderId       String
-  senderType     SenderType
+  senderType     String
   content        String
   isAnonymized   Boolean    @default(false)
   createdAt      DateTime   @default(now())
@@ -367,11 +367,11 @@ model InterviewSimulation {
   jobTitle        String?
   durationSeconds Int       @default(0)
   score           Int       @default(0)
-  transcriptJson  Json?
-  analysisJson    Json?
-  config          Json?
+  transcriptJson  String?
+  analysisJson    String?
+  config          String?
   audioUrl        String?
-  status          SimStatus @default(IN_PROGRESS)
+  status          String    @default("IN_PROGRESS")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -390,7 +390,7 @@ model CollectiveInsight {
   id              String   @id @default(uuid())
   companyId       String
   insightType     String
-  contentJson     Json
+  contentJson     String
   sourceCount     Int      @default(1)
   confidenceScore Float    @default(0.5)
   createdAt       DateTime @default(now())
@@ -409,9 +409,9 @@ model CollectiveInsight {
 model EdgeChatMessage {
   id        String   @id @default(uuid())
   userId    String
-  role      ChatRole
+  role      String
   content   String
-  metadata  Json?
+  metadata  String?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -431,7 +431,7 @@ model Notification {
   title     String
   body      String
   actionUrl String?
-  metadata  Json?
+  metadata  String?
   read      Boolean   @default(false)
   createdAt DateTime  @default(now())
   readAt    DateTime?
@@ -442,92 +442,4 @@ model Notification {
   @@map("notifications")
 }
 
-// ============================================================
-// ENUMS
-// ============================================================
 
-enum UserRole {
-  CANDIDATE
-  SCOUT
-  RECRUITER
-  ADMIN
-}
-
-enum SubscriptionTier {
-  FREE
-  PREMIUM
-}
-
-enum RemotePreference {
-  REMOTE
-  HYBRID
-  ONSITE
-}
-
-enum SkillLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  EXPERT
-}
-
-enum ContractType {
-  CDI
-  CDD
-  FREELANCE
-  STAGE
-  ALTERNANCE
-}
-
-enum ApplicationStatus {
-  DRAFT
-  SENT
-  VIEWED
-  INTERVIEW_SCHEDULED
-  OFFER_RECEIVED
-  ACCEPTED
-  REJECTED
-}
-
-enum SquadStatus {
-  FORMING
-  ACTIVE
-  DISSOLVED
-}
-
-enum SquadMemberRole {
-  MEMBER
-  LEADER
-}
-
-enum SquadMessageType {
-  TEXT
-  VOICE
-  SYSTEM
-  CELEBRATION
-}
-
-enum ScoutStatus {
-  PENDING
-  ACTIVE
-  VERIFIED
-  PROBATION
-  SUSPENDED
-}
-
-enum SimStatus {
-  IN_PROGRESS
-  COMPLETED
-  ABANDONED
-}
-
-enum SenderType {
-  CANDIDATE
-  SCOUT
-}
-
-enum ChatRole {
-  user
-  assistant
-  system
-}

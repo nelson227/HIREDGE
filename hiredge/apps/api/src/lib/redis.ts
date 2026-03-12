@@ -1,22 +1,34 @@
 import Redis from 'ioredis';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times: number) => Math.min(times * 500, 10000),
-  enableOfflineQueue: false,
-  lazyConnect: false,
-});
+// En développement sans Redis, on utilise un mock en mémoire
+const createRedis = () => {
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const RedisMock = require('ioredis-mock');
+      console.log('[Redis] Using in-memory mock (dev mode)');
+      return new RedisMock();
+    } catch {
+      // ioredis-mock non disponible, on tente la connexion réelle
+    }
+  }
+  return new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    maxRetriesPerRequest: 3,
+    retryStrategy: (times: number) => Math.min(times * 500, 10000),
+    enableOfflineQueue: false,
+  });
+};
 
-let redisErrorLogged = false;
-redis.on('error', (err) => {
-  if (!redisErrorLogged) {
-    console.error('[Redis] Connection error:', err.message, '(suppressing further errors until reconnect)');
-    redisErrorLogged = true;
+const redis = createRedis();
+
+redis.on('error', (err: Error) => {
+  // Silencieux en dev — le mock ne devrait pas émettre d'erreurs
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[Redis] Connection error:', err.message);
   }
 });
 
 redis.on('connect', () => {
-  redisErrorLogged = false;
   console.log('[Redis] Connected');
 });
 

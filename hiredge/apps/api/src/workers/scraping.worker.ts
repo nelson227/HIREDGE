@@ -221,7 +221,7 @@ function enrichJob(job: any): any {
   return {
     ...job,
     scamScore,
-    requiredSkills,
+    requiredSkills: JSON.stringify(skillPatterns.filter(s => desc.includes(s))),
     qualityScore: Math.max(0, 1 - scamScore) * (job.description?.length > 200 ? 1 : 0.7),
   };
 }
