@@ -7,6 +7,7 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Bord
 
 // ─── Structured CV Data ───────────────────────────────────────────────
 export interface CVData {
+  targetCountry?: string; // ISO: 'FR','US','CA','UK','DE','CH','BE','JP','AU','NL','ES','IT','BR','IN','AE','MA','SN','QC'
   personalInfo: {
     firstName: string;
     lastName: string;
@@ -16,6 +17,12 @@ export interface CVData {
     address?: string;
     linkedin?: string;
     portfolio?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    maritalStatus?: string;
+    drivingLicense?: string;
+    visaStatus?: string;
+    photo?: boolean;
   };
   summary: string;
   experiences: {
@@ -36,11 +43,68 @@ export interface CVData {
   languages?: { name: string; level: string }[];
   certifications?: string[];
   interests?: string[];
+  references?: { name: string; title: string; company: string; contact: string }[] | string;
+  declaration?: string;
+}
+
+// ─── Country-specific CV Format Configurations ────────────────────────
+interface CountryConfig {
+  pageFormat: 'a4' | 'letter';
+  showPhoto: boolean;
+  showPersonalDetails: boolean;
+  showReferences: boolean;
+  signatureLine: boolean;
+  sections: { profile: string; experience: string; education: string; skills: string; languages: string; certifications: string; interests: string; references: string };
+}
+
+const COUNTRY_CONFIGS: Record<string, CountryConfig> = {
+  FR: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+  US: { pageFormat: 'letter', showPhoto: false, showPersonalDetails: false, showReferences: false, signatureLine: false,
+    sections: { profile: 'Summary', experience: 'Professional Experience', education: 'Education', skills: 'Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Interests', references: 'References' } },
+  CA: { pageFormat: 'letter', showPhoto: false, showPersonalDetails: false, showReferences: true, signatureLine: false,
+    sections: { profile: 'Summary', experience: 'Professional Experience', education: 'Education', skills: 'Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Interests', references: 'References' } },
+  UK: { pageFormat: 'a4', showPhoto: false, showPersonalDetails: false, showReferences: true, signatureLine: false,
+    sections: { profile: 'Personal Profile', experience: 'Work Experience', education: 'Education', skills: 'Key Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Interests', references: 'References' } },
+  DE: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: true,
+    sections: { profile: 'Profil', experience: 'Berufserfahrung', education: 'Ausbildung', skills: 'Kenntnisse', languages: 'Sprachen', certifications: 'Zertifizierungen', interests: 'Interessen', references: 'Referenzen' } },
+  CH: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: true, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+  BE: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+  JP: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: true,
+    sections: { profile: '\u8077\u52d9\u6982\u8981', experience: '\u8077\u52d9\u7d4c\u6b74', education: '\u5b66\u6b74', skills: '\u30b9\u30ad\u30eb', languages: '\u8a9e\u5b66\u529b', certifications: '\u8cc7\u683c', interests: '\u8da3\u5473', references: '\u7d39\u4ecb\u8005' } },
+  AU: { pageFormat: 'a4', showPhoto: false, showPersonalDetails: false, showReferences: true, signatureLine: false,
+    sections: { profile: 'Career Objective', experience: 'Employment History', education: 'Education', skills: 'Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Interests', references: 'Referees' } },
+  NL: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Profiel', experience: 'Werkervaring', education: 'Opleiding', skills: 'Vaardigheden', languages: 'Talen', certifications: 'Certificeringen', interests: 'Interesses', references: 'Referenties' } },
+  ES: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Perfil Profesional', experience: 'Experiencia Profesional', education: "Formaci\u00f3n Acad\u00e9mica", skills: 'Competencias', languages: 'Idiomas', certifications: 'Certificaciones', interests: 'Intereses', references: 'Referencias' } },
+  IT: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: true,
+    sections: { profile: 'Profilo', experience: 'Esperienza Professionale', education: 'Istruzione', skills: 'Competenze', languages: 'Lingue', certifications: 'Certificazioni', interests: 'Interessi', references: 'Referenze' } },
+  BR: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Objetivo', experience: "Experi\u00eancia Profissional", education: "Forma\u00e7\u00e3o Acad\u00eamica", skills: "Compet\u00eancias", languages: 'Idiomas', certifications: "Certifica\u00e7\u00f5es", interests: 'Interesses', references: "Refer\u00eancias" } },
+  IN: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: true, signatureLine: true,
+    sections: { profile: 'Career Objective', experience: 'Professional Experience', education: 'Education', skills: 'Technical Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Hobbies & Interests', references: 'References' } },
+  AE: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: true, signatureLine: false,
+    sections: { profile: 'Professional Summary', experience: 'Work Experience', education: 'Education', skills: 'Key Skills', languages: 'Languages', certifications: 'Certifications', interests: 'Interests', references: 'References' } },
+  MA: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: false, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+  SN: { pageFormat: 'a4', showPhoto: true, showPersonalDetails: true, showReferences: true, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+  QC: { pageFormat: 'letter', showPhoto: false, showPersonalDetails: false, showReferences: true, signatureLine: false,
+    sections: { profile: 'Profil', experience: "Exp\u00e9rience Professionnelle", education: 'Formation', skills: "Comp\u00e9tences", languages: 'Langues', certifications: 'Certifications', interests: "Centres d'Int\u00e9r\u00eat", references: "R\u00e9f\u00e9rences" } },
+};
+
+function getCountryConfig(country?: string): CountryConfig {
+  if (!country) return COUNTRY_CONFIGS.FR;
+  return COUNTRY_CONFIGS[country.toUpperCase()] ?? COUNTRY_CONFIGS.FR;
 }
 
 // ─── PDF Generation ───────────────────────────────────────────────────
 export function generatePDF(cv: CVData): Blob {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const cc = getCountryConfig(cv.targetCountry);
+  const doc = new jsPDF({ unit: 'mm', format: cc.pageFormat });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 18;
   const contentWidth = pageWidth - margin * 2;
@@ -57,6 +121,15 @@ export function generatePDF(cv: CVData): Blob {
   doc.setFillColor(108, 92, 231); // #6C5CE7
   doc.rect(0, 0, pageWidth, 40, 'F');
 
+  // Photo placeholder (for countries that expect it)
+  if (cc.showPhoto && cv.personalInfo.photo) {
+    doc.setFillColor(230, 230, 230);
+    doc.roundedRect(pageWidth - margin - 25, 5, 25, 30, 2, 2, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.text('PHOTO', pageWidth - margin - 19, 22);
+  }
+
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
@@ -71,12 +144,30 @@ export function generatePDF(cv: CVData): Blob {
   if (cv.personalInfo.email) contactParts.push(cv.personalInfo.email);
   if (cv.personalInfo.phone) contactParts.push(cv.personalInfo.phone);
   if (cv.personalInfo.address) contactParts.push(cv.personalInfo.address);
+  if (cv.personalInfo.linkedin) contactParts.push(cv.personalInfo.linkedin);
   if (contactParts.length) {
     doc.setFontSize(9);
     doc.text(contactParts.join('  |  '), margin, 34);
   }
 
   y = 48;
+
+  // Personal details (for countries that include them)
+  if (cc.showPersonalDetails) {
+    const details: string[] = [];
+    if (cv.personalInfo.dateOfBirth) details.push(cv.personalInfo.dateOfBirth);
+    if (cv.personalInfo.nationality) details.push(cv.personalInfo.nationality);
+    if (cv.personalInfo.maritalStatus) details.push(cv.personalInfo.maritalStatus);
+    if (cv.personalInfo.drivingLicense) details.push(`Permis ${cv.personalInfo.drivingLicense}`);
+    if (cv.personalInfo.visaStatus) details.push(cv.personalInfo.visaStatus);
+    if (details.length) {
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(details.join('  |  '), margin, y);
+      y += 8;
+    }
+  }
+
   doc.setTextColor(45, 52, 54); // #2D3436
 
   // ── Helper: Section Title ──
@@ -96,7 +187,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Summary ──
   if (cv.summary) {
-    sectionTitle('Profil');
+    sectionTitle(cc.sections.profile);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const lines = doc.splitTextToSize(cv.summary, contentWidth);
@@ -107,7 +198,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Experiences ──
   if (cv.experiences.length) {
-    sectionTitle('Expérience Professionnelle');
+    sectionTitle(cc.sections.experience);
     for (const exp of cv.experiences) {
       checkPageBreak(20);
       doc.setFontSize(11);
@@ -139,7 +230,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Education ──
   if (cv.education.length) {
-    sectionTitle('Formation');
+    sectionTitle(cc.sections.education);
     for (const edu of cv.education) {
       checkPageBreak(12);
       doc.setFontSize(11);
@@ -165,7 +256,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Skills ──
   if (cv.skills.length) {
-    sectionTitle('Compétences');
+    sectionTitle(cc.sections.skills);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const skillsText = cv.skills.join('  •  ');
@@ -177,7 +268,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Languages ──
   if (cv.languages?.length) {
-    sectionTitle('Langues');
+    sectionTitle(cc.sections.languages);
     doc.setFontSize(10);
     for (const lang of cv.languages) {
       checkPageBreak(6);
@@ -192,7 +283,7 @@ export function generatePDF(cv: CVData): Blob {
 
   // ── Certifications ──
   if (cv.certifications?.length) {
-    sectionTitle('Certifications');
+    sectionTitle(cc.sections.certifications);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     for (const cert of cv.certifications) {
@@ -202,11 +293,73 @@ export function generatePDF(cv: CVData): Blob {
     }
   }
 
+  // ── Interests ──
+  if (cv.interests?.length) {
+    sectionTitle(cc.sections.interests);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const interestsText = cv.interests.join('  •  ');
+    const intLines = doc.splitTextToSize(interestsText, contentWidth);
+    checkPageBreak(intLines.length * 4.5);
+    doc.text(intLines, margin, y);
+    y += intLines.length * 4.5 + 4;
+  }
+
+  // ── References ──
+  if (cc.showReferences && cv.references) {
+    sectionTitle(cc.sections.references);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    if (typeof cv.references === 'string') {
+      doc.text(cv.references, margin, y);
+      y += 6;
+    } else {
+      for (const ref of cv.references) {
+        checkPageBreak(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(ref.name, margin, y);
+        doc.setFont('helvetica', 'normal');
+        y += 4.5;
+        doc.text(`${ref.title} — ${ref.company}`, margin, y);
+        y += 4.5;
+        doc.setTextColor(120, 120, 120);
+        doc.text(ref.contact, margin, y);
+        doc.setTextColor(45, 52, 54);
+        y += 6;
+      }
+    }
+  }
+
+  // ── Declaration (India format) ──
+  if (cv.declaration) {
+    checkPageBreak(16);
+    sectionTitle('Declaration');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const declLines = doc.splitTextToSize(cv.declaration, contentWidth);
+    doc.text(declLines, margin, y);
+    y += declLines.length * 4.5 + 4;
+  }
+
+  // ── Signature line (DE, IT, JP, IN) ──
+  if (cc.signatureLine) {
+    checkPageBreak(20);
+    y += 10;
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    const today = new Date().toLocaleDateString('fr-FR');
+    doc.text(today, margin, y);
+    doc.line(margin + 60, y, margin + 130, y);
+    y += 4;
+    doc.text('Signature', margin + 80, y);
+  }
+
   return doc.output('blob');
 }
 
 // ─── Word (.docx) Generation ──────────────────────────────────────────
 export async function generateWord(cv: CVData): Promise<Blob> {
+  const cc = getCountryConfig(cv.targetCountry);
   const children: Paragraph[] = [];
 
   // ── Header ──
@@ -251,6 +404,24 @@ export async function generateWord(cv: CVData): Promise<Blob> {
     );
   }
 
+  // Personal details (for applicable countries)
+  if (cc.showPersonalDetails) {
+    const details: string[] = [];
+    if (cv.personalInfo.dateOfBirth) details.push(cv.personalInfo.dateOfBirth);
+    if (cv.personalInfo.nationality) details.push(cv.personalInfo.nationality);
+    if (cv.personalInfo.maritalStatus) details.push(cv.personalInfo.maritalStatus);
+    if (cv.personalInfo.drivingLicense) details.push(`Permis ${cv.personalInfo.drivingLicense}`);
+    if (cv.personalInfo.visaStatus) details.push(cv.personalInfo.visaStatus);
+    if (details.length) {
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: details.join('  |  '), size: 18, color: '636E72', font: 'Calibri', italics: true })],
+          spacing: { after: 200 },
+        }),
+      );
+    }
+  }
+
   // ── Helper: Section heading ──
   const addSection = (title: string) => {
     children.push(
@@ -264,7 +435,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Summary ──
   if (cv.summary) {
-    addSection('Profil');
+    addSection(cc.sections.profile);
     children.push(
       new Paragraph({
         children: [new TextRun({ text: cv.summary, size: 20, font: 'Calibri' })],
@@ -275,7 +446,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Experiences ──
   if (cv.experiences.length) {
-    addSection('Expérience Professionnelle');
+    addSection(cc.sections.experience);
     for (const exp of cv.experiences) {
       children.push(
         new Paragraph({
@@ -307,7 +478,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Education ──
   if (cv.education.length) {
-    addSection('Formation');
+    addSection(cc.sections.education);
     for (const edu of cv.education) {
       children.push(
         new Paragraph({
@@ -331,7 +502,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Skills ──
   if (cv.skills.length) {
-    addSection('Compétences');
+    addSection(cc.sections.skills);
     children.push(
       new Paragraph({
         children: [new TextRun({ text: cv.skills.join('  •  '), size: 20, font: 'Calibri' })],
@@ -342,7 +513,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Languages ──
   if (cv.languages?.length) {
-    addSection('Langues');
+    addSection(cc.sections.languages);
     for (const lang of cv.languages) {
       children.push(
         new Paragraph({
@@ -358,7 +529,7 @@ export async function generateWord(cv: CVData): Promise<Blob> {
 
   // ── Certifications ──
   if (cv.certifications?.length) {
-    addSection('Certifications');
+    addSection(cc.sections.certifications);
     for (const cert of cv.certifications) {
       children.push(
         new Paragraph({
@@ -368,6 +539,39 @@ export async function generateWord(cv: CVData): Promise<Blob> {
         }),
       );
     }
+  }
+
+  // ── Interests ──
+  if (cv.interests?.length) {
+    addSection(cc.sections.interests);
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: cv.interests.join('  •  '), size: 20, font: 'Calibri' })],
+        spacing: { after: 120 },
+      }),
+    );
+  }
+
+  // ── References ──
+  if (cc.showReferences && cv.references) {
+    addSection(cc.sections.references);
+    if (typeof cv.references === 'string') {
+      children.push(new Paragraph({ children: [new TextRun({ text: cv.references, size: 20, font: 'Calibri', italics: true })], spacing: { after: 120 } }));
+    } else {
+      for (const ref of cv.references) {
+        children.push(
+          new Paragraph({ children: [new TextRun({ text: ref.name, bold: true, size: 20, font: 'Calibri' })], spacing: { before: 80 } }),
+          new Paragraph({ children: [new TextRun({ text: `${ref.title} — ${ref.company}`, size: 20, color: '636E72', font: 'Calibri' })] }),
+          new Paragraph({ children: [new TextRun({ text: ref.contact, size: 18, color: '636E72', font: 'Calibri' })], spacing: { after: 60 } }),
+        );
+      }
+    }
+  }
+
+  // ── Declaration (India format) ──
+  if (cv.declaration) {
+    addSection('Declaration');
+    children.push(new Paragraph({ children: [new TextRun({ text: cv.declaration, size: 20, font: 'Calibri' })], spacing: { after: 120 } }));
   }
 
   const docFile = new Document({
