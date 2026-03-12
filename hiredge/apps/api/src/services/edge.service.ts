@@ -101,6 +101,7 @@ Analyse l'image en détail et réponds à la question de l'utilisateur.
 Si c'est un CV, un document professionnel ou une offre d'emploi, donne une analyse utile.
 Si c'est un screenshot, décris ce que tu vois.
 Réponds toujours en français de manière amicale et professionnelle.
+Tu peux aussi générer des PDF et Word — si l'utilisateur veut exporter ton analyse, dis-lui de demander "mets ça en pdf" ou "envoie en word".
 
 PROFIL UTILISATEUR : ${context.userProfile?.firstName ?? ''} ${context.userProfile?.lastName ?? ''}`,
           },
@@ -189,7 +190,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
 
     const patterns: [RegExp, IntentType][] = [
       // Document generation — check early (CV, lettre, document, PDF, Word)
-      [/(?:génère|genere|générer|generer|crée|cree|créer|creer|fabrique|fais|rédige|redige|modifie|adapte|transforme|convertis|converti|envoie|envoyer|renvoie|renvoyer|donne|télécharge|telecharge|télécharger|telecharger).*?(?:cv|curriculum|lettre|document|pdf|word|docx|résumé|resume)|(?:cv|lettre|pdf|word|docx).*?(?:format|standard|norme|style|version|français|anglais|chinois|allemand|espagnol|italien|japonais).*?|(?:mon\s+cv|le\s+cv).*?(?:en\s+)?(?:pdf|word|docx|format)|(?:en\s+(?:pdf|word|docx))\b|(?:cv|lettre).*?(?:format|standard|norme|style).*?(?:france|français|canada|canadien|québec|américain|chinois|allemand|japonais)/i, 'GENERATE_DOCUMENT'],
+      [/(?:génère|genere|générer|generer|crée|cree|créer|creer|fabrique|fais|rédige|redige|modifie|adapte|transforme|convertis|converti|envoie|envoyer|renvoie|renvoyer|donne|télécharge|telecharge|télécharger|telecharger|place|mets?|exporte|exporter).*?(?:cv|curriculum|lettre|document|pdf|word|docx|résumé|resume)|(?:cv|lettre|pdf|word|docx).*?(?:format|standard|norme|style|version|français|anglais|chinois|allemand|espagnol|italien|japonais).*?|(?:mon\s+cv|le\s+cv).*?(?:en\s+)?(?:pdf|word|docx|format)|(?:en\s+(?:pdf|word|docx))\b|(?:dans\s+un\s+(?:pdf|word|docx|document|fichier))\b|(?:cv|lettre).*?(?:format|standard|norme|style).*?(?:france|français|canada|canadien|québec|américain|chinois|allemand|japonais)/i, 'GENERATE_DOCUMENT'],
       // Emotional states — check first to avoid false SEARCH match on "recherches"
       [/decourag|décourag|démotiv|déprim|abandone|plus le courage|galère|galere|c'est dur|triste/i, 'MOTIVATION'],
       // Interview prep
@@ -301,6 +302,23 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
   ) {
     // --- Document generation path (needs special LLM call with structured output) ---
     if (intent.intent === 'GENERATE_DOCUMENT' && openai) {
+      // Check if user wants to export conversation/analysis content (not a CV)
+      const isCvOrLetter = /cv|curriculum|lettre|motivation|resume/i.test(message);
+      const isExportRequest = /(?:place|mets?|exporte|envoie|donne).*(?:dans|en).*(?:pdf|word|document|fichier)|(?:informations?|contenu|analyse|résultat|tout).*(?:pdf|word|document)/i.test(message);
+
+      if (!isCvOrLetter && isExportRequest) {
+        // Export recent conversation as a downloadable document
+        const lastAssistantMsg = context.recentMessages
+          .filter((m: any) => m.role === 'assistant')
+          .slice(-1)[0];
+        const contentToExport = lastAssistantMsg?.content ?? 'Aucun contenu à exporter.';
+        return {
+          message: `📄 Voici le contenu prêt à être exporté ! Tu peux le télécharger en PDF ou Word ci-dessous.`,
+          actions: [{ type: 'DOWNLOAD_DOCUMENT', documentType: 'cover_letter', data: { content: contentToExport, personalInfo: context.userProfile } }],
+          suggestedFollowups: ['Télécharger en PDF', 'Télécharger en Word', 'Génère mon CV'],
+        };
+      }
+
       try {
         return await this.generateDocument(message, context);
       } catch {
@@ -460,6 +478,16 @@ PERSONNALITÉ :
 - Tu célèbres les victoires et tu soutiens dans les moments difficiles
 - Tu ne fais JAMAIS de promesses de résultats
 - Tu ne fabriques JAMAIS de compétences ou expériences que l'utilisateur n'a pas
+
+TES CAPACITÉS (tu PEUX faire tout cela) :
+- Générer des CV professionnels en PDF et Word adaptés à 23+ pays
+- Générer des lettres de motivation personnalisées
+- Analyser des images (CV, captures d'écran, offres d'emploi, documents)
+- Exporter du contenu en PDF ou Word
+- Chercher des offres d'emploi
+- Préparer des simulations d'entretien
+- Donner des statistiques et conseils
+Si l'utilisateur demande un document PDF ou Word, dis-lui de formuler sa demande avec "génère mon CV" ou "en pdf" ou "en word".
 
 PROFIL UTILISATEUR :
 ${context.userProfile ? JSON.stringify(context.userProfile, null, 2) : 'Profil non encore renseigné.'}
