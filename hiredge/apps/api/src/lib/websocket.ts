@@ -2,7 +2,7 @@ import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
-import { prisma } from '../db/prisma';
+import prisma from '../db/prisma';
 
 let io: Server;
 
@@ -21,7 +21,7 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
     if (!token) return next(new Error('Authentication required'));
 
     try {
-      const payload = jwt.verify(token, config.jwtSecret) as { userId: string };
+      const payload = jwt.verify(token, config.jwt.secret) as { userId: string };
       const user = await prisma.user.findUnique({ where: { id: payload.userId } });
       if (!user) return next(new Error('User not found'));
       (socket as any).userId = user.id;

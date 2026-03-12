@@ -106,7 +106,7 @@ export class JobService {
     if (!profile) throw new AppError('PROFILE_NOT_FOUND', 'Complétez votre profil pour recevoir des recommandations', 404);
 
     // Step 1: Pre-filter — SQL-based fast filtering
-    const userSkillNames = profile.skills.map(s => s.name.toLowerCase());
+    const userSkillNames = profile.skills.map((s: any) => s.name.toLowerCase());
     const totalExperienceYears = this.calculateTotalExperience(profile.experiences);
 
     const candidates = await prisma.job.findMany({
@@ -126,7 +126,7 @@ export class JobService {
     });
 
     // Step 2: Rule-based scoring
-    const scored = candidates.map(job => {
+    const scored = candidates.map((job: any) => {
       const skillScore = this.computeSkillOverlap(userSkillNames, job.requiredSkills);
       const experienceScore = this.computeExperienceMatch(totalExperienceYears, job.experienceMin, job.experienceMax);
       const salaryScore = this.computeSalaryMatch(profile.salaryMin, profile.salaryMax, job.salaryMin, job.salaryMax);
@@ -154,7 +154,7 @@ export class JobService {
     });
 
     // Sort by score descending
-    scored.sort((a, b) => b.matchScore - a.matchScore);
+    scored.sort((a: any, b: any) => b.matchScore - a.matchScore);
 
     return scored.slice(0, limit);
   }

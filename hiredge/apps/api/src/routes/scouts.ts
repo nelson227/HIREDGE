@@ -18,7 +18,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const scout = await scoutService.registerAsScout(request.user.userId, body);
+      const scout = await scoutService.registerAsScout(request.user.id, body);
       return reply.status(201).send({ success: true, data: scout });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -29,7 +29,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /scouts/profile — Get my scout profile(s)
   fastify.get('/profile', async (request, reply) => {
     try {
-      const scouts = await scoutService.getScoutProfile(request.user.userId);
+      const scouts = await scoutService.getScoutProfile(request.user.id);
       return reply.send({ success: true, data: scouts });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -60,7 +60,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const conversation = await scoutService.startConversation(request.user.userId, scoutId, question);
+      const conversation = await scoutService.startConversation(request.user.id, scoutId, question);
       return reply.status(201).send({ success: true, data: conversation });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -71,7 +71,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /scouts/conversations — Get all my conversations
   fastify.get('/conversations', async (request, reply) => {
     try {
-      const conversations = await scoutService.getConversations(request.user.userId);
+      const conversations = await scoutService.getConversations(request.user.id);
       return reply.send({ success: true, data: conversations });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -83,7 +83,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/conversations/:id/messages', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      const messages = await scoutService.getConversationMessages(request.user.userId, id);
+      const messages = await scoutService.getConversationMessages(request.user.id, id);
       return reply.send({ success: true, data: messages });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -102,7 +102,7 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const message = await scoutService.sendMessage(request.user.userId, id, content);
+      const message = await scoutService.sendMessage(request.user.id, id, content);
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

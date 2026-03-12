@@ -250,8 +250,8 @@ export class InterviewSimService {
       CASE_STUDY: ['Manager', 'Directeur de Projet', 'Consultant Senior'],
     };
 
-    const name = names[Math.floor(Math.random() * names.length)];
-    const role = roles[type][Math.floor(Math.random() * roles[type].length)];
+    const name = names[Math.floor(Math.random() * names.length)] ?? 'Marie Dupont';
+    const role = roles[type]![Math.floor(Math.random() * roles[type]!.length)] ?? 'Recruteur';
 
     return {
       name,
@@ -301,7 +301,7 @@ RESTE EN PERSONNAGE. Parle naturellement comme dans un vrai entretien. 1-3 phras
       ],
     });
 
-    return completion.choices[0].message.content ?? 'Très bien, merci. Continuons.';
+    return completion.choices[0]!.message.content ?? 'Très bien, merci. Continuons.';
   }
 
   private async evaluateResponse(
@@ -328,14 +328,14 @@ Réponds UNIQUEMENT avec le JSON.`,
         },
         {
           role: 'user',
-          content: `Dernière question posée: ${history.filter((m: any) => m.role === 'interviewer').pop()?.content ?? ''}
+          content: `Dernière question posée: ${history.filter((m: any) => m.role === 'interviewer').pop()?.content ?? ''}}
 Réponse du candidat: ${response}`,
         },
       ],
     });
 
     try {
-      return JSON.parse(completion.choices[0].message.content ?? '{}');
+      return JSON.parse(completion.choices[0]!.message.content ?? '{}');
     } catch {
       return {
         questionId: history.length,
@@ -370,7 +370,7 @@ Réponds UNIQUEMENT avec le JSON.`,
     });
 
     try {
-      return JSON.parse(completion.choices[0].message.content ?? '{}');
+      return JSON.parse(completion.choices[0]!.message.content ?? '{}');
     } catch {
       return {
         overallScore: 65,

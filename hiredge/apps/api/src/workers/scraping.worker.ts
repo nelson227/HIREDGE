@@ -1,8 +1,9 @@
-import { Queue, Worker, Job } from 'bullmq';
+import { Queue, Worker, Job, ConnectionOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import { prisma } from '../db/prisma';
 
-const connection = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const redisInstance = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = redisInstance as unknown as ConnectionOptions;
 
 // ─── Queues ──────────────────────────────────────────────
 export const scrapingQueue = new Queue('scraping', { connection });
@@ -182,7 +183,7 @@ function parseSalaryMax(salary?: string): number | null {
   if (!salary) return null;
   const matches = salary.match(/(\d[\d\s]*)/g);
   if (!matches || matches.length < 2) return null;
-  return parseInt(matches[1].replace(/\s/g, ''));
+  return parseInt(matches[1]!.replace(/\s/g, ''));
 }
 
 function detectRemote(title: string, desc: string, loc: string): boolean {

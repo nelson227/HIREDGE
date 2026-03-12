@@ -81,7 +81,7 @@ Analyse le message et retourne un JSON avec:
 
 Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         },
-        ...recentMessages.map(m => ({
+        ...recentMessages.map((m: any) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
@@ -90,7 +90,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
     });
 
     try {
-      const raw = completion.choices[0].message.content ?? '{}';
+      const raw = completion.choices[0]!.message.content ?? '{}';
       return JSON.parse(raw);
     } catch {
       return {
@@ -164,8 +164,8 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         firstName: profile.firstName,
         lastName: profile.lastName,
         title: profile.title,
-        skills: profile.skills.map(s => s.name),
-        experience: profile.experiences.map(e => `${e.title} chez ${e.company}`),
+        skills: profile.skills.map((s: any) => s.name),
+        experience: profile.experiences.map((e: any) => `${e.title} chez ${e.company}`),
       } : null,
       recentMessages,
       intentData,
@@ -186,7 +186,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
       max_tokens: 800,
       messages: [
         { role: 'system', content: systemPrompt },
-        ...context.recentMessages.map(m => ({
+        ...context.recentMessages.map((m: any) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
@@ -194,7 +194,7 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
       ],
     });
 
-    const responseText = completion.choices[0].message.content ?? 'Je suis là pour t\'aider ! Que puis-je faire pour toi ?';
+    const responseText = completion.choices[0]!.message.content ?? 'Je suis là pour t\'aider ! Que puis-je faire pour toi ?';
 
     // Generate suggested follow-ups
     const suggestedFollowups = this.getSuggestedFollowups(intent.intent);
@@ -243,7 +243,7 @@ Limite ta réponse à 3-4 phrases max sauf si l'utilisateur demande plus de dét
       GENERAL_CHAT: ['Chercher des offres', 'Mes candidatures', 'Préparer un entretien'],
     };
 
-    return followups[intent] ?? followups.GENERAL_CHAT;
+    return (followups[intent] ?? followups['GENERAL_CHAT']) as string[];
   }
 
   private getActions(intent: DetectedIntent): any[] | undefined {

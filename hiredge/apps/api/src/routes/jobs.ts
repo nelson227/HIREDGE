@@ -13,12 +13,19 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const result = await jobService.searchJobs(request.user.userId, parsed.data);
+      const result = await jobService.searchJobs(request.user.id, {
+        query: parsed.data.q,
+        location: parsed.data.location,
+        contractType: parsed.data.contract,
+        remote: parsed.data.remote === 'remote' ? true : parsed.data.remote === 'onsite' ? false : undefined,
+        page: parsed.data.page,
+        limit: parsed.data.limit,
+      });
       return reply.send({ success: true, data: result.jobs, pagination: result.pagination });
     } catch (err) {
       if (err instanceof AppError) {
@@ -36,7 +43,7 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     const { limit } = request.query as { limit?: string };
 
     try {
-      const jobs = await jobService.getMatchedJobs(request.user.userId, limit ? parseInt(limit) : 20);
+      const jobs = await jobService.getMatchedJobs(request.user.id, limit ? parseInt(limit) : 20);
       return reply.send({ success: true, data: jobs });
     } catch (err) {
       if (err instanceof AppError) {

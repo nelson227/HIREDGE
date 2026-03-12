@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { registerSchema, loginSchema } from '@hiredge/shared';
 import { authService, AppError } from '../services/auth.service';
+import prisma from '../db/prisma';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /auth/register
@@ -9,7 +10,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
@@ -17,11 +18,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const user = await authService.register(parsed.data);
 
       const accessToken = fastify.jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '15m' },
       );
       const refreshToken = fastify.jwt.sign(
-        { userId: user.id, type: 'refresh' },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '30d' },
       );
 
@@ -53,7 +54,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
@@ -61,11 +62,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const user = await authService.login(parsed.data);
 
       const accessToken = fastify.jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '15m' },
       );
       const refreshToken = fastify.jwt.sign(
-        { userId: user.id, type: 'refresh' },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '30d' },
       );
 
@@ -108,7 +109,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       await authService.revokeRefreshToken(refreshToken);
 
       // Issue new tokens
-      const user = await fastify.prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: session.userId },
         select: { id: true, email: true, role: true, subscriptionTier: true },
       });
@@ -121,11 +122,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const newAccessToken = fastify.jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '15m' },
       );
       const newRefreshToken = fastify.jwt.sign(
-        { userId: user.id, type: 'refresh' },
+        { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '30d' },
       );
 
@@ -170,7 +171,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /auth/logout-all (authenticated) - revoke all sessions
   fastify.post('/logout-all', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    await authService.revokeAllUserSessions(request.user.userId);
+    await authService.revokeAllUserSessions(request.user.id);
 
     return reply.send({ success: true, data: { message: 'Toutes les sessions révoquées' } });
   });

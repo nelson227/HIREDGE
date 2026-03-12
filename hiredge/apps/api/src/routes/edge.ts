@@ -12,12 +12,12 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const response = await edgeService.chat(request.user.userId, parsed.data.message);
+      const response = await edgeService.chat(request.user.id, parsed.data.message);
       return reply.send({ success: true, data: response });
     } catch (err) {
       if (err instanceof AppError) {
@@ -35,7 +35,7 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
 
     const messages = await fastify.prisma.edgeChatMessage.findMany({
       where: {
-        userId: request.user.userId,
+        userId: request.user.id,
         ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
       },
       orderBy: { createdAt: 'desc' },
@@ -48,7 +48,7 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
   // DELETE /edge/history — Clear chat history
   fastify.delete('/history', async (request, reply) => {
     await fastify.prisma.edgeChatMessage.deleteMany({
-      where: { userId: request.user.userId },
+      where: { userId: request.user.id },
     });
 
     return reply.send({ success: true, data: { message: 'Historique effacé' } });

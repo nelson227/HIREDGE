@@ -10,7 +10,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
     const { unreadOnly, limit } = request.query as { unreadOnly?: string; limit?: string };
     try {
       const notifications = await notificationService.getUserNotifications(
-        request.user.userId,
+        request.user.id,
         unreadOnly === 'true',
         limit ? parseInt(limit) : undefined,
       );
@@ -23,7 +23,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /notifications/count
   fastify.get('/count', async (request, reply) => {
-    const count = await notificationService.getUnreadCount(request.user.userId);
+    const count = await notificationService.getUnreadCount(request.user.id);
     return reply.send({ success: true, data: { unread: count } });
   });
 
@@ -31,7 +31,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch('/:id/read', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await notificationService.markAsRead(request.user.userId, id);
+      await notificationService.markAsRead(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Notification lue' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -41,7 +41,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
 
   // PATCH /notifications/read-all
   fastify.patch('/read-all', async (request, reply) => {
-    await notificationService.markAllAsRead(request.user.userId);
+    await notificationService.markAllAsRead(request.user.id);
     return reply.send({ success: true, data: { message: 'Toutes les notifications lues' } });
   });
 
@@ -49,7 +49,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await notificationService.deleteNotification(request.user.userId, id);
+      await notificationService.deleteNotification(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Notification supprimée' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

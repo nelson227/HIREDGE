@@ -158,11 +158,11 @@ export class ApplicationService {
       _count: { id: true },
     });
 
-    const total = stats.reduce((sum, s) => sum + s._count.id, 0);
+    const total = stats.reduce((sum: number, s: any) => sum + s._count.id, 0);
 
     return {
       total,
-      byStatus: Object.fromEntries(stats.map(s => [s.status, s._count.id])),
+      byStatus: Object.fromEntries(stats.map((s: any) => [s.status, s._count.id])),
       responseRate: await this.calculateResponseRate(userId),
     };
   }

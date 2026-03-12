@@ -2,12 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "noEmit": false,
+    "noEmit": true,
+    "types": ["node", "vitest/globals"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@hiredge/shared": ["../../packages/shared/src"],
+      "@hiredge/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src"],

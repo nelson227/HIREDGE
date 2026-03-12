@@ -208,7 +208,7 @@ export class SquadService {
       take: 20,
     });
 
-    return squads.filter(s => s._count.members < s.maxMembers);
+    return squads.filter((s: any) => s._count.members < s.maxMembers);
   }
 }
 

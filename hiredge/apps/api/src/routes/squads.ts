@@ -16,7 +16,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const squad = await squadService.createSquad(request.user.userId, { name, description, industry });
+      const squad = await squadService.createSquad(request.user.id, { name, description, industry });
       return reply.status(201).send({ success: true, data: squad });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -27,7 +27,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /squads/mine — Get current user's squad
   fastify.get('/mine', async (request, reply) => {
     try {
-      const squad = await squadService.getMySquad(request.user.userId);
+      const squad = await squadService.getMySquad(request.user.id);
       return reply.send({ success: true, data: squad });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -39,7 +39,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/available', async (request, reply) => {
     const { industry } = request.query as { industry?: string };
     try {
-      const squads = await squadService.findAvailableSquads(request.user.userId, industry);
+      const squads = await squadService.findAvailableSquads(request.user.id, industry);
       return reply.send({ success: true, data: squads });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -51,7 +51,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/:id/join', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await squadService.joinSquad(request.user.userId, id);
+      await squadService.joinSquad(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Vous avez rejoint l\'escouade' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -63,7 +63,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/:id/leave', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await squadService.leaveSquad(request.user.userId, id);
+      await squadService.leaveSquad(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Vous avez quitté l\'escouade' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -75,7 +75,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      const squad = await squadService.getSquadDetails(request.user.userId, id);
+      const squad = await squadService.getSquadDetails(request.user.id, id);
       return reply.send({ success: true, data: squad });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -89,12 +89,15 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     const parsed = sendSquadMessageSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
-        success: false, error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        success: false, error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const message = await squadService.sendMessage(request.user.userId, id, parsed.data);
+      const message = await squadService.sendMessage(request.user.id, id, {
+        content: parsed.data.contentText ?? '',
+        type: parsed.data.messageType,
+      });
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -109,7 +112,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const messages = await squadService.getMessages(
-        request.user.userId, id, cursor, limit ? parseInt(limit) : undefined,
+        request.user.id, id, cursor, limit ? parseInt(limit) : undefined,
       );
       return reply.send({ success: true, data: messages });
     } catch (err) {

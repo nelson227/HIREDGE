@@ -131,7 +131,7 @@ export class ScoutService {
     if (isScout) {
       await prisma.scout.update({
         where: { id: conversation.scoutId },
-        data: { creditBalance: { increment: SCOUT_CREDITS.ANSWER_QUESTION } },
+        data: { creditBalance: { increment: SCOUT_CREDITS.answerQuestion } },
       });
     }
 
@@ -149,7 +149,7 @@ export class ScoutService {
       where: {
         OR: [
           { candidateId: userId },
-          { scoutId: { in: scoutIds.map(s => s.id) } },
+          { scoutId: { in: scoutIds.map((s: any) => s.id) } },
         ],
       },
       include: {

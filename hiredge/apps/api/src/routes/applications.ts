@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { createApplicationSchema, updateApplicationSchema } from '@hiredge/shared';
+import { createApplicationSchema, updateApplicationStatusSchema } from '@hiredge/shared';
 import { applicationService } from '../services/application.service';
 import { AppError } from '../services/auth.service';
 
@@ -12,12 +12,12 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const application = await applicationService.createApplication(request.user.userId, parsed.data);
+      const application = await applicationService.createApplication(request.user.id, parsed.data);
       return reply.status(201).send({ success: true, data: application });
     } catch (err) {
       if (err instanceof AppError) {
@@ -34,7 +34,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
     const { status, page, limit } = request.query as { status?: string; page?: string; limit?: string };
 
     try {
-      const result = await applicationService.getUserApplications(request.user.userId, {
+      const result = await applicationService.getUserApplications(request.user.id, {
         status,
         page: page ? parseInt(page) : undefined,
         limit: limit ? parseInt(limit) : undefined,
@@ -53,7 +53,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /applications/stats
   fastify.get('/stats', async (request, reply) => {
     try {
-      const stats = await applicationService.getApplicationStats(request.user.userId);
+      const stats = await applicationService.getApplicationStats(request.user.id);
       return reply.send({ success: true, data: stats });
     } catch (err) {
       if (err instanceof AppError) {
@@ -69,7 +69,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      const application = await applicationService.getApplicationById(request.user.userId, id);
+      const application = await applicationService.getApplicationById(request.user.id, id);
       return reply.send({ success: true, data: application });
     } catch (err) {
       if (err instanceof AppError) {
@@ -84,16 +84,16 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
   // PATCH /applications/:id
   fastify.patch('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const parsed = updateApplicationSchema.safeParse(request.body);
+    const parsed = updateApplicationStatusSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const application = await applicationService.updateApplicationStatus(request.user.userId, id, parsed.data);
+      const application = await applicationService.updateApplicationStatus(request.user.id, id, parsed.data);
       return reply.send({ success: true, data: application });
     } catch (err) {
       if (err instanceof AppError) {
@@ -109,7 +109,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await applicationService.deleteApplication(request.user.userId, id);
+      await applicationService.deleteApplication(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Candidature supprimée' } });
     } catch (err) {
       if (err instanceof AppError) {

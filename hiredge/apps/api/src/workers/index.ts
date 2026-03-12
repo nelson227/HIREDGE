@@ -1,12 +1,14 @@
-import { Worker, Queue } from 'bullmq';
-import { redis } from '../lib/redis';
-import { prisma } from '../db/prisma';
+import { Worker, Queue, ConnectionOptions } from 'bullmq';
+import redis from '../lib/redis';
+import prisma from '../db/prisma';
 import { emitToUser } from '../lib/websocket';
 
+const connection = redis as unknown as ConnectionOptions;
+
 // ─── Queues ───
-export const matchingQueue = new Queue('matching', { connection: redis });
-export const notificationQueue = new Queue('notifications', { connection: redis });
-export const contentQueue = new Queue('content-generation', { connection: redis });
+export const matchingQueue = new Queue('matching', { connection });
+export const notificationQueue = new Queue('notifications', { connection });
+export const contentQueue = new Queue('content-generation', { connection });
 
 // ─── Matching Worker ───
 // Recalculates job recommendations for a user
@@ -31,9 +33,9 @@ const matchingWorker = new Worker(
       take: 200,
     });
 
-    const userSkills = new Set(user.skills.map((s) => s.name.toLowerCase()));
+    const userSkills = new Set(user.skills.map((s: { name: string }) => s.name.toLowerCase()));
 
-    const scored = jobs.map((j) => {
+    const scored = jobs.map((j: any) => {
       const requiredSkills = (j.requiredSkills as string[]) ?? [];
       const matchedSkills = requiredSkills.filter((s) => userSkills.has(s.toLowerCase()));
       const skillScore = requiredSkills.length > 0 ? matchedSkills.length / requiredSkills.length : 0;
@@ -48,7 +50,7 @@ const matchingWorker = new Worker(
     });
 
     // Store top matches in Redis cache (24h TTL)
-    const topMatches = scored.sort((a, b) => b.matchScore - a.matchScore).slice(0, 50);
+    const topMatches = scored.sort((a: any, b: any) => b.matchScore - a.matchScore).slice(0, 50);
     await redis.set(
       `user:${userId}:matches`,
       JSON.stringify(topMatches),
@@ -57,23 +59,21 @@ const matchingWorker = new Worker(
     );
 
     // If high match found, queue notification
-    const highMatches = topMatches.filter((m) => m.matchScore >= 80);
+    const highMatches = topMatches.filter((m: any) => m.matchScore >= 80);
     if (highMatches.length > 0) {
       await notificationQueue.add('job-match', {
         userId,
-        jobIds: highMatches.slice(0, 3).map((m) => m.jobId),
+        jobIds: highMatches.slice(0, 3).map((m: any) => m.jobId),
       });
     }
   },
-  { connection: redis, concurrency: 5 }
+  { connection, concurrency: 5 }
 );
 
 // ─── Notification Worker ───
 const notificationWorker = new Worker(
   'notifications',
   async (job) => {
-    const { type } = job.name as string;
-
     if (job.name === 'job-match') {
       const { userId, jobIds } = job.data;
       const jobs = await prisma.job.findMany({
@@ -91,7 +91,7 @@ const notificationWorker = new Worker(
           userId,
           type: 'JOB_MATCH',
           title,
-          body: jobs.map((j) => `${j.title} · ${j.company?.name ?? ''}`).join('\n'),
+          body: jobs.map((j: any) => `${j.title} · ${j.company?.name ?? ''}`).join('\n'),
         },
       });
 
@@ -139,7 +139,7 @@ const notificationWorker = new Worker(
       emitToUser(userId, 'notification', notification);
     }
   },
-  { connection: redis, concurrency: 3 }
+  { connection, concurrency: 3 }
 );
 
 // ─── Error handling ───

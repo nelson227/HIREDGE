@@ -10,7 +10,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /profile
   fastify.get('/', async (request, reply) => {
     try {
-      const profile = await profileService.getProfile(request.user.userId);
+      const profile = await profileService.getProfile(request.user.id);
       return reply.send({ success: true, data: profile });
     } catch (err) {
       if (err instanceof AppError) {
@@ -29,12 +29,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const profile = await profileService.updateProfile(request.user.userId, parsed.data);
+      const profile = await profileService.updateProfile(request.user.id, parsed.data);
       return reply.send({ success: true, data: profile });
     } catch (err) {
       if (err instanceof AppError) {
@@ -53,12 +53,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const skill = await profileService.addSkill(request.user.userId, parsed.data);
+      const skill = await profileService.addSkill(request.user.id, parsed.data);
       return reply.status(201).send({ success: true, data: skill });
     } catch (err) {
       if (err instanceof AppError) {
@@ -75,7 +75,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/skills/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await profileService.removeSkill(request.user.userId, id);
+      await profileService.removeSkill(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Compétence supprimée' } });
     } catch (err) {
       if (err instanceof AppError) {
@@ -94,12 +94,19 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const experience = await profileService.addExperience(request.user.userId, parsed.data);
+      const experience = await profileService.addExperience(request.user.id, {
+        company: parsed.data.companyName,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        startDate: parsed.data.startDate,
+        endDate: parsed.data.endDate ?? undefined,
+        current: parsed.data.isCurrent,
+      });
       return reply.status(201).send({ success: true, data: experience });
     } catch (err) {
       if (err instanceof AppError) {
@@ -116,7 +123,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/experiences/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await profileService.removeExperience(request.user.userId, id);
+      await profileService.removeExperience(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Expérience supprimée' } });
     } catch (err) {
       if (err instanceof AppError) {
@@ -144,7 +151,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const education = await profileService.addEducation(request.user.userId, body);
+      const education = await profileService.addEducation(request.user.id, body);
       return reply.status(201).send({ success: true, data: education });
     } catch (err) {
       if (err instanceof AppError) {
@@ -161,7 +168,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/educations/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      await profileService.removeEducation(request.user.userId, id);
+      await profileService.removeEducation(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Formation supprimée' } });
     } catch (err) {
       if (err instanceof AppError) {

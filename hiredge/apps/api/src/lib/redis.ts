@@ -13,4 +13,5 @@ redis.on('connect', () => {
   console.log('[Redis] Connected');
 });
 
+export { redis };
 export default redis;

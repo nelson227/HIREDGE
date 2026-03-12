@@ -68,7 +68,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const { data } = await api.get('/profile');
       if (data.success) {
-        set({ user: { id: data.data.userId, email: '', role: 'CANDIDATE' }, isAuthenticated: true, isLoading: false });
+        const profile = data.data;
+        set({ user: { id: profile.id, email: profile.email, role: profile.role ?? 'CANDIDATE' }, isAuthenticated: true, isLoading: false });
       } else {
         set({ isLoading: false });
       }

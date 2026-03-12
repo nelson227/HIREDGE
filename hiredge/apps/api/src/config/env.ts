@@ -36,3 +36,15 @@ export const config = {
     fromEmail: process.env.FROM_EMAIL || 'noreply@hiredge.app',
   },
 } as const;
+
+// Flat alias for backward compatibility
+export const env = {
+  NODE_ENV: config.nodeEnv,
+  PORT: config.port,
+  API_URL: config.apiUrl,
+  CORS_ORIGIN: config.corsOrigin,
+  JWT_SECRET: config.jwt.secret,
+  JWT_REFRESH_SECRET: config.jwt.refreshSecret,
+  OPENAI_API_KEY: config.openai.apiKey,
+  ANTHROPIC_API_KEY: config.anthropic.apiKey,
+} as const;
