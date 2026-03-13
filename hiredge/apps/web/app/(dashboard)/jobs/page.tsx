@@ -33,7 +33,7 @@ import {
 interface Job {
   id: string
   title: string
-  company: string
+  company: string | { id: string; name: string; logo?: string; industry?: string }
   location: string
   salary?: string
   salaryMin?: number
@@ -49,6 +49,11 @@ interface Job {
   gaps?: string[]
   remote?: boolean
   description?: string
+}
+
+function getCompanyName(company: Job['company']): string {
+  if (typeof company === 'string') return company
+  return company?.name || 'Entreprise'
 }
 
 function formatSalary(job: Job): string {
@@ -280,7 +285,7 @@ export default function JobsPage() {
                         >
                           {job.title}
                         </Link>
-                        <p className="text-muted-foreground">{job.company}</p>
+                        <p className="text-muted-foreground">{getCompanyName(job.company)}</p>
                       </div>
                       {getMatchScore(job) > 0 && (
                         <div className="flex items-center gap-2 shrink-0">
