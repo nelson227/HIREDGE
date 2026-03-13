@@ -4,7 +4,9 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 function getSocketUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.replace(/\/api\/v1\/?$/, '');
+  }
   if (Platform.OS === 'web') return '';
   const debuggerHost = Constants.expoConfig?.hostUri ?? Constants.manifest2?.extra?.expoGo?.debuggerHost;
   const hostIp = debuggerHost?.split(':')[0];
