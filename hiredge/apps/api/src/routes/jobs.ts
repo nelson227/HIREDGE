@@ -1,9 +1,40 @@
 import { FastifyPluginAsync } from 'fastify';
 import { searchJobsSchema } from '@hiredge/shared';
 import { jobService } from '../services/job.service';
+import { adzunaService } from '../services/adzuna.service';
 import { AppError } from '../services/auth.service';
 
 const jobRoutes: FastifyPluginAsync = async (fastify) => {
+  // POST /jobs/import — import jobs from Adzuna
+  fastify.post('/import', async (request, reply) => {
+    const { keywords, location, country, maxPages } = request.body as {
+      keywords?: string;
+      location?: string;
+      country?: string;
+      maxPages?: number;
+    };
+
+    try {
+      const result = await adzunaService.importJobs({
+        keywords: keywords || 'developer',
+        location: location || 'Montreal',
+        country: country || 'canada',
+        maxPages: maxPages || 3,
+      });
+
+      return reply.send({
+        success: true,
+        data: result,
+        message: `${result.imported} offres importées sur ${result.fetched} récupérées`,
+      });
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'IMPORT_ERROR', message: err.message },
+      });
+    }
+  });
+
   // GET /jobs/search — public (no auth needed to browse jobs)
   fastify.get('/search', async (request, reply) => {
     const parsed = searchJobsSchema.safeParse(request.query);

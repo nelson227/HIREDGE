@@ -35,6 +35,11 @@ export const config = {
     resendApiKey: process.env.RESEND_API_KEY || '',
     fromEmail: process.env.FROM_EMAIL || 'noreply@hiredge.app',
   },
+
+  adzuna: {
+    appId: process.env.ADZUNA_APP_ID || '',
+    appKey: process.env.ADZUNA_APP_KEY || '',
+  },
 } as const;
 
 // Flat alias for backward compatibility
