@@ -6,6 +6,17 @@ import { AppError } from '../services/auth.service';
 const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
 
+  // GET /interviews — List upcoming interviews (scheduled)
+  fastify.get('/', async (request, reply) => {
+    try {
+      const interviews = await interviewSimService.getUpcomingInterviews(request.user.id);
+      return reply.send({ success: true, data: interviews });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
   // POST /interviews/start — Start a new simulation
   fastify.post('/start', async (request, reply) => {
     const parsed = startSimulationSchema.safeParse(request.body);

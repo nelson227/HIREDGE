@@ -1,129 +1,129 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Play,
   Mic,
-  Video,
+  Bot,
   Building2,
   Clock,
   Star,
   ChevronRight,
-  Bot,
-  Target,
-  TrendingUp,
+  Loader2,
+  Video,
+  Calendar,
   MessageSquare,
-  BookOpen,
 } from "lucide-react"
-import Link from "next/link"
+import { interviewsApi, applicationsApi } from "@/lib/api"
 
-const practiceCategories = [
-  {
-    id: "behavioral",
-    name: "Behavioral Questions",
-    description: "STAR method, teamwork, leadership",
-    questions: 45,
-    completed: 12,
-    icon: MessageSquare,
-  },
-  {
-    id: "design",
-    name: "Design Challenges",
-    description: "Product thinking, whiteboard exercises",
-    questions: 30,
-    completed: 8,
-    icon: Target,
-  },
-  {
-    id: "portfolio",
-    name: "Portfolio Review",
-    description: "Present your work effectively",
-    questions: 20,
-    completed: 15,
-    icon: BookOpen,
-  },
-  {
-    id: "technical",
-    name: "Technical Questions",
-    description: "Tools, processes, systems",
-    questions: 35,
-    completed: 5,
-    icon: TrendingUp,
-  },
-]
+interface Interview {
+  id: string
+  type: string
+  status: string
+  score?: number
+  createdAt: string
+  application?: {
+    job?: {
+      title: string
+      company?: { name: string }
+    }
+  }
+}
 
-const companyQuestions = [
-  {
-    id: "1",
-    company: "TechCorp Inc.",
-    role: "Senior Product Designer",
-    questions: 15,
-    lastUpdated: "2 days ago",
-  },
-  {
-    id: "2",
-    company: "Google",
-    role: "UX Designer",
-    questions: 28,
-    lastUpdated: "1 week ago",
-  },
-  {
-    id: "3",
-    company: "Stripe",
-    role: "Product Designer",
-    questions: 22,
-    lastUpdated: "3 days ago",
-  },
-]
-
-const recentSessions = [
-  {
-    id: "1",
-    type: "AI Mock Interview",
-    company: "TechCorp Inc.",
-    date: "Yesterday",
-    score: 85,
-    feedback: "Strong storytelling, could improve on metrics",
-  },
-  {
-    id: "2",
-    type: "Squad Practice",
-    company: "General Behavioral",
-    date: "3 days ago",
-    score: 78,
-    feedback: "Good structure, add more specific examples",
-  },
-]
-
-const performanceData = {
-  overall: 82,
-  categories: [
-    { name: "Communication", score: 88 },
-    { name: "Problem Solving", score: 85 },
-    { name: "Technical Knowledge", score: 78 },
-    { name: "Leadership Examples", score: 75 },
-  ],
+interface UpcomingInterview {
+  applicationId: string
+  jobTitle: string
+  company: string
+  interviewDate: string
 }
 
 export default function InterviewsPage() {
   const [selectedMode, setSelectedMode] = useState<"ai" | "company" | null>(null)
+  const [interviews, setInterviews] = useState<Interview[]>([])
+  const [upcomingInterviews, setUpcomingInterviews] = useState<UpcomingInterview[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [interviewsRes, upcomingRes] = await Promise.all([
+        interviewsApi.list().catch(() => ({ data: { data: [] } })),
+        fetch("/api/v1/interviews").then(r => r.json()).catch(() => ({ data: [] }))
+      ])
+
+      if (interviewsRes.data?.data) {
+        setInterviews(interviewsRes.data.data)
+      }
+      if (upcomingRes.data) {
+        setUpcomingInterviews(upcomingRes.data)
+      }
+    } catch (error) {
+      console.error("Erreur chargement interviews:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fr-CA", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const getInterviewTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      hr: "Entretien RH",
+      technical: "Technique",
+      case: "Étude de cas",
+      culture: "Culture fit",
+      negotiation: "Négociation",
+    }
+    return labels[type.toLowerCase()] || type
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const totalInterviews = interviews.length
+  const averageScore = totalInterviews > 0
+    ? Math.round(interviews.filter(i => i.score).reduce((acc, i) => acc + (i.score || 0), 0) / interviews.filter(i => i.score).length)
+    : 0
 
   return (
     <div className="p-4 lg:p-8 space-y-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Interview Preparation</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Préparation aux Entretiens</h1>
           <p className="text-muted-foreground mt-1">
-            Practice with AI or real questions from your target companies
+            Entraînez-vous avec l&apos;IA ou préparez vos entretiens planifiés
           </p>
         </div>
-        <Button size="lg">
-          <Play className="w-4 h-4 mr-2" />
-          Start Practice Session
-        </Button>
+        <Link href="/interview">
+          <Button size="lg">
+            <Play className="w-4 h-4 mr-2" />
+            Démarrer une simulation
+          </Button>
+        </Link>
       </div>
 
       {/* Quick Start Cards */}
@@ -142,18 +142,16 @@ export default function InterviewsPage() {
                 <Bot className="w-7 h-7 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1">AI Mock Interview</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Simulation IA</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Practice with EDGE in a realistic interview setting. Get instant feedback on your answers.
+                  Entraînez-vous avec EDGE dans un entretien réaliste. Obtenez un feedback instantané.
                 </p>
-                <div className="flex items-center gap-4">
-                  <Button asChild>
-                    <Link href="/interviews/ai">
-                      <Mic className="w-4 h-4 mr-2" />
-                      Start AI Interview
-                    </Link>
-                  </Button>
-                </div>
+                <Button asChild>
+                  <Link href="/interview">
+                    <Mic className="w-4 h-4 mr-2" />
+                    Démarrer
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -173,16 +171,16 @@ export default function InterviewsPage() {
                 <Building2 className="w-7 h-7 text-success" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1">Company-Specific Prep</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Préparation spécifique</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Practice with real questions reported by scouts from your target companies.
+                  Pratiquez avec des questions réelles rapportées par les éclaireurs.
                 </p>
-                <div className="flex items-center gap-4">
+                <Link href="/scouts">
                   <Button variant="secondary">
                     <Building2 className="w-4 h-4 mr-2" />
-                    Choose Company
+                    Voir les éclaireurs
                   </Button>
-                </div>
+                </Link>
               </div>
             </div>
           </CardContent>
@@ -192,125 +190,100 @@ export default function InterviewsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Practice Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Practice by Category</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {practiceCategories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/interviews/category/${category.id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <category.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-foreground">{category.name}</h4>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {category.completed}/{category.questions}
-                      </p>
-                      <div className="w-20 h-1.5 rounded-full bg-muted mt-1.5 overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{
-                            width: `${(category.completed / category.questions) * 100}%`,
-                          }}
-                        />
+          {/* Upcoming Interviews */}
+          {upcomingInterviews.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  Entretiens à venir
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {upcomingInterviews.map((interview) => (
+                    <div key={interview.applicationId} className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <Calendar className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground">{interview.jobTitle}</h4>
+                        <p className="text-sm text-muted-foreground">{interview.company}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-foreground">
+                          {formatDate(interview.interviewDate)}
+                        </p>
+                        <Link href={`/interview?applicationId=${interview.applicationId}`}>
+                          <Button variant="outline" size="sm" className="mt-2">
+                            Préparer
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Company-Specific Questions */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Company Interview Questions</CardTitle>
-              <Button variant="ghost" size="sm">
-                View All
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {companyQuestions.map((company) => (
-                  <Link
-                    key={company.id}
-                    href={`/interviews/company/${company.id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <Building2 className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-foreground">{company.company}</h4>
-                      <p className="text-sm text-muted-foreground">{company.role}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {company.questions} questions
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Updated {company.lastUpdated}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recent Practice Sessions */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Practice Sessions</CardTitle>
+              <CardTitle>Sessions de pratique</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {recentSessions.map((session) => (
-                  <div key={session.id} className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          {session.type.includes("AI") ? (
-                            <Bot className="w-5 h-5 text-primary" />
-                          ) : (
-                            <Video className="w-5 h-5 text-primary" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-foreground">{session.type}</h4>
-                          <p className="text-sm text-muted-foreground">{session.company}</p>
-                          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {session.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-warning" />
-                          <span className="font-semibold text-foreground">{session.score}%</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 p-3 rounded-lg bg-muted/50">
-                      <p className="text-sm text-muted-foreground">{session.feedback}</p>
-                    </div>
+              {interviews.length === 0 ? (
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-8 h-8 text-muted-foreground" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="font-semibold mb-2">Aucune session de pratique</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Démarrez votre première simulation d&apos;entretien pour vous entraîner.
+                  </p>
+                  <Link href="/interview">
+                    <Button>
+                      <Play className="w-4 h-4 mr-2" />
+                      Commencer
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {interviews.map((interview) => (
+                    <div key={interview.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                            <Bot className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-foreground">
+                              {getInterviewTypeLabel(interview.type)}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {interview.application?.job?.company?.name || "Simulation générale"}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(interview.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                        {interview.score && (
+                          <div className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-warning" />
+                              <span className="font-semibold text-foreground">{interview.score}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -320,98 +293,79 @@ export default function InterviewsPage() {
           {/* Performance Overview */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Performance Overview</CardTitle>
+              <CardTitle className="text-base">Aperçu des performances</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center mb-6">
-                <div className="relative w-32 h-32">
-                  <svg className="w-full h-full -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      strokeWidth="8"
-                      fill="none"
-                      className="stroke-muted"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeDasharray={`${(performanceData.overall / 100) * 352} 352`}
-                      className="stroke-primary"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-foreground">
-                      {performanceData.overall}%
-                    </span>
-                    <span className="text-xs text-muted-foreground">Overall</span>
-                  </div>
+              {totalInterviews === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Complétez des simulations pour voir vos statistiques
+                  </p>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                {performanceData.categories.map((cat) => (
-                  <div key={cat.name}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">{cat.name}</span>
-                      <span className="font-medium text-foreground">{cat.score}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          cat.score >= 85
-                            ? "bg-success"
-                            : cat.score >= 75
-                            ? "bg-primary"
-                            : "bg-warning"
-                        }`}
-                        style={{ width: `${cat.score}%` }}
-                      />
+              ) : (
+                <>
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="relative w-32 h-32">
+                      <svg className="w-full h-full -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          strokeWidth="8"
+                          fill="none"
+                          className="stroke-muted"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(averageScore / 100) * 352} 352`}
+                          className="stroke-primary"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-3xl font-bold text-foreground">
+                          {averageScore}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">Score moyen</span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="text-center text-sm text-muted-foreground">
+                    {totalInterviews} session{totalInterviews > 1 ? "s" : ""} complétée{totalInterviews > 1 ? "s" : ""}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
           {/* Tips */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Quick Tips</CardTitle>
+              <CardTitle className="text-base">Conseils rapides</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                "Use the STAR method for behavioral questions",
-                "Quantify your impact with specific metrics",
-                "Prepare 3-5 strong portfolio case studies",
-                "Practice explaining your design process",
-              ].map((tip, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-xs font-medium text-primary">{i + 1}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{tip}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Schedule Mock Interview */}
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Video className="w-6 h-6 text-primary" />
+              <div className="flex items-start gap-2">
+                <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  Utilisez la méthode STAR pour structurer vos réponses
+                </p>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Squad Mock Interview</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Practice with a squad member for realistic feedback
-              </p>
-              <Button className="w-full">Schedule Session</Button>
+              <div className="flex items-start gap-2">
+                <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  Préparez 3-5 exemples concrets de vos réalisations
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  Renseignez-vous sur l&apos;entreprise avant l&apos;entretien
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

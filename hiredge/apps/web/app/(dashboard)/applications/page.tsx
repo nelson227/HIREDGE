@@ -1,126 +1,139 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Plus,
+  GripVertical,
   Building2,
   Calendar,
   MoreHorizontal,
-  GripVertical,
   ArrowRight,
-  Bell,
+  Loader2,
+  Briefcase,
 } from "lucide-react"
-import Link from "next/link"
+import { applicationsApi } from "@/lib/api"
 
-type ApplicationStatus = "draft" | "applied" | "screening" | "interview" | "offer" | "rejected"
+// Statuts UI du Kanban (frontend)
+type KanbanStatus = "draft" | "applied" | "screening" | "interview" | "offer" | "rejected"
 
-type Application = {
+// Mapping des statuts API vers Kanban
+const statusMapping: Record<string, KanbanStatus> = {
+  DRAFT: "draft",
+  SENT: "applied",
+  VIEWED: "screening",
+  INTERVIEW: "interview",
+  OFFER: "offer",
+  ACCEPTED: "offer",
+  REJECTED: "rejected",
+}
+
+// Mapping inverse pour les updates vers l'API
+const reverseStatusMapping: Record<KanbanStatus, string> = {
+  draft: "DRAFT",
+  applied: "SENT",
+  screening: "VIEWED",
+  interview: "INTERVIEW",
+  offer: "OFFER",
+  rejected: "REJECTED",
+}
+
+interface Application {
   id: string
   company: string
+  companyLogo?: string
   role: string
   date: string
   nextStep?: string
-  reminder?: string
-  status: ApplicationStatus
+  status: KanbanStatus
+  jobId: string
 }
 
-const initialApplications: Record<ApplicationStatus, Application[]> = {
-  draft: [
-    {
-      id: "1",
-      company: "FinanceApp",
-      role: "Product Designer",
-      date: "Mar 10, 2026",
-      status: "draft",
-    },
-  ],
-  applied: [
-    {
-      id: "2",
-      company: "TechCorp Inc.",
-      role: "Senior Product Designer",
-      date: "Mar 8, 2026",
-      nextStep: "Waiting for response",
-      status: "applied",
-    },
-    {
-      id: "3",
-      company: "StartupXYZ",
-      role: "UX Lead",
-      date: "Mar 5, 2026",
-      nextStep: "Recruiter reviewing",
-      status: "applied",
-    },
-  ],
-  screening: [
-    {
-      id: "4",
-      company: "DesignCo",
-      role: "Design Director",
-      date: "Mar 3, 2026",
-      nextStep: "Phone screen scheduled",
-      reminder: "Tomorrow, 2:00 PM",
-      status: "screening",
-    },
-  ],
-  interview: [
-    {
-      id: "5",
-      company: "HealthTech Solutions",
-      role: "Senior UX Designer",
-      date: "Feb 28, 2026",
-      nextStep: "Final round",
-      reminder: "Wed, 10:00 AM",
-      status: "interview",
-    },
-  ],
-  offer: [
-    {
-      id: "6",
-      company: "CloudServices",
-      role: "Product Designer",
-      date: "Feb 20, 2026",
-      nextStep: "Negotiating offer",
-      status: "offer",
-    },
-  ],
-  rejected: [
-    {
-      id: "7",
-      company: "BigTech Corp",
-      role: "UX Designer",
-      date: "Feb 15, 2026",
-      status: "rejected",
-    },
-  ],
-}
-
-const columns: { id: ApplicationStatus; label: string; color: string }[] = [
-  { id: "draft", label: "Draft", color: "bg-muted-foreground" },
-  { id: "applied", label: "Applied", color: "bg-primary" },
-  { id: "screening", label: "Screening", color: "bg-chart-2" },
-  { id: "interview", label: "Interview", color: "bg-warning" },
-  { id: "offer", label: "Offer", color: "bg-success" },
-  { id: "rejected", label: "Rejected", color: "bg-destructive" },
+const columns: { id: KanbanStatus; label: string; color: string }[] = [
+  { id: "draft", label: "Brouillon", color: "bg-muted-foreground" },
+  { id: "applied", label: "Envoyée", color: "bg-primary" },
+  { id: "screening", label: "Vue", color: "bg-chart-2" },
+  { id: "interview", label: "Entretien", color: "bg-warning" },
+  { id: "offer", label: "Offre", color: "bg-success" },
+  { id: "rejected", label: "Refusée", color: "bg-destructive" },
 ]
 
 export default function ApplicationsPage() {
-  const [applications, setApplications] = useState(initialApplications)
+  const [applications, setApplications] = useState<Record<KanbanStatus, Application[]>>({
+    draft: [],
+    applied: [],
+    screening: [],
+    interview: [],
+    offer: [],
+    rejected: [],
+  })
+  const [loading, setLoading] = useState(true)
   const [draggedItem, setDraggedItem] = useState<Application | null>(null)
-  const [dragOverColumn, setDragOverColumn] = useState<ApplicationStatus | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<KanbanStatus | null>(null)
+
+  // Charger les candidatures depuis l'API
+  useEffect(() => {
+    loadApplications()
+  }, [])
+
+  const loadApplications = async () => {
+    try {
+      setLoading(true)
+      const response = await applicationsApi.list()
+      
+      // Initialiser toutes les colonnes vides
+      const grouped: Record<KanbanStatus, Application[]> = {
+        draft: [],
+        applied: [],
+        screening: [],
+        interview: [],
+        offer: [],
+        rejected: [],
+      }
+
+      // Mapper les données API vers les colonnes Kanban
+      if (response.data?.data?.applications) {
+        response.data.data.applications.forEach((app: any) => {
+          const kanbanStatus = statusMapping[app.status] || "draft"
+          grouped[kanbanStatus].push({
+            id: app.id,
+            company: app.job?.company?.name || "Entreprise",
+            companyLogo: app.job?.company?.logo,
+            role: app.job?.title || "Poste",
+            date: new Date(app.createdAt).toLocaleDateString("fr-CA", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            nextStep: app.interviewDate 
+              ? `Entretien ${new Date(app.interviewDate).toLocaleDateString("fr-CA")}`
+              : undefined,
+            status: kanbanStatus,
+            jobId: app.jobId,
+          })
+        })
+      }
+
+      setApplications(grouped)
+    } catch (error) {
+      console.error("Erreur chargement candidatures:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleDragStart = (app: Application) => {
     setDraggedItem(app)
   }
 
-  const handleDragOver = (e: React.DragEvent, status: ApplicationStatus) => {
+  const handleDragOver = (e: React.DragEvent, status: KanbanStatus) => {
     e.preventDefault()
     setDragOverColumn(status)
   }
 
-  const handleDrop = (status: ApplicationStatus) => {
+  const handleDrop = async (status: KanbanStatus) => {
     if (!draggedItem) return
 
     const oldStatus = draggedItem.status
@@ -130,11 +143,21 @@ export default function ApplicationsPage() {
       return
     }
 
+    // Mise à jour optimiste de l'UI
     setApplications((prev) => ({
       ...prev,
       [oldStatus]: prev[oldStatus].filter((app) => app.id !== draggedItem.id),
       [status]: [...prev[status], { ...draggedItem, status }],
     }))
+
+    // Mise à jour via l'API
+    try {
+      await applicationsApi.updateStatus(draggedItem.id, reverseStatusMapping[status])
+    } catch (error) {
+      console.error("Erreur mise à jour statut:", error)
+      // Annuler le changement en cas d'erreur
+      loadApplications()
+    }
 
     setDraggedItem(null)
     setDragOverColumn(null)
@@ -145,118 +168,152 @@ export default function ApplicationsPage() {
     setDragOverColumn(null)
   }
 
+  const totalApplications = Object.values(applications).flat().length
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">Chargement des candidatures...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 lg:p-8 space-y-6 h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Application Pipeline</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Pipeline de Candidatures</h1>
           <p className="text-muted-foreground mt-1">
-            Track and manage your job applications
+            {totalApplications === 0 
+              ? "Commencez à postuler pour voir vos candidatures ici"
+              : `${totalApplications} candidature${totalApplications > 1 ? "s" : ""} en cours`
+            }
           </p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Application
-        </Button>
+        <Link href="/jobs">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvelle candidature
+          </Button>
+        </Link>
       </div>
+
+      {/* Message si aucune candidature */}
+      {totalApplications === 0 && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Aucune candidature pour le moment</h2>
+            <p className="text-muted-foreground mb-6">
+              Explorez les offres d&apos;emploi et commencez à postuler pour suivre vos candidatures ici.
+            </p>
+            <Link href="/jobs">
+              <Button size="lg">
+                <Briefcase className="w-4 h-4 mr-2" />
+                Voir les offres
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto">
-        <div className="flex gap-4 min-w-max h-full pb-4">
-          {columns.map((column) => (
-            <div
-              key={column.id}
-              className="w-72 flex flex-col"
-              onDragOver={(e) => handleDragOver(e, column.id)}
-              onDrop={() => handleDrop(column.id)}
-            >
-              {/* Column Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className={`w-2.5 h-2.5 rounded-full ${column.color}`} />
-                <h3 className="font-semibold text-foreground">{column.label}</h3>
-                <span className="text-sm text-muted-foreground">
-                  {applications[column.id].length}
-                </span>
-              </div>
-
-              {/* Column Content */}
+      {totalApplications > 0 && (
+        <div className="flex-1 overflow-x-auto">
+          <div className="flex gap-4 min-w-max h-full pb-4">
+            {columns.map((column) => (
               <div
-                className={`flex-1 rounded-xl p-2 space-y-2 transition-colors ${
-                  dragOverColumn === column.id ? "bg-primary/10" : "bg-muted/50"
-                }`}
+                key={column.id}
+                className="w-72 flex flex-col"
+                onDragOver={(e) => handleDragOver(e, column.id)}
+                onDrop={() => handleDrop(column.id)}
               >
-                {applications[column.id].map((app) => (
-                  <Card
-                    key={app.id}
-                    draggable
-                    onDragStart={() => handleDragStart(app)}
-                    onDragEnd={handleDragEnd}
-                    className={`cursor-grab active:cursor-grabbing transition-all ${
-                      draggedItem?.id === app.id ? "opacity-50 scale-95" : ""
-                    } hover:border-primary/30`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <GripVertical className="w-4 h-4 text-muted-foreground/50 mt-1 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/jobs/${app.id}`}
-                                className="font-medium text-foreground hover:text-primary truncate block"
-                              >
-                                {app.role}
-                              </Link>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground truncate">
-                                  {app.company}
-                                </span>
+                {/* Column Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-2.5 h-2.5 rounded-full ${column.color}`} />
+                  <h3 className="font-semibold text-foreground">{column.label}</h3>
+                  <span className="text-sm text-muted-foreground">
+                    {applications[column.id].length}
+                  </span>
+                </div>
+
+                {/* Column Content */}
+                <div
+                  className={`flex-1 rounded-xl p-2 space-y-2 transition-colors ${
+                    dragOverColumn === column.id ? "bg-primary/10" : "bg-muted/50"
+                  }`}
+                >
+                  {applications[column.id].map((app) => (
+                    <Card
+                      key={app.id}
+                      draggable
+                      onDragStart={() => handleDragStart(app)}
+                      onDragEnd={handleDragEnd}
+                      className={`cursor-grab active:cursor-grabbing transition-all ${
+                        draggedItem?.id === app.id ? "opacity-50 scale-95" : ""
+                      } hover:border-primary/30`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <GripVertical className="w-4 h-4 text-muted-foreground/50 mt-1 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <Link
+                                  href={`/job/${app.jobId}`}
+                                  className="font-medium text-foreground hover:text-primary truncate block"
+                                >
+                                  {app.role}
+                                </Link>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground truncate">
+                                    {app.company}
+                                  </span>
+                                </div>
                               </div>
+                              <button className="text-muted-foreground hover:text-foreground">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
                             </div>
-                            <button className="text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
+
+                            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{app.date}</span>
+                            </div>
+
+                            {app.nextStep && (
+                              <div className="flex items-center gap-1.5 mt-2 text-xs">
+                                <ArrowRight className="w-3.5 h-3.5 text-primary" />
+                                <span className="text-foreground">{app.nextStep}</span>
+                              </div>
+                            )}
                           </div>
-
-                          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>{app.date}</span>
-                          </div>
-
-                          {app.nextStep && (
-                            <div className="flex items-center gap-1.5 mt-2 text-xs">
-                              <ArrowRight className="w-3.5 h-3.5 text-primary" />
-                              <span className="text-foreground">{app.nextStep}</span>
-                            </div>
-                          )}
-
-                          {app.reminder && (
-                            <div className="flex items-center gap-1.5 mt-2 text-xs">
-                              <Bell className="w-3.5 h-3.5 text-warning" />
-                              <span className="text-warning font-medium">{app.reminder}</span>
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
 
-                {applications[column.id].length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <p className="text-sm text-muted-foreground">No applications</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">
-                      Drag cards here or add new
-                    </p>
-                  </div>
-                )}
+                  {applications[column.id].length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <p className="text-sm text-muted-foreground">Aucune candidature</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        Glissez les cartes ici
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

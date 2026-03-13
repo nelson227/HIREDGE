@@ -88,30 +88,49 @@ export default function JobsPage() {
   const [savedJobs, setSavedJobs] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [totalJobs, setTotalJobs] = useState(0)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [sortBy, setSortBy] = useState<"match" | "date">("match")
 
   // Load jobs on mount and when filters change
   useEffect(() => {
     loadJobs()
   }, [])
 
-  const loadJobs = async (params: JobSearchParams = {}) => {
+  const loadJobs = async (params: JobSearchParams = {}, append = false) => {
     try {
       setIsLoading(true)
       setError(null)
+      
+      const currentPage = append ? page + 1 : 1
       
       const searchParams: JobSearchParams = {
         q: searchQuery || undefined,
         location: locationFilter || undefined,
         contract: contractFilter || undefined,
-        limit: 20,
+        limit: 50,
+        page: currentPage,
         ...params,
       }
       
       const { data } = await jobsApi.search(searchParams)
       
       if (data.success) {
-        setJobs(data.data || [])
+        const newJobs = data.data || []
+        // Sort by match score if available
+        const sortedJobs = sortBy === "match" 
+          ? newJobs.sort((a: Job, b: Job) => (b.matchScore || 0) - (a.matchScore || 0))
+          : newJobs
+        
+        if (append) {
+          setJobs(prev => [...prev, ...sortedJobs])
+          setPage(currentPage)
+        } else {
+          setJobs(sortedJobs)
+          setPage(1)
+        }
         setTotalJobs(data.pagination?.total || data.data?.length || 0)
+        setHasMore(data.pagination?.page < data.pagination?.totalPages)
       }
     } catch (err: any) {
       console.error("Failed to load jobs:", err)
@@ -119,6 +138,10 @@ export default function JobsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loadMore = () => {
+    loadJobs({}, true)
   }
 
   const handleSearch = () => {
@@ -386,6 +409,27 @@ export default function JobsPage() {
               </CardContent>
             </Card>
           ))}
+          
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" onClick={loadMore} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Voir plus d'offres ({jobs.length} / {totalJobs})
+              </Button>
+            </div>
+          )}
+          
+          {/* Showing count */}
+          {!hasMore && jobs.length > 0 && (
+            <p className="text-center text-sm text-muted-foreground pt-4">
+              {jobs.length} offres affichées sur {totalJobs}
+            </p>
+          )}
         </div>
       )}
     </div>

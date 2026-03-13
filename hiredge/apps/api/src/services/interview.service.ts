@@ -230,6 +230,32 @@ export class InterviewSimService {
     });
   }
 
+  async getUpcomingInterviews(userId: string) {
+    // Get applications with scheduled interview dates
+    const applications = await prisma.application.findMany({
+      where: {
+        userId,
+        interviewDate: { not: null },
+      },
+      include: {
+        job: {
+          include: {
+            company: true,
+          },
+        },
+      },
+      orderBy: { interviewDate: 'asc' },
+    });
+
+    return applications.map(app => ({
+      id: app.id,
+      jobTitle: app.job.title,
+      companyName: app.job.company.name,
+      interviewDate: app.interviewDate,
+      status: app.status,
+    }));
+  }
+
   async getSimulationDetails(userId: string, simulationId: string) {
     const simulation = await prisma.interviewSimulation.findFirst({
       where: { id: simulationId, userId },

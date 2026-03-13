@@ -19,7 +19,7 @@ export class JobService {
     limit?: number;
   }) {
     const page = filters.page ?? 1;
-    const limit = Math.min(filters.limit ?? 20, 50);
+    const limit = Math.min(filters.limit ?? 50, 200);
     const skip = (page - 1) * limit;
 
     const where: any = { status: 'ACTIVE' };
@@ -141,7 +141,7 @@ export class JobService {
     return enriched;
   }
 
-  async getMatchedJobs(userId: string, limit: number = 20) {
+  async getMatchedJobs(userId: string, limit: number = 100) {
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId },
       include: { skills: true, experiences: true },
