@@ -11,3 +11,6 @@ android/
 .next/
 coverage/
 *.tsbuildinfo
+
+ngrok.exe
+cloudflared.exe
