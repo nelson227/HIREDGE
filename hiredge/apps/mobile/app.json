@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hiredge.app",
-      "buildNumber": "1"
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
