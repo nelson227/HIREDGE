@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,94 +16,197 @@ import {
   Users,
   Sparkles,
   MessageSquare,
+  Loader2,
 } from "lucide-react"
+import { jobsApi, applicationsApi, interviewsApi, squadApi, profileApi } from "@/lib/api"
 
-const recentJobs = [
-  {
-    id: "1",
-    title: "Senior Product Designer",
-    company: "TechCorp Inc.",
-    location: "Remote",
-    salary: "$120k - $160k",
-    match: 94,
-    posted: "2h ago",
-  },
-  {
-    id: "2",
-    title: "UX Lead",
-    company: "StartupXYZ",
-    location: "San Francisco, CA",
-    salary: "$140k - $180k",
-    match: 91,
-    posted: "5h ago",
-  },
-  {
-    id: "3",
-    title: "Design Director",
-    company: "DesignCo",
-    location: "New York, NY",
-    salary: "$160k - $200k",
-    match: 87,
-    posted: "1d ago",
-  },
-]
+interface Job {
+  id: string
+  title: string
+  company: string | { id: string; name: string; logo?: string }
+  location: string
+  salary?: string
+  salaryMin?: number
+  salaryMax?: number
+  match?: number
+  matchScore?: number
+  postedAt: string
+  remote?: boolean
+}
 
-const upcomingEvents = [
-  {
-    id: "1",
-    title: "Technical Interview",
-    company: "TechCorp Inc.",
-    date: "Tomorrow, 2:00 PM",
-    type: "interview",
-  },
-  {
-    id: "2",
-    title: "Squad Mock Interview",
-    company: "Practice Session",
-    date: "Wed, 4:00 PM",
-    type: "squad",
-  },
-]
+interface Application {
+  id: string
+  status: string
+  job?: { title: string; company?: { name: string } }
+  createdAt: string
+}
 
-const squadActivity = [
-  {
-    id: "1",
-    user: "Alex M.",
-    action: "shared interview tips for",
-    target: "Google",
-    time: "10 min ago",
-  },
-  {
-    id: "2",
-    user: "Emma T.",
-    action: "landed a job at",
-    target: "Stripe",
-    time: "2h ago",
-  },
-  {
-    id: "3",
-    user: "Marcus R.",
-    action: "started preparing for",
-    target: "Amazon interview",
-    time: "4h ago",
-  },
-]
+interface Interview {
+  id: string
+  type: string
+  status: string
+  scheduledAt?: string
+  application?: { job?: { title: string; company?: { name: string } } }
+}
+
+interface SquadMember {
+  id: string
+  user: { candidateProfile?: { firstName: string } }
+  joinedAt: string
+}
+
+interface SquadMessage {
+  id: string
+  content: string
+  sender?: { candidateProfile?: { firstName: string } }
+  createdAt: string
+}
+
+interface UserProfile {
+  firstName?: string
+  lastName?: string
+}
+
+function getCompanyName(company: Job['company']): string {
+  if (typeof company === 'string') return company
+  return company?.name || 'Entreprise'
+}
+
+function formatSalary(job: Job): string {
+  if (job.salary) return job.salary
+  if (job.salaryMin && job.salaryMax) {
+    return `${job.salaryMin.toLocaleString()}€ - ${job.salaryMax.toLocaleString()}€`
+  }
+  if (job.salaryMin) return `À partir de ${job.salaryMin.toLocaleString()}€`
+  return "Non précisé"
+}
+
+function formatPostedAt(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffHours < 1) return "À l'instant"
+  if (diffHours < 24) return `Il y a ${diffHours}h`
+  if (diffDays < 7) return `Il y a ${diffDays}j`
+  return date.toLocaleDateString('fr-FR')
+}
+
+function formatEventDate(dateStr?: string): string {
+  if (!dateStr) return "Date non définie"
+  const date = new Date(dateStr)
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  if (date.toDateString() === now.toDateString()) {
+    return `Aujourd'hui, ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+  }
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Demain, ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+  }
+  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
 
 export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
+  const [interviews, setInterviews] = useState<Interview[]>([])
+  const [squad, setSquad] = useState<{ id: string; name: string; members: SquadMember[]; messages: SquadMessage[] } | null>(null)
+  const [totalJobs, setTotalJobs] = useState(0)
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [])
+
+  const loadDashboardData = async () => {
+    setIsLoading(true)
+    try {
+      // Load all data in parallel
+      const [profileRes, jobsRes, appsRes, interviewsRes, squadRes] = await Promise.allSettled([
+        profileApi.get(),
+        jobsApi.getRecommended(5),
+        applicationsApi.list(),
+        interviewsApi.list(),
+        squadApi.getMySquad(),
+      ])
+
+      if (profileRes.status === 'fulfilled' && profileRes.value.data.success) {
+        setProfile(profileRes.value.data.data)
+      }
+
+      if (jobsRes.status === 'fulfilled' && jobsRes.value.data.success) {
+        setJobs(jobsRes.value.data.data || [])
+        setTotalJobs(jobsRes.value.data.pagination?.total || jobsRes.value.data.data?.length || 0)
+      }
+
+      if (appsRes.status === 'fulfilled' && appsRes.value.data.success) {
+        setApplications(appsRes.value.data.data || [])
+      }
+
+      if (interviewsRes.status === 'fulfilled' && interviewsRes.value.data.success) {
+        setInterviews(interviewsRes.value.data.data || [])
+      }
+
+      if (squadRes.status === 'fulfilled' && squadRes.value.data.success) {
+        setSquad(squadRes.value.data.data)
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Calculate stats
+  const activeApplications = applications.filter(a => 
+    ['DRAFT', 'SENT', 'VIEWED', 'INTERVIEW_SCHEDULED'].includes(a.status)
+  ).length
+  
+  const upcomingInterviews = interviews.filter(i => 
+    i.status === 'SCHEDULED' && i.scheduledAt && new Date(i.scheduledAt) > new Date()
+  )
+
+  const respondedApplications = applications.filter(a => 
+    ['VIEWED', 'INTERVIEW_SCHEDULED', 'OFFER', 'ACCEPTED'].includes(a.status)
+  ).length
+  const responseRate = applications.length > 0 
+    ? Math.round((respondedApplications / applications.length) * 100) 
+    : 0
+
+  const userName = profile?.firstName || "Utilisateur"
+
+  // Get recent squad activity (last messages)
+  const recentSquadActivity = squad?.messages?.slice(0, 3) || []
+
+  if (isLoading) {
+    return (
+      <div className="p-4 lg:p-8 flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 lg:p-8 space-y-8">
       {/* Welcome Section */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Good morning, Sarah</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            Bonjour, {userName} 👋
+          </h1>
           <p className="text-muted-foreground mt-1">
-            {"Here's what's happening with your job search today."}
+            Voici un résumé de ta recherche d'emploi aujourd'hui.
           </p>
         </div>
         <Button asChild>
           <Link href="/assistant">
             <Bot className="w-4 h-4 mr-2" />
-            Chat with EDGE
+            Parler à EDGE
           </Link>
         </Button>
       </div>
@@ -117,12 +221,16 @@ export default function DashboardPage() {
             <div className="flex-1">
               <h3 className="font-semibold text-foreground mb-1">EDGE Insights</h3>
               <p className="text-muted-foreground">
-                {"I found 12 new matches today! 3 have compatibility scores above 90%. Based on your recent activity, I'd recommend focusing on the TechCorp position - they're actively hiring and your skills align perfectly."}
+                {totalJobs > 0
+                  ? `J'ai trouvé ${totalJobs} offres qui correspondent à ton profil ! ${upcomingInterviews.length > 0 ? `Tu as ${upcomingInterviews.length} entretien(s) à venir.` : "Continue à postuler pour décrocher des entretiens."}`
+                  : applications.length > 0
+                  ? `Tu as ${applications.length} candidature(s) en cours. Je continue à chercher des offres pour toi.`
+                  : "Je n'ai pas encore trouvé d'offres. Complète ton profil pour que je puisse mieux te recommander des postes !"}
               </p>
             </div>
             <Button variant="secondary" asChild className="shrink-0">
               <Link href="/jobs">
-                View Matches
+                Voir les offres
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
@@ -139,8 +247,8 @@ export default function DashboardPage() {
                 <Briefcase className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">24</p>
-                <p className="text-sm text-muted-foreground">Active Jobs</p>
+                <p className="text-2xl font-bold text-foreground">{totalJobs}</p>
+                <p className="text-sm text-muted-foreground">Offres trouvées</p>
               </div>
             </div>
           </CardContent>
@@ -152,8 +260,8 @@ export default function DashboardPage() {
                 <TrendingUp className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">8</p>
-                <p className="text-sm text-muted-foreground">Applications</p>
+                <p className="text-2xl font-bold text-foreground">{activeApplications}</p>
+                <p className="text-sm text-muted-foreground">Candidatures</p>
               </div>
             </div>
           </CardContent>
@@ -165,8 +273,8 @@ export default function DashboardPage() {
                 <Calendar className="w-5 h-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">3</p>
-                <p className="text-sm text-muted-foreground">Interviews</p>
+                <p className="text-2xl font-bold text-foreground">{upcomingInterviews.length}</p>
+                <p className="text-sm text-muted-foreground">Entretiens</p>
               </div>
             </div>
           </CardContent>
@@ -178,8 +286,8 @@ export default function DashboardPage() {
                 <MessageSquare className="w-5 h-5 text-chart-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">67%</p>
-                <p className="text-sm text-muted-foreground">Response Rate</p>
+                <p className="text-2xl font-bold text-foreground">{responseRate}%</p>
+                <p className="text-sm text-muted-foreground">Taux de réponse</p>
               </div>
             </div>
           </CardContent>
@@ -192,50 +300,61 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg font-semibold">Recent Job Matches</CardTitle>
+              <CardTitle className="text-lg font-semibold">Offres recommandées</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/jobs">
-                  View All
+                  Voir tout
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {recentJobs.map((job) => (
-                  <Link
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <Building2 className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-semibold text-foreground truncate">{job.title}</h4>
-                          <p className="text-sm text-muted-foreground">{job.company}</p>
+              {jobs.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucune offre recommandée pour le moment.</p>
+                  <p className="text-sm mt-2">Complète ton profil pour recevoir des recommandations personnalisées.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {jobs.map((job) => (
+                    <Link
+                      key={job.id}
+                      href={`/jobs/${job.id}`}
+                      className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                        <Building2 className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h4 className="font-semibold text-foreground truncate">{job.title}</h4>
+                            <p className="text-sm text-muted-foreground">{getCompanyName(job.company)}</p>
+                          </div>
+                          {(job.match || job.matchScore) && (
+                            <div className="px-2.5 py-1 rounded-full bg-success/10 text-success text-xs font-semibold shrink-0">
+                              {job.match || job.matchScore}% Match
+                            </div>
+                          )}
                         </div>
-                        <div className="px-2.5 py-1 rounded-full bg-success/10 text-success text-xs font-semibold shrink-0">
-                          {job.match}% Match
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {job.location || "Non précisé"}
+                            {job.remote && " (Remote)"}
+                          </span>
+                          <span>{formatSalary(job)}</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatPostedAt(job.postedAt)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {job.location}
-                        </span>
-                        <span>{job.salary}</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {job.posted}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -245,55 +364,82 @@ export default function DashboardPage() {
           {/* Upcoming Events */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">Upcoming</CardTitle>
+              <CardTitle className="text-lg font-semibold">À venir</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        event.type === "interview" ? "bg-primary/10" : "bg-success/10"
-                      }`}>
-                        {event.type === "interview" ? (
+              {upcomingInterviews.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <Calendar className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Aucun entretien planifié</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {upcomingInterviews.slice(0, 3).map((interview) => (
+                    <div key={interview.id} className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                           <Calendar className="w-5 h-5 text-primary" />
-                        ) : (
-                          <Users className="w-5 h-5 text-success" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-foreground">{event.title}</h4>
-                        <p className="text-sm text-muted-foreground">{event.company}</p>
-                        <p className="text-xs text-primary mt-1">{event.date}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-foreground">
+                            Entretien {interview.type === 'TECHNICAL' ? 'technique' : interview.type === 'HR' ? 'RH' : ''}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {interview.application?.job?.company?.name || interview.application?.job?.title || "Entreprise"}
+                          </p>
+                          <p className="text-xs text-primary mt-1">{formatEventDate(interview.scheduledAt)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Squad Activity */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg font-semibold">Squad Activity</CardTitle>
+              <CardTitle className="text-lg font-semibold">Activité Squad</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/squad">View Squad</Link>
+                <Link href="/squad">Voir Squad</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {squadActivity.map((activity) => (
-                  <div key={activity.id} className="p-4">
-                    <p className="text-sm text-foreground">
-                      <span className="font-medium">{activity.user}</span>{" "}
-                      <span className="text-muted-foreground">{activity.action}</span>{" "}
-                      <span className="font-medium">{activity.target}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                  </div>
-                ))}
-              </div>
+              {!squad ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Tu n'as pas encore de Squad</p>
+                  <Button variant="outline" size="sm" className="mt-3" asChild>
+                    <Link href="/squad">Rejoindre un Squad</Link>
+                  </Button>
+                </div>
+              ) : recentSquadActivity.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Aucune activité récente</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {recentSquadActivity.map((message) => (
+                    <div key={message.id} className="p-4">
+                      <p className="text-sm text-foreground">
+                        <span className="font-medium">
+                          {message.sender?.candidateProfile?.firstName || "Membre"}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                          {message.content.length > 50 
+                            ? message.content.slice(0, 50) + "..." 
+                            : message.content}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatPostedAt(message.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
