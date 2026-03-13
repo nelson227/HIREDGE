@@ -35,51 +35,47 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         {/* Brand */}
-        <View style={{ alignItems: 'center', marginBottom: 40 }}>
+        <View style={{ alignItems: 'center', marginBottom: 36 }}>
           <View style={{
-            width: 56, height: 56, borderRadius: 18, backgroundColor: colors.primaryLight,
+            width: 48, height: 48, borderRadius: 12, backgroundColor: colors.primary,
             justifyContent: 'center', alignItems: 'center', marginBottom: 16,
           }}>
-            <Ionicons name="sparkles" size={28} color={colors.primary} />
+            <Ionicons name="sparkles" size={24} color={colors.primaryForeground} />
           </View>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 }}>HIREDGE</Text>
-          <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 4 }}>
-            Ton avantage dans la recherche d'emploi
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>Bon retour</Text>
+          <Text style={{ fontSize: 14, color: colors.mutedForeground, marginTop: 4 }}>
+            Connecte-toi à ton compte HIREDGE
           </Text>
         </View>
 
-        {/* Form Card */}
-        <View style={{
-          backgroundColor: colors.card, borderRadius: 20, padding: 20,
-          borderWidth: 1, borderColor: colors.border,
-        }}>
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>Email</Text>
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
-              borderRadius: 12, backgroundColor: colors.muted, paddingHorizontal: 12,
-            }}>
-              <Ionicons name="mail-outline" size={16} color={colors.mutedForeground} />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="ton@email.com"
-                placeholderTextColor={colors.mutedForeground}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-                style={{ flex: 1, padding: 13, fontSize: 14, color: colors.foreground }}
-              />
-            </View>
+        {/* Form */}
+        <View style={{ gap: 16, marginBottom: 20 }}>
+          {/* Email */}
+          <View>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Email</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="ton@email.com"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              style={{
+                borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+                backgroundColor: colors.card, paddingHorizontal: 14, paddingVertical: 12,
+                fontSize: 14, color: colors.foreground, height: 44,
+              }}
+            />
           </View>
 
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>Mot de passe</Text>
+          {/* Password */}
+          <View>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Mot de passe</Text>
             <View style={{
               flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
-              borderRadius: 12, backgroundColor: colors.muted, paddingHorizontal: 12,
+              borderRadius: 8, backgroundColor: colors.card, paddingHorizontal: 14, height: 44,
             }}>
-              <Ionicons name="lock-closed-outline" size={16} color={colors.mutedForeground} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
@@ -87,27 +83,53 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 secureTextEntry={!showPw}
                 autoComplete="password"
-                style={{ flex: 1, padding: 13, fontSize: 14, color: colors.foreground }}
+                style={{ flex: 1, fontSize: 14, color: colors.foreground }}
               />
               <TouchableOpacity onPress={() => setShowPw(!showPw)}>
                 <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
           </View>
+        </View>
 
-          <TouchableOpacity
-            onPress={handleLogin}
-            disabled={loading}
-            style={{
-              backgroundColor: loading ? colors.primaryMedium : colors.primary,
-              padding: 14, borderRadius: 12, alignItems: 'center',
-              flexDirection: 'row', justifyContent: 'center', gap: 8,
-            }}
-          >
-            {loading && <Ionicons name="sync" size={16} color="#fff" />}
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </Text>
+        {/* Submit */}
+        <TouchableOpacity
+          onPress={handleLogin}
+          disabled={loading}
+          style={{
+            backgroundColor: loading ? colors.primaryMedium : colors.primary,
+            height: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'row', gap: 8,
+          }}
+        >
+          {loading && <Ionicons name="sync" size={16} color={colors.primaryForeground} />}
+          <Text style={{ color: colors.primaryForeground, fontSize: 15, fontWeight: '600' }}>
+            {loading ? 'Connexion...' : 'Se connecter'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+          <Text style={{ marginHorizontal: 12, color: colors.mutedForeground, fontSize: 12 }}>Ou continuer avec</Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+        </View>
+
+        {/* Social buttons */}
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity style={{
+            flex: 1, height: 44, borderRadius: 8, borderWidth: 1, borderColor: colors.border,
+            backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <Ionicons name="logo-google" size={18} color={colors.foreground} />
+            <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{
+            flex: 1, height: 44, borderRadius: 8, borderWidth: 1, borderColor: colors.border,
+            backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <Ionicons name="logo-linkedin" size={18} color={colors.foreground} />
+            <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>LinkedIn</Text>
           </TouchableOpacity>
         </View>
 
@@ -117,7 +139,7 @@ export default function LoginScreen() {
             <TouchableOpacity>
               <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
                 Pas encore de compte ?{' '}
-                <Text style={{ fontWeight: '700', color: colors.primary }}>S'inscrire</Text>
+                <Text style={{ fontWeight: '600', color: colors.primary }}>S'inscrire</Text>
               </Text>
             </TouchableOpacity>
           </Link>

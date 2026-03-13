@@ -434,7 +434,7 @@ export default function EdgeScreen() {
           <Ionicons name="sparkles" size={18} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '800' }}>EDGE</Text>
+          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '700' }}>EDGE</Text>
           <Text style={{ color: colors.mutedForeground, fontSize: 11 }} numberOfLines={1}>
             {activeConversationId && conversations?.find(c => c.id === activeConversationId)?.title || 'Nouvelle conversation'}
           </Text>
@@ -461,7 +461,7 @@ export default function EdgeScreen() {
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
               paddingHorizontal: 18, paddingBottom: 16, borderBottomWidth: 1, borderColor: colors.border,
             }}>
-              <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '800' }}>Conversations</Text>
+              <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '700' }}>Conversations</Text>
               <TouchableOpacity onPress={() => setDrawerOpen(false)}>
                 <Ionicons name="close" size={22} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -588,7 +588,7 @@ export default function EdgeScreen() {
             {item.attachment?.type === 'image' && item.attachment.uri && (
               <Image
                 source={{ uri: item.attachment.uri }}
-                style={{ width: 180, height: 120, borderRadius: 14, marginBottom: 4 }}
+                style={{ width: 180, height: 120, borderRadius: 12, marginBottom: 4 }}
                 resizeMode="cover"
               />
             )}
@@ -676,7 +676,7 @@ export default function EdgeScreen() {
               key={i}
               onPress={() => handleSuggestion(s)}
               style={{
-                paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+                paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
                 borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.primaryLight,
               }}
             >
@@ -806,12 +806,12 @@ function WelcomeMessage() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, paddingBottom: 40 }}>
       <View style={{
-        width: 64, height: 64, borderRadius: 20, backgroundColor: colors.primaryLight,
+        width: 64, height: 64, borderRadius: 16, backgroundColor: colors.primaryLight,
         justifyContent: 'center', alignItems: 'center', marginBottom: 16,
       }}>
         <Ionicons name="sparkles" size={30} color={colors.primary} />
       </View>
-      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, textAlign: 'center', letterSpacing: -0.3 }}>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
         Salut ! Moi c'est EDGE
       </Text>
       <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>
@@ -833,7 +833,7 @@ function WelcomeMessage() {
 function SuggestionChip({ text, icon }: { text: string; icon: string }) {
   return (
     <TouchableOpacity style={{
-      borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 14,
+      borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14,
       paddingVertical: 12, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', gap: 10,
     }}>
       <Ionicons name={icon as any} size={16} color={colors.primary} />

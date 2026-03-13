@@ -1,42 +1,49 @@
-// HIREDGE Design System — Based on deep indigo/blue primary with modern look
-// Translated from oklch CSS variables to hex/rgba for React Native
+// HIREDGE Design System — Indigo primary matching reference Next.js app
+// oklch(0.55 0.22 270) ≈ #4F46E5 indigo-600
 
 export const colors = {
-  // Primary palette
-  primary: '#6C3FD9',
+  // Primary palette (indigo)
+  primary: '#4F46E5',
   primaryForeground: '#FFFFFF',
-  primaryLight: 'rgba(108, 63, 217, 0.10)',
-  primaryMedium: 'rgba(108, 63, 217, 0.20)',
+  primaryLight: 'rgba(79, 70, 229, 0.10)',
+  primaryMedium: 'rgba(79, 70, 229, 0.20)',
 
   // Semantic colors
   success: '#22C55E',
   successLight: 'rgba(34, 197, 94, 0.10)',
-  warning: '#EAB308',
-  warningLight: 'rgba(234, 179, 8, 0.10)',
+  successForeground: '#FFFFFF',
+  warning: '#F59E0B',
+  warningLight: 'rgba(245, 158, 11, 0.10)',
+  warningForeground: '#422006',
   destructive: '#EF4444',
   destructiveLight: 'rgba(239, 68, 68, 0.10)',
+  destructiveForeground: '#FFFFFF',
 
   // Chart colors
-  chart1: '#6C3FD9',
+  chart1: '#4F46E5',
   chart2: '#22C55E',
   chart3: '#0EA5E9',
-  chart4: '#EAB308',
-  chart5: '#D946EF',
+  chart4: '#F59E0B',
+  chart5: '#EC4899',
 
-  // Neutral palette (light mode)
-  background: '#FAFAFB',
+  // Neutral palette (light mode — slate scale)
+  background: '#FAFAFF',
   foreground: '#0F172A',
   card: '#FFFFFF',
   cardForeground: '#0F172A',
   muted: '#F1F5F9',
   mutedForeground: '#64748B',
+  secondary: '#F1F5F9',
+  secondaryForeground: '#1E293B',
+  accent: '#F1F5F9',
+  accentForeground: '#1E293B',
   border: '#E2E8F0',
   input: '#E2E8F0',
 
   // Sidebar (drawer)
-  sidebar: '#FAFAFB',
+  sidebar: '#FAFAFF',
   sidebarForeground: '#0F172A',
-  sidebarPrimary: '#6C3FD9',
+  sidebarPrimary: '#4F46E5',
   sidebarAccent: '#F1F5F9',
   sidebarBorder: '#E2E8F0',
 } as const;
@@ -52,8 +59,8 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  sm: 8,
-  md: 10,
+  sm: 6,
+  md: 8,
   lg: 12,
   xl: 16,
   '2xl': 20,
@@ -86,7 +93,7 @@ export const shadows = {
     elevation: 3,
   },
   lg: {
-    shadowColor: '#6C3FD9',
+    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

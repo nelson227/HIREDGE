@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
-import { colors, shadows, radius, fontSize, spacing } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -49,225 +49,212 @@ export default function HomeScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
-      {/* ─── Top Bar ─── */}
-      <View style={{
-        paddingTop: 56, paddingBottom: 12, paddingHorizontal: 20,
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{
-            width: 40, height: 40, borderRadius: 12,
-            backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
-          }}>
-            <Ionicons name="sparkles" size={20} color="#fff" />
+      <View style={{ padding: 16, paddingTop: 56 }}>
+        {/* Welcome Section */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <View>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>
+              Bonjour 👋
+            </Text>
+            <Text style={{ color: colors.mutedForeground, marginTop: 4, fontSize: 14 }}>
+              Voici ce qui se passe dans ta recherche.
+            </Text>
           </View>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground, letterSpacing: -0.5 }}>HIREDGE</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => router.push('/notifications')}
-          style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border }}
-        >
-          <Ionicons name="notifications-outline" size={20} color={colors.foreground} />
-          {notifications?.unread > 0 && (
-            <View style={{
-              position: 'absolute', top: -3, right: -3, backgroundColor: colors.destructive,
-              borderRadius: 8, width: 16, height: 16, justifyContent: 'center', alignItems: 'center',
-              borderWidth: 2, borderColor: colors.background,
-            }}>
-              <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{notifications.unread}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ paddingHorizontal: 20 }}>
-        {/* ─── Welcome ─── */}
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5, lineHeight: 34 }}>
-            Bonjour 👋
-          </Text>
-          <Text style={{ fontSize: 15, color: colors.mutedForeground, marginTop: 4 }}>
-            Voici ton tableau de bord.
-          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/notifications')}
+            style={{
+              width: 40, height: 40, borderRadius: 12,
+              backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center',
+              borderWidth: 1, borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.foreground} />
+            {notifications?.unread > 0 && (
+              <View style={{
+                position: 'absolute', top: -4, right: -4, backgroundColor: colors.destructive,
+                borderRadius: 8, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center',
+                paddingHorizontal: 4, borderWidth: 2, borderColor: colors.background,
+              }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{notifications.unread}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* ─── AI Insights Banner (gradient-like) ─── */}
+        {/* AI Insights Card — gradient-like */}
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/edge')}
           activeOpacity={0.85}
           style={{
-            borderRadius: 20, padding: 20, marginBottom: 24,
-            backgroundColor: colors.primaryLight,
-            borderWidth: 1.5, borderColor: colors.primaryMedium,
+            backgroundColor: colors.primaryLight, borderRadius: 12, padding: 16, marginBottom: 16,
+            borderWidth: 1, borderColor: colors.primaryMedium,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <View style={{
               width: 56, height: 56, borderRadius: 16,
               backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
             }}>
-              <Ionicons name="sparkles" size={26} color="#fff" />
+              <Ionicons name="sparkles" size={28} color={colors.primaryForeground} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '700', color: colors.foreground, fontSize: 16, marginBottom: 3 }}>
+              <Text style={{ fontWeight: '600', color: colors.foreground, fontSize: 15, marginBottom: 2 }}>
                 EDGE Insights
               </Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19 }}>
-                Recommandations IA personnalisées
+              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18 }}>
+                Des recommandations personnalisées t'attendent. Discute avec EDGE pour en savoir plus.
               </Text>
-            </View>
-            <View style={{
-              width: 36, height: 36, borderRadius: 10,
-              backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
-            }}>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </View>
           </View>
         </TouchableOpacity>
 
-        {/* ─── Stats : 4 colonnes horizontales ─── */}
+        {/* Stats Grid — 2x2 like reference */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+          <StatCard icon="briefcase-outline" value={total} label="Candidatures" color={colors.primary} />
+          <StatCard icon="trending-up-outline" value={`${responseRate}%`} label="Réponses" color={colors.success} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+          <StatCard icon="calendar-outline" value={interviews} label="Entretiens" color={colors.warning} />
+          <StatCard icon="chatbubble-outline" value={pending} label="En attente" color={colors.chart5} />
+        </View>
+
+        {/* Recent Job Matches */}
         <View style={{
-          backgroundColor: colors.card, borderRadius: 20, padding: 20,
-          borderWidth: 1, borderColor: colors.border, marginBottom: 24,
+          backgroundColor: colors.card, borderRadius: 12,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 16,
         }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
-            Vue d'ensemble
-          </Text>
-
-          <StatRow icon="paper-plane" label="Candidatures" value={total} color={colors.primary} />
-          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 14 }} />
-          <StatRow icon="calendar-outline" label="Entretiens" value={interviews} color={colors.success} />
-          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 14 }} />
-          <StatRow icon="trending-up-outline" label="Taux de réponse" value={`${responseRate}%`} color={colors.warning} />
-          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 14 }} />
-          <StatRow icon="time-outline" label="En attente" value={pending} color={colors.chart5} />
-        </View>
-
-        {/* ─── Quick Actions Grid ─── */}
-        <View style={{ marginBottom: 28 }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14 }}>
-            Actions rapides
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <ActionCard icon="search" label="Offres" color={colors.primary} onPress={() => router.push('/(tabs)/jobs')} />
-            <ActionCard icon="chatbubble-ellipses" label="EDGE" color={colors.chart3} onPress={() => router.push('/(tabs)/edge')} />
-            <ActionCard icon="mic" label="Entretien" color={colors.chart5} onPress={() => router.push('/interview')} />
-            <ActionCard icon="people" label="Squad" color={colors.warning} onPress={() => router.push('/(tabs)/squad')} />
-          </View>
-        </View>
-
-        {/* ─── Recent Matches ─── */}
-        <View style={{ marginBottom: 40 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          {/* Header */}
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            padding: 16, paddingBottom: 12,
+          }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
               Offres récentes
             </Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/jobs')}>
-              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>Voir tout</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/jobs')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Voir tout</Text>
+              <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
 
-          <View style={{
-            backgroundColor: colors.card, borderRadius: 20,
-            borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
-          }}>
-            {recommended && recommended.length > 0 ? (
-              recommended.map((job: any, i: number) => (
-                <TouchableOpacity
-                  key={job.id}
-                  onPress={() => router.push(`/job/${job.id}`)}
-                  activeOpacity={0.7}
-                  style={{
-                    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14,
-                    borderBottomWidth: i < recommended.length - 1 ? 1 : 0,
-                    borderColor: colors.border,
-                  }}
-                >
-                  <View style={{
-                    width: 48, height: 48, borderRadius: 14,
-                    backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center',
-                  }}>
-                    <Ionicons name="business-outline" size={20} color={colors.mutedForeground} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>
-                      {job.title}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
-                      {job.company?.name}{job.location ? ` · ${job.location}` : ''}
-                    </Text>
-                  </View>
-                  {job.matchScore != null && (
-                    <View style={{
-                      paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
-                      backgroundColor: job.matchScore >= 80 ? 'rgba(34, 197, 94, 0.10)' : colors.primaryLight,
-                    }}>
-                      <Text style={{
-                        fontSize: 12, fontWeight: '700',
-                        color: job.matchScore >= 80 ? colors.success : colors.primary,
-                      }}>
-                        {job.matchScore}%
-                      </Text>
-                    </View>
-                  )}
-                  <Ionicons name="chevron-forward" size={16} color={colors.border} />
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={{ padding: 32, alignItems: 'center' }}>
+          {/* Job list — divide-y */}
+          {recommended && recommended.length > 0 ? (
+            recommended.map((job: any, i: number) => (
+              <TouchableOpacity
+                key={job.id}
+                onPress={() => router.push(`/job/${job.id}`)}
+                activeOpacity={0.7}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+                  borderTopWidth: 1, borderColor: colors.border,
+                }}
+              >
                 <View style={{
-                  width: 56, height: 56, borderRadius: 16, backgroundColor: colors.muted,
-                  justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+                  width: 48, height: 48, borderRadius: 12,
+                  backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center',
                 }}>
-                  <Ionicons name="briefcase-outline" size={24} color={colors.mutedForeground} />
+                  <Ionicons name="business-outline" size={24} color={colors.mutedForeground} />
                 </View>
-                <Text style={{ color: colors.mutedForeground, textAlign: 'center', fontSize: 13 }}>
-                  Complète ton profil pour recevoir des recommandations
-                </Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>
+                        {job.title}
+                      </Text>
+                      <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{job.company?.name}</Text>
+                    </View>
+                    {job.matchScore != null && (
+                      <View style={{
+                        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
+                        backgroundColor: job.matchScore >= 90 ? colors.successLight : job.matchScore >= 80 ? colors.primaryLight : colors.muted,
+                      }}>
+                        <Text style={{
+                          fontSize: 12, fontWeight: '600',
+                          color: job.matchScore >= 90 ? colors.success : job.matchScore >= 80 ? colors.primary : colors.mutedForeground,
+                        }}>
+                          {job.matchScore}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                    {job.location && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Ionicons name="location-outline" size={12} color={colors.mutedForeground} />
+                        <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{job.location}</Text>
+                      </View>
+                    )}
+                    {job.salary && <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{job.salary}</Text>}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={{ padding: 32, alignItems: 'center', borderTopWidth: 1, borderColor: colors.border }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 12, backgroundColor: colors.muted,
+                justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+              }}>
+                <Ionicons name="briefcase-outline" size={24} color={colors.mutedForeground} />
               </View>
-            )}
-          </View>
+              <Text style={{ color: colors.mutedForeground, textAlign: 'center', fontSize: 13 }}>
+                Complète ton profil pour recevoir des recommandations
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Quick actions row */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 32 }}>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/edge')}
+            style={{
+              flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+              backgroundColor: colors.primary, borderRadius: 12, padding: 14, justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="sparkles" size={16} color={colors.primaryForeground} />
+            <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: 14 }}>
+              Parler à EDGE
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/jobs')}
+            style={{
+              flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+              backgroundColor: colors.card, borderRadius: 12, padding: 14, justifyContent: 'center',
+              borderWidth: 1, borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="search" size={16} color={colors.foreground} />
+            <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 14 }}>
+              Offres
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
   );
 }
 
-/* ─── Sub-components ─── */
-
-function StatRow({ icon, label, value, color }: { icon: string; label: string; value: number | string; color: string }) {
+function StatCard({ icon, value, label, color }: { icon: string; value: number | string; label: string; color: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{
-        width: 40, height: 40, borderRadius: 12,
-        backgroundColor: color + '15', justifyContent: 'center', alignItems: 'center',
-      }}>
-        <Ionicons name={icon as any} size={18} color={color} />
+    <View style={{
+      flex: 1, backgroundColor: colors.card, borderRadius: 12, padding: 16,
+      borderWidth: 1, borderColor: colors.border,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{
+          width: 40, height: 40, borderRadius: 12,
+          backgroundColor: color + '18', justifyContent: 'center', alignItems: 'center',
+        }}>
+          <Ionicons name={icon as any} size={20} color={color} />
+        </View>
+        <View>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground }}>{value}</Text>
+          <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{label}</Text>
+        </View>
       </View>
-      <Text style={{ flex: 1, fontSize: 14, color: colors.mutedForeground, marginLeft: 14, fontWeight: '500' }}>{label}</Text>
-      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>{value}</Text>
     </View>
-  );
-}
-
-function ActionCard({ icon, label, color, onPress }: { icon: string; label: string; color: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={{
-        flex: 1, backgroundColor: colors.card, borderRadius: 16,
-        paddingVertical: 18, alignItems: 'center', gap: 8,
-        borderWidth: 1, borderColor: colors.border,
-      }}
-    >
-      <View style={{
-        width: 44, height: 44, borderRadius: 14,
-        backgroundColor: color + '12', justifyContent: 'center', alignItems: 'center',
-      }}>
-        <Ionicons name={icon as any} size={22} color={color} />
-      </View>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.foreground }}>{label}</Text>
-    </TouchableOpacity>
   );
 }

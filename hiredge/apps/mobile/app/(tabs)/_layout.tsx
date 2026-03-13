@@ -13,7 +13,7 @@ function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName
       width: 48,
       height: 36,
       borderRadius: 12,
-      backgroundColor: focused ? colors.primaryLight : 'transparent',
+      backgroundColor: focused ? colors.primary + '15' : 'transparent',
     }}>
       <Ionicons name={focused ? focusedName : name} size={22} color={color} />
     </View>

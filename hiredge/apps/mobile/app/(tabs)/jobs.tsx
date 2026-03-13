@@ -4,7 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
-import { colors, spacing, radius, fontSize, shadows } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 // ─── Types des filtres ──────────────────────────────────────────────────────
 interface Filters {
@@ -138,12 +138,10 @@ export default function JobsScreen() {
         {/* Row 1 : Company + Title + Match */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
           <View style={{
-            width: 44, height: 44, borderRadius: 14,
-            backgroundColor: colors.primary + '12', justifyContent: 'center', alignItems: 'center',
+            width: 48, height: 48, borderRadius: 12,
+            backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: colors.primary }}>
-              {(item.company?.name ?? '?')[0].toUpperCase()}
-            </Text>
+            <Ionicons name="business-outline" size={24} color={colors.mutedForeground} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, lineHeight: 20 }} numberOfLines={2}>
@@ -155,11 +153,10 @@ export default function JobsScreen() {
           </View>
           {item.matchScore != null && (
             <View style={{
-              width: 46, height: 46, borderRadius: 23,
+              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
               backgroundColor: getMatchBg(item.matchScore),
-              justifyContent: 'center', alignItems: 'center',
             }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: getMatchColor(item.matchScore) }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: getMatchColor(item.matchScore) }}>
                 {item.matchScore}%
               </Text>
             </View>
@@ -222,7 +219,7 @@ export default function JobsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* ─── Sticky Header ─── */}
       <View style={{ backgroundColor: colors.background, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5, marginBottom: 14 }}>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground, marginBottom: 14 }}>
           Offres d'emploi
         </Text>
 
@@ -230,7 +227,7 @@ export default function JobsScreen() {
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{
             flex: 1, flexDirection: 'row', alignItems: 'center',
-            backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 14,
+            backgroundColor: colors.card, borderRadius: 12, paddingHorizontal: 14,
             borderWidth: 1, borderColor: colors.border,
           }}>
             <Ionicons name="search" size={17} color={colors.mutedForeground} />
@@ -250,7 +247,7 @@ export default function JobsScreen() {
           <TouchableOpacity
             onPress={openFilters}
             style={{
-              width: 48, height: 48, borderRadius: 14,
+              width: 48, height: 48, borderRadius: 12,
               backgroundColor: activeCount > 0 ? colors.primary : colors.card,
               borderWidth: activeCount > 0 ? 0 : 1, borderColor: colors.border,
               justifyContent: 'center', alignItems: 'center',
@@ -311,7 +308,7 @@ export default function JobsScreen() {
           ListHeaderComponent={
             <View style={{
               marginHorizontal: 16, marginTop: 4,
-              backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+              backgroundColor: colors.card, borderTopLeftRadius: 12, borderTopRightRadius: 12,
               borderWidth: 1, borderBottomWidth: 0, borderColor: colors.border,
               height: 0,
             }} />
@@ -323,8 +320,8 @@ export default function JobsScreen() {
                 marginHorizontal: 16,
                 backgroundColor: colors.card,
                 borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.border,
-                ...(index === 0 ? { borderTopWidth: 1, borderTopLeftRadius: 20, borderTopRightRadius: 20 } : {}),
-                ...(index === jobs.length - 1 ? { borderBottomWidth: 1, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 } : {}),
+                ...(index === 0 ? { borderTopWidth: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12 } : {}),
+                ...(index === jobs.length - 1 ? { borderBottomWidth: 1, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 } : {}),
               }}
             >
               {children}
@@ -337,7 +334,7 @@ export default function JobsScreen() {
           }
           ListEmptyComponent={
             <View style={{
-              marginHorizontal: 16, backgroundColor: colors.card, borderRadius: 20,
+              marginHorizontal: 16, backgroundColor: colors.card, borderRadius: 12,
               borderWidth: 1, borderColor: colors.border, padding: 48, alignItems: 'center',
             }}>
               <View style={{
@@ -361,7 +358,7 @@ export default function JobsScreen() {
             paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16,
             borderBottomWidth: 1, borderColor: colors.border,
           }}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>Filtres</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>Filtres</Text>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <TouchableOpacity onPress={resetFilters}>
                 <Text style={{ fontSize: 14, color: colors.mutedForeground, fontWeight: '600' }}>Réinitialiser</Text>
@@ -436,9 +433,9 @@ export default function JobsScreen() {
           <View style={{ padding: 20, paddingBottom: Platform.OS === 'ios' ? 34 : 20, borderTopWidth: 1, borderColor: colors.border }}>
             <TouchableOpacity
               onPress={applyFilters}
-              style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
+              style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
                 Voir les offres {countActiveFilters(tempFilters) > 0 ? `(${countActiveFilters(tempFilters)} filtre${countActiveFilters(tempFilters) > 1 ? 's' : ''})` : ''}
               </Text>
             </TouchableOpacity>
@@ -467,7 +464,7 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
       style={{
         paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
         backgroundColor: active ? colors.primary : colors.card,
-        borderWidth: 1.5, borderColor: active ? colors.primary : colors.border,
+        borderWidth: 1, borderColor: active ? colors.primary : colors.border,
       }}
     >
       <Text style={{ fontSize: 13, fontWeight: '600', color: active ? '#fff' : colors.foreground }}>{label}</Text>

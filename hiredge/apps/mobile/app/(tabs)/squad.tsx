@@ -50,7 +50,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 }}>Escouade</Text>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>Escouade</Text>
         <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 4 }}>
           Rejoins un groupe de 5-8 personnes pour vous entraider
         </Text>
@@ -62,7 +62,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
           <TouchableOpacity
             onPress={() => setShowCreate(true)}
             style={{
-              backgroundColor: colors.primary, borderRadius: 16, padding: 16,
+              backgroundColor: colors.primary, borderRadius: 12, padding: 14,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24,
             }}
           >
@@ -71,7 +71,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
           </TouchableOpacity>
         ) : (
           <View style={{
-            backgroundColor: colors.card, borderRadius: 20, padding: 18,
+            backgroundColor: colors.card, borderRadius: 12, padding: 16,
             borderWidth: 1, borderColor: colors.border, marginBottom: 24,
           }}>
             <TextInput
@@ -117,21 +117,21 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
         )}
 
         {/* Available squads */}
-        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.mutedForeground, marginBottom: 12 }}>
           Escouades disponibles
         </Text>
 
         {available?.length > 0 ? (
           <View style={{
-            backgroundColor: colors.card, borderRadius: 20, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+            backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
           }}>
             {available.map((sq: any, i: number) => (
               <View key={sq.id} style={{
                 padding: 16, borderBottomWidth: i < available.length - 1 ? 1 : 0, borderColor: colors.border,
-                flexDirection: 'row', alignItems: 'center', gap: 14,
+                flexDirection: 'row', alignItems: 'center', gap: 12,
               }}>
                 <View style={{
-                  width: 44, height: 44, borderRadius: 14,
+                  width: 40, height: 40, borderRadius: 12,
                   backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                 }}>
                   <Ionicons name="people" size={20} color={colors.primary} />
@@ -156,11 +156,11 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
           </View>
         ) : (
           <View style={{
-            backgroundColor: colors.card, borderRadius: 20, padding: 40,
+            backgroundColor: colors.card, borderRadius: 12, padding: 40,
             borderWidth: 1, borderColor: colors.border, alignItems: 'center',
           }}>
             <View style={{
-              width: 48, height: 48, borderRadius: 14, backgroundColor: colors.muted,
+              width: 48, height: 48, borderRadius: 12, backgroundColor: colors.muted,
               justifyContent: 'center', alignItems: 'center', marginBottom: 10,
             }}>
               <Ionicons name="people-outline" size={22} color={colors.mutedForeground} />
@@ -213,7 +213,7 @@ function SquadDetailView({ squad }: { squad: any }) {
             <Ionicons name="people" size={20} color={colors.primary} />
           </View>
           <View>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground }}>{squad.name}</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>{squad.name}</Text>
             <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{squad.members?.length ?? 0} membres</Text>
           </View>
         </View>
@@ -250,10 +250,10 @@ function SquadDetailView({ squad }: { squad: any }) {
               <View style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                   <View style={{
-                    width: 24, height: 24, borderRadius: 8,
+                    width: 32, height: 32, borderRadius: 8,
                     backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                   }}>
-                    <Text style={{ fontSize: 10, fontWeight: '800', color: colors.primary }}>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>
                       {(item.user?.fullName ?? '?')[0].toUpperCase()}
                     </Text>
                   </View>
@@ -265,8 +265,8 @@ function SquadDetailView({ squad }: { squad: any }) {
                   </Text>
                 </View>
                 <View style={{
-                  backgroundColor: colors.card, borderRadius: 16, borderTopLeftRadius: 4,
-                  padding: 12, marginLeft: 32, borderWidth: 1, borderColor: colors.border,
+                    backgroundColor: colors.muted, borderRadius: 16, borderTopLeftRadius: 4,
+                  padding: 12, marginLeft: 40,
                 }}>
                   <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 19 }}>{item.content}</Text>
                 </View>
@@ -275,7 +275,7 @@ function SquadDetailView({ squad }: { squad: any }) {
             ListEmptyComponent={
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
                 <View style={{
-                  width: 48, height: 48, borderRadius: 14, backgroundColor: colors.muted,
+                  width: 48, height: 48, borderRadius: 12, backgroundColor: colors.muted,
                   justifyContent: 'center', alignItems: 'center', marginBottom: 10,
                 }}>
                   <Ionicons name="chatbubbles-outline" size={22} color={colors.mutedForeground} />
@@ -315,7 +315,7 @@ function SquadDetailView({ squad }: { squad: any }) {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           <View style={{
-            backgroundColor: colors.card, borderRadius: 20, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+            backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
           }}>
             {squad.members?.map((m: any, i: number) => (
               <View key={m.id} style={{
@@ -326,7 +326,7 @@ function SquadDetailView({ squad }: { squad: any }) {
                   width: 40, height: 40, borderRadius: 12,
                   backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.primary }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.primary }}>
                     {(m.user?.fullName ?? '?')[0].toUpperCase()}
                   </Text>
                 </View>

@@ -34,40 +34,25 @@ export default function ProfileScreen() {
 
   const completion = profile?.completionScore ?? 0;
 
-  // Circular progress ring via views
-  const ringSize = 100;
-  const strokeWidth = 8;
-
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       {/* ─── Hero Header ─── */}
-      <View style={{ paddingTop: 56, paddingBottom: 28, paddingHorizontal: 20, alignItems: 'center' }}>
-        {/* Avatar ring */}
+      <View style={{ paddingTop: 56, paddingBottom: 24, paddingHorizontal: 20, alignItems: 'center' }}>
+        {/* Avatar — square rounded like reference w-24 h-24 rounded-2xl */}
         <View style={{
-          width: ringSize, height: ringSize, borderRadius: ringSize / 2,
-          backgroundColor: colors.primaryLight,
+          width: 96, height: 96, borderRadius: 16,
+          backgroundColor: colors.primary,
           justifyContent: 'center', alignItems: 'center', marginBottom: 14,
-          borderWidth: strokeWidth, borderColor: colors.border,
         }}>
-          {/* Completion overlay — simple color ring */}
-          <View style={{
-            position: 'absolute', width: ringSize, height: ringSize, borderRadius: ringSize / 2,
-            borderWidth: strokeWidth, borderColor: completion >= 100 ? colors.success : colors.primary,
-            borderTopColor: completion >= 75 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
-            borderRightColor: completion >= 50 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
-            borderBottomColor: completion >= 25 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
-            borderLeftColor: completion >= 100 ? colors.success : colors.primary,
-            transform: [{ rotate: '-90deg' }],
-          }} />
-          <Text style={{ fontSize: 34, fontWeight: '800', color: colors.primary }}>
+          <Text style={{ fontSize: 36, fontWeight: '700', color: colors.primaryForeground }}>
             {(user?.fullName ?? '?')[0].toUpperCase()}
           </Text>
         </View>
 
-        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 }}>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>
           {user?.fullName ?? 'Utilisateur'}
         </Text>
         <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>{user?.email}</Text>
@@ -76,10 +61,10 @@ export default function ProfileScreen() {
         <View style={{
           marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
           backgroundColor: completion >= 80 ? 'rgba(34,197,94,0.10)' : colors.primaryLight,
-          paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999,
+          paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
         }}>
           <Ionicons name={completion >= 80 ? 'checkmark-circle' : 'alert-circle'} size={14} color={completion >= 80 ? colors.success : colors.primary} />
-          <Text style={{ fontSize: 12, fontWeight: '700', color: completion >= 80 ? colors.success : colors.primary }}>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: completion >= 80 ? colors.success : colors.primary }}>
             Profil {completion}% complété
           </Text>
         </View>
@@ -88,8 +73,8 @@ export default function ProfileScreen() {
       <View style={{ paddingHorizontal: 16 }}>
         {/* ─── Stats Row ─── */}
         <View style={{
-          flexDirection: 'row', backgroundColor: colors.card, borderRadius: 20,
-          borderWidth: 1, borderColor: colors.border, marginBottom: 20, overflow: 'hidden',
+          flexDirection: 'row', backgroundColor: colors.card, borderRadius: 12,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 16, overflow: 'hidden',
         }}>
           <MiniStat label="Candidatures" value={profile?.stats?.applications ?? 0} color={colors.primary} />
           <View style={{ width: 1, backgroundColor: colors.border }} />
@@ -115,7 +100,7 @@ export default function ProfileScreen() {
               {profile.skills.map((skill: any) => (
                 <View key={skill.id} style={{
                   flexDirection: 'row', alignItems: 'center', gap: 4,
-                  backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
+                  backgroundColor: colors.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
                 }}>
                   <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>{skill.name}</Text>
                   {skill.level > 0 && (
@@ -202,7 +187,7 @@ export default function ProfileScreen() {
 
         {/* ─── Actions ─── */}
         <View style={{
-          backgroundColor: colors.card, borderRadius: 20,
+          backgroundColor: colors.card, borderRadius: 12,
           borderWidth: 1, borderColor: colors.border, marginBottom: 12, overflow: 'hidden',
         }}>
           <ActionRow icon="settings-outline" label="Paramètres" onPress={() => router.push('/settings')} />
@@ -240,17 +225,17 @@ export default function ProfileScreen() {
 function SectionCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
     <View style={{
-      backgroundColor: colors.card, borderRadius: 20, padding: 18,
+      backgroundColor: colors.card, borderRadius: 12, padding: 16,
       borderWidth: 1, borderColor: colors.border, marginBottom: 12,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <View style={{
-          width: 34, height: 34, borderRadius: 10,
+          width: 40, height: 40, borderRadius: 12,
           backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
         }}>
-          <Ionicons name={icon as any} size={16} color={colors.primary} />
+          <Ionicons name={icon as any} size={18} color={colors.primary} />
         </View>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground }}>{title}</Text>
+        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground }}>{title}</Text>
       </View>
       {children}
     </View>

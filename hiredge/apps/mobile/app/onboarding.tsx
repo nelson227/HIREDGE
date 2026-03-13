@@ -114,12 +114,12 @@ export default function OnboardingScreen() {
         {/* Step 0: Welcome */}
         <View style={{ width, paddingHorizontal: 28, justifyContent: 'center' }}>
           <View style={{
-            width: 64, height: 64, borderRadius: 20, backgroundColor: colors.primaryLight,
+            width: 56, height: 56, borderRadius: 16, backgroundColor: colors.primary,
             justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 24,
           }}>
-            <Ionicons name="sparkles" size={30} color={colors.primary} />
+            <Ionicons name="sparkles" size={26} color={colors.primaryForeground} />
           </View>
-          <Text style={{ fontSize: 26, fontWeight: '800', color: colors.foreground, textAlign: 'center', letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 26, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
             Bienvenue sur{'\n'}HIREDGE
           </Text>
           <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 10, lineHeight: 20 }}>
@@ -128,7 +128,7 @@ export default function OnboardingScreen() {
             et t'accompagner à chaque étape.
           </Text>
           <View style={{
-            marginTop: 32, backgroundColor: colors.card, borderRadius: 20,
+            marginTop: 32, backgroundColor: colors.card, borderRadius: 12,
             borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
           }}>
             <FeatureRow icon="sparkles-outline" text="Matching intelligent des offres" border />
@@ -140,7 +140,7 @@ export default function OnboardingScreen() {
 
         {/* Step 1: Profile */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 }}>Parle-nous de toi</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Parle-nous de toi</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
             Ces infos aident EDGE à personnaliser tes recommandations
           </Text>
@@ -167,7 +167,7 @@ export default function OnboardingScreen() {
 
         {/* Step 2: Skills */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 }}>Tes compétences</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Tes compétences</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
             Sélectionne celles qui te correspondent ({form.skills.length} sélectionnées)
           </Text>
@@ -193,7 +193,7 @@ export default function OnboardingScreen() {
 
         {/* Step 3: Preferences */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 }}>Tes préférences</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Tes préférences</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
             Pour te proposer les meilleures offres
           </Text>
@@ -248,7 +248,7 @@ export default function OnboardingScreen() {
           }}>
             <Ionicons name="checkmark-circle" size={44} color={colors.success} />
           </View>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.foreground, textAlign: 'center', letterSpacing: -0.3 }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
             Tu es prêt !
           </Text>
           <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 10, lineHeight: 20 }}>
@@ -280,11 +280,11 @@ export default function OnboardingScreen() {
           onPress={goNext}
           disabled={saveMutation.isPending}
           style={{
-            backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12,
+            backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8,
             opacity: saveMutation.isPending ? 0.6 : 1, flexDirection: 'row', alignItems: 'center', gap: 6,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
             {step === STEPS.length - 1 ? (saveMutation.isPending ? 'Enregistrement...' : "C'est parti !") : 'Suivant'}
           </Text>
           {step < STEPS.length - 1 && <Ionicons name="chevron-forward" size={16} color="#fff" />}
@@ -301,10 +301,10 @@ function FeatureRow({ icon, text, border }: { icon: string; text: string; border
       borderBottomWidth: border ? 1 : 0, borderColor: colors.border,
     }}>
       <View style={{
-        width: 34, height: 34, borderRadius: 10, backgroundColor: colors.primaryLight,
+        width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primary + '18',
         justifyContent: 'center', alignItems: 'center',
       }}>
-        <Ionicons name={icon as any} size={16} color={colors.primary} />
+        <Ionicons name={icon as any} size={18} color={colors.primary} />
       </View>
       <Text style={{ fontSize: 13, color: colors.foreground, fontWeight: '500' }}>{text}</Text>
     </View>
@@ -321,8 +321,8 @@ function Input({ multiline, ...props }: any) {
       {...props}
       multiline={multiline}
       style={{
-        backgroundColor: colors.card, borderRadius: 12, paddingHorizontal: 14,
-        paddingVertical: 12, fontSize: 14, color: colors.foreground, marginBottom: 16,
+        backgroundColor: colors.card, borderRadius: 8, paddingHorizontal: 14,
+        paddingVertical: 12, fontSize: 14, color: colors.foreground, marginBottom: 16, height: 44,
         borderWidth: 1, borderColor: colors.border,
         ...(multiline ? { minHeight: 80, textAlignVertical: 'top' } : {}),
       }}
