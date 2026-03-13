@@ -1,9 +1,20 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { storage } from './storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (Platform.OS === 'web' ? '/api/v1' : 'http://localhost:3000/api/v1');
+function getApiUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  if (Platform.OS === 'web') return '/api/v1';
+  // On a real device, extract the host IP from Expo's debugger connection
+  const debuggerHost = Constants.expoConfig?.hostUri ?? Constants.manifest2?.extra?.expoGo?.debuggerHost;
+  const hostIp = debuggerHost?.split(':')[0];
+  if (hostIp) return `http://${hostIp}:3000/api/v1`;
+  return 'http://localhost:3000/api/v1';
+}
+
+const API_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,

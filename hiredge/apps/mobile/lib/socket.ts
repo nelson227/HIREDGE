@@ -1,7 +1,18 @@
 import { io, Socket } from 'socket.io-client';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+function getSocketUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  if (Platform.OS === 'web') return '';
+  const debuggerHost = Constants.expoConfig?.hostUri ?? Constants.manifest2?.extra?.expoGo?.debuggerHost;
+  const hostIp = debuggerHost?.split(':')[0];
+  if (hostIp) return `http://${hostIp}:3000`;
+  return 'http://localhost:3000';
+}
+
+const API_URL = getSocketUrl();
 
 let socket: Socket | null = null;
 
