@@ -222,8 +222,10 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
           ],
         });
         const raw = completion.choices[0]!.message.content ?? '{}';
+        console.log('[EDGE] Intent detected via LLM:', raw);
         return JSON.parse(raw);
-      } catch {
+      } catch (err: any) {
+        console.error('[EDGE] Intent detection LLM error:', err?.message ?? err);
         // Fall through to keyword detection
       }
     }
@@ -407,12 +409,14 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         });
         const responseText = completion.choices[0]!.message.content
           ?? "Je suis là pour t'aider ! Que puis-je faire pour toi ?";
+        console.log('[EDGE] Response generated via LLM');
         return {
           message: responseText,
           actions: this.getActions(intent),
           suggestedFollowups: this.getSuggestedFollowups(intent.intent),
         };
-      } catch {
+      } catch (err: any) {
+        console.error('[EDGE] Response generation LLM error:', err?.message ?? err);
         // Fall through to smart fallback
       }
     }

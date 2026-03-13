@@ -62,14 +62,19 @@ export default function AssistantPage() {
   const [authError, setAuthError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const skipNextLoadRef = useRef(false) // Skip loading when we just sent a message
 
   // Load conversations on mount
   useEffect(() => {
     loadConversations()
   }, [])
 
-  // Load messages when conversation changes
+  // Load messages when conversation changes (only if not skipped)
   useEffect(() => {
+    if (skipNextLoadRef.current) {
+      skipNextLoadRef.current = false
+      return
+    }
     if (currentConversation) {
       loadMessages(currentConversation)
     } else {
@@ -179,6 +184,8 @@ export default function AssistantPage() {
               _count: { messages: 1 }
             }
             setConversations(prev => [newConv, ...prev])
+            // Skip loading messages since we already have them locally
+            skipNextLoadRef.current = true
           }
           setCurrentConversation(newConvId)
           
@@ -243,6 +250,7 @@ export default function AssistantPage() {
         )
         if (data.success) {
           if (data.data.conversationId && !currentConversation) {
+            skipNextLoadRef.current = true
             setCurrentConversation(data.data.conversationId)
             loadConversations()
           }
