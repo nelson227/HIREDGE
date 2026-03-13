@@ -11,7 +11,7 @@
         "simulator": true
       },
       "env": {
-        "API_URL": "http://localhost:3000/api/v1"
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000/api/v1"
       }
     },
     "preview": {
@@ -23,7 +23,7 @@
         "buildType": "apk"
       },
       "env": {
-        "API_URL": "https://staging-api.hiredge.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://staging-api.hiredge.app/api/v1"
       }
     },
     "production": {
@@ -35,7 +35,7 @@
         "image": "latest"
       },
       "env": {
-        "API_URL": "https://api.hiredge.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://api.hiredge.app/api/v1"
       }
     }
   },
