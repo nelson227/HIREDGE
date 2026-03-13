@@ -1,15 +1,15 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/auth.store';
 import api from '../../lib/api';
-import { colors, spacing, radius, fontSize, shadows } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: profile, refetch } = useQuery({
     queryKey: ['profile'],
@@ -34,155 +34,200 @@ export default function ProfileScreen() {
 
   const completion = profile?.completionScore ?? 0;
 
+  // Circular progress ring via views
+  const ringSize = 100;
+  const strokeWidth = 8;
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
-      {/* Header */}
-      <View style={{
-        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing['3xl'],
-        paddingHorizontal: spacing.xl, alignItems: 'center',
-        borderBottomWidth: 1, borderColor: colors.border,
-      }}>
-        {/* Avatar */}
+      {/* ─── Hero Header ─── */}
+      <View style={{ paddingTop: 56, paddingBottom: 28, paddingHorizontal: 20, alignItems: 'center' }}>
+        {/* Avatar ring */}
         <View style={{
-          width: 88, height: 88, borderRadius: 44, backgroundColor: colors.primaryLight,
-          justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md,
-          borderWidth: 3, borderColor: colors.primary,
+          width: ringSize, height: ringSize, borderRadius: ringSize / 2,
+          backgroundColor: colors.primaryLight,
+          justifyContent: 'center', alignItems: 'center', marginBottom: 14,
+          borderWidth: strokeWidth, borderColor: colors.border,
         }}>
-          <Text style={{ fontSize: 36, fontWeight: '700', color: colors.primary }}>
+          {/* Completion overlay — simple color ring */}
+          <View style={{
+            position: 'absolute', width: ringSize, height: ringSize, borderRadius: ringSize / 2,
+            borderWidth: strokeWidth, borderColor: completion >= 100 ? colors.success : colors.primary,
+            borderTopColor: completion >= 75 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
+            borderRightColor: completion >= 50 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
+            borderBottomColor: completion >= 25 ? (completion >= 100 ? colors.success : colors.primary) : 'transparent',
+            borderLeftColor: completion >= 100 ? colors.success : colors.primary,
+            transform: [{ rotate: '-90deg' }],
+          }} />
+          <Text style={{ fontSize: 34, fontWeight: '800', color: colors.primary }}>
             {(user?.fullName ?? '?')[0].toUpperCase()}
           </Text>
         </View>
-        <Text style={{ color: colors.foreground, fontSize: fontSize.xl, fontWeight: '700' }}>
+
+        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 }}>
           {user?.fullName ?? 'Utilisateur'}
         </Text>
-        <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm + 1, marginTop: 2 }}>{user?.email}</Text>
+        <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>{user?.email}</Text>
 
-        {/* Completion Bar */}
-        <View style={{ width: '100%', marginTop: spacing.xl }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm }}>
-            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.xs + 1 }}>Profil complété</Text>
-            <Text style={{ color: colors.foreground, fontSize: fontSize.xs + 1, fontWeight: '700' }}>{completion}%</Text>
-          </View>
-          <View style={{ height: 6, backgroundColor: colors.muted, borderRadius: 3, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${completion}%`, backgroundColor: colors.success, borderRadius: 3 }} />
-          </View>
+        {/* Completion badge */}
+        <View style={{
+          marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
+          backgroundColor: completion >= 80 ? 'rgba(34,197,94,0.10)' : colors.primaryLight,
+          paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999,
+        }}>
+          <Ionicons name={completion >= 80 ? 'checkmark-circle' : 'alert-circle'} size={14} color={completion >= 80 ? colors.success : colors.primary} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: completion >= 80 ? colors.success : colors.primary }}>
+            Profil {completion}% complété
+          </Text>
         </View>
       </View>
 
-      {/* Sections */}
-      <View style={{ padding: spacing.lg, gap: spacing.md }}>
-        {/* Bio */}
-        <ProfileSection title="Titre professionnel" icon="briefcase-outline">
-          <Text style={{ color: colors.foreground, fontSize: fontSize.base }}>
+      <View style={{ paddingHorizontal: 16 }}>
+        {/* ─── Stats Row ─── */}
+        <View style={{
+          flexDirection: 'row', backgroundColor: colors.card, borderRadius: 20,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 20, overflow: 'hidden',
+        }}>
+          <MiniStat label="Candidatures" value={profile?.stats?.applications ?? 0} color={colors.primary} />
+          <View style={{ width: 1, backgroundColor: colors.border }} />
+          <MiniStat label="Entretiens" value={profile?.stats?.interviews ?? 0} color={colors.success} />
+          <View style={{ width: 1, backgroundColor: colors.border }} />
+          <MiniStat label="Simulations" value={profile?.stats?.simulations ?? 0} color={colors.chart5} />
+        </View>
+
+        {/* ─── Title + Bio ─── */}
+        <SectionCard title="Titre professionnel" icon="briefcase-outline">
+          <Text style={{ fontSize: 14, color: profile?.title ? colors.foreground : colors.mutedForeground, fontWeight: profile?.title ? '600' : '400' }}>
             {profile?.title || 'Non renseigné'}
           </Text>
           {profile?.bio && (
-            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm, marginTop: spacing.xs }}>{profile.bio}</Text>
+            <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 6, lineHeight: 19 }}>{profile.bio}</Text>
           )}
-        </ProfileSection>
+        </SectionCard>
 
-        {/* Skills */}
-        <ProfileSection title="Compétences" icon="code-slash-outline">
+        {/* ─── Skills ─── */}
+        <SectionCard title="Compétences" icon="code-slash-outline">
           {profile?.skills?.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {profile.skills.map((skill: any) => (
                 <View key={skill.id} style={{
-                  flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-                  backgroundColor: colors.primaryLight, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full,
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                  backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
                 }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.primary, fontWeight: '600' }}>{skill.name}</Text>
-                  <Text style={{ fontSize: 10, color: colors.primary, opacity: 0.6 }}>
-                    {['', '⭐', '⭐⭐', '⭐⭐⭐'][skill.level] ?? ''}
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>{skill.name}</Text>
+                  {skill.level > 0 && (
+                    <View style={{ flexDirection: 'row', gap: 1 }}>
+                      {[1, 2, 3].map(n => (
+                        <View key={n} style={{
+                          width: 4, height: 4, borderRadius: 2,
+                          backgroundColor: n <= skill.level ? colors.primary : colors.border,
+                        }} />
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute tes compétences</Text>
+          )}
+        </SectionCard>
+
+        {/* ─── Experiences ─── */}
+        <SectionCard title="Expériences" icon="business-outline">
+          {profile?.experiences?.length > 0 ? (
+            <View>
+              {profile.experiences.map((exp: any, i: number) => (
+                <View key={exp.id} style={{
+                  paddingBottom: i < profile.experiences.length - 1 ? 16 : 0,
+                  marginBottom: i < profile.experiences.length - 1 ? 16 : 0,
+                  borderBottomWidth: i < profile.experiences.length - 1 ? 1 : 0,
+                  borderColor: colors.border,
+                }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{exp.title}</Text>
+                  <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', marginTop: 2 }}>{exp.company}</Text>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                    {formatPeriod(exp.startDate, exp.endDate)}
+                  </Text>
+                  {exp.description && (
+                    <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6, lineHeight: 17 }} numberOfLines={3}>
+                      {exp.description}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute tes expériences</Text>
+          )}
+        </SectionCard>
+
+        {/* ─── Education ─── */}
+        <SectionCard title="Formation" icon="school-outline">
+          {profile?.educations?.length > 0 ? (
+            <View>
+              {profile.educations.map((edu: any, i: number) => (
+                <View key={edu.id} style={{
+                  paddingBottom: i < profile.educations.length - 1 ? 14 : 0,
+                  marginBottom: i < profile.educations.length - 1 ? 14 : 0,
+                  borderBottomWidth: i < profile.educations.length - 1 ? 1 : 0,
+                  borderColor: colors.border,
+                }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{edu.degree}</Text>
+                  <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>{edu.school}</Text>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
+                    {edu.fieldOfStudy} · {new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : 'En cours'}
                   </Text>
                 </View>
               ))}
             </View>
           ) : (
-            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm }}>Ajoute tes compétences</Text>
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute ta formation</Text>
           )}
-        </ProfileSection>
+        </SectionCard>
 
-        {/* Experience */}
-        <ProfileSection title="Expériences" icon="business-outline">
-          {profile?.experiences?.length > 0 ? (
-            profile.experiences.map((exp: any, idx: number) => (
-              <View key={exp.id} style={{ marginBottom: idx < profile.experiences.length - 1 ? spacing.lg : 0 }}>
-                <Text style={{ fontSize: fontSize.base, fontWeight: '600', color: colors.foreground }}>{exp.title}</Text>
-                <Text style={{ color: colors.primary, fontSize: fontSize.sm, marginTop: 1 }}>{exp.company}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: fontSize.xs + 1, marginTop: 2 }}>
-                  {formatPeriod(exp.startDate, exp.endDate)}
-                </Text>
-                {exp.description && (
-                  <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm, marginTop: spacing.xs }} numberOfLines={3}>
-                    {exp.description}
-                  </Text>
-                )}
-              </View>
-            ))
-          ) : (
-            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm }}>Ajoute tes expériences</Text>
-          )}
-        </ProfileSection>
+        {/* ─── Preferences ─── */}
+        <SectionCard title="Préférences" icon="options-outline">
+          <PrefRow label="Localisations" value={profile?.preferredLocations?.join(', ') || '—'} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
+          <PrefRow label="Contrat" value={profile?.contractPreferences?.join(', ') || '—'} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
+          <PrefRow label="Salaire" value={profile?.salaryExpectation ? `${profile.salaryExpectation.toLocaleString()} €/an` : '—'} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
+          <PrefRow label="Télétravail" value={profile?.remotePreference ? 'Oui' : '—'} />
+        </SectionCard>
 
-        {/* Education */}
-        <ProfileSection title="Formation" icon="school-outline">
-          {profile?.educations?.length > 0 ? (
-            profile.educations.map((edu: any) => (
-              <View key={edu.id} style={{ marginBottom: spacing.md }}>
-                <Text style={{ fontSize: fontSize.base, fontWeight: '600', color: colors.foreground }}>{edu.degree}</Text>
-                <Text style={{ color: colors.primary, fontSize: fontSize.sm }}>{edu.school}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: fontSize.xs + 1 }}>
-                  {edu.fieldOfStudy} • {new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : "En cours"}
-                </Text>
-              </View>
-            ))
-          ) : (
-            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm }}>Ajoute ta formation</Text>
-          )}
-        </ProfileSection>
-
-        {/* Preferences */}
-        <ProfileSection title="Préférences de recherche" icon="options-outline">
-          <View style={{ gap: spacing.sm }}>
-            <PrefRow label="Localisations" value={profile?.preferredLocations?.join(', ') || 'Non défini'} />
-            <PrefRow label="Type de contrat" value={profile?.contractPreferences?.join(', ') || 'Non défini'} />
-            <PrefRow label="Salaire souhaité" value={profile?.salaryExpectation ? `${profile.salaryExpectation.toLocaleString()} €/an` : 'Non défini'} />
-            <PrefRow label="Télétravail" value={profile?.remotePreference ? 'Oui' : 'Non défini'} />
-          </View>
-        </ProfileSection>
-
-        {/* Stats */}
-        <ProfileSection title="Statistiques" icon="stats-chart-outline">
-          <View style={{ flexDirection: 'row', gap: spacing.md }}>
-            <MiniStat label="Candidatures" value={profile?.stats?.applications ?? 0} />
-            <MiniStat label="Entretiens" value={profile?.stats?.interviews ?? 0} />
-            <MiniStat label="Simulations" value={profile?.stats?.simulations ?? 0} />
-          </View>
-        </ProfileSection>
-
-        {/* Actions */}
-        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          <ActionRow icon="settings-outline" label="Paramètres" onPress={() => {}} />
-          <ActionRow icon="notifications-outline" label="Préférences de notifications" onPress={() => {}} />
+        {/* ─── Actions ─── */}
+        <View style={{
+          backgroundColor: colors.card, borderRadius: 20,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 12, overflow: 'hidden',
+        }}>
+          <ActionRow icon="settings-outline" label="Paramètres" onPress={() => router.push('/settings')} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
+          <ActionRow icon="notifications-outline" label="Notifications" onPress={() => router.push('/notifications')} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
           <ActionRow icon="shield-checkmark-outline" label="Confidentialité" onPress={() => {}} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
           <ActionRow icon="help-circle-outline" label="Aide & Support" onPress={() => {}} />
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={{
-              backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg,
-              flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-              borderWidth: 1, borderColor: colors.destructiveLight,
-            }}
-          >
-            <Ionicons name="log-out-outline" size={20} color={colors.destructive} />
-            <Text style={{ color: colors.destructive, fontWeight: '600', fontSize: fontSize.base }}>Se déconnecter</Text>
-          </TouchableOpacity>
         </View>
 
-        <Text style={{ textAlign: 'center', color: colors.border, fontSize: fontSize.xs + 1, marginTop: spacing.lg, marginBottom: spacing['3xl'] }}>
+        {/* Logout */}
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={{
+            backgroundColor: 'rgba(239,68,68,0.06)', borderRadius: 16, padding: 16,
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+            borderWidth: 1, borderColor: 'rgba(239,68,68,0.15)', marginBottom: 12,
+          }}
+        >
+          <Ionicons name="log-out-outline" size={18} color={colors.destructive} />
+          <Text style={{ color: colors.destructive, fontWeight: '700', fontSize: 14 }}>Se déconnecter</Text>
+        </TouchableOpacity>
+
+        <Text style={{ textAlign: 'center', color: colors.border, fontSize: 11, marginTop: 4, marginBottom: 40 }}>
           HIREDGE v1.0.0
         </Text>
       </View>
@@ -192,40 +237,40 @@ export default function ProfileScreen() {
 
 // ─── Sub-components ───
 
-function ProfileSection({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+function SectionCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
     <View style={{
-      backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg,
-      borderWidth: 1, borderColor: colors.border, ...shadows.sm,
+      backgroundColor: colors.card, borderRadius: 20, padding: 18,
+      borderWidth: 1, borderColor: colors.border, marginBottom: 12,
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <View style={{
-          width: 32, height: 32, borderRadius: radius.sm, backgroundColor: colors.primaryLight,
-          justifyContent: 'center', alignItems: 'center',
+          width: 34, height: 34, borderRadius: 10,
+          backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
         }}>
           <Ionicons name={icon as any} size={16} color={colors.primary} />
         </View>
-        <Text style={{ fontSize: fontSize.base + 1, fontWeight: '700', color: colors.foreground }}>{title}</Text>
+        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground }}>{title}</Text>
       </View>
       {children}
     </View>
   );
 }
 
-function PrefRow({ label, value }: { label: string; value: string }) {
+function MiniStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm }}>{label}</Text>
-      <Text style={{ color: colors.foreground, fontSize: fontSize.sm, fontWeight: '500' }}>{value}</Text>
+    <View style={{ flex: 1, alignItems: 'center', paddingVertical: 18 }}>
+      <Text style={{ fontSize: 22, fontWeight: '800', color }}>{value}</Text>
+      <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 3, fontWeight: '500' }}>{label}</Text>
     </View>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: number }) {
+function PrefRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: colors.muted, borderRadius: radius.lg, padding: spacing.md }}>
-      <Text style={{ fontSize: fontSize.xl, fontWeight: '700', color: colors.primary }}>{value}</Text>
-      <Text style={{ fontSize: fontSize.xs, color: colors.mutedForeground, marginTop: 2 }}>{label}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{label}</Text>
+      <Text style={{ fontSize: 13, color: colors.foreground, fontWeight: '600', maxWidth: '60%', textAlign: 'right' }}>{value}</Text>
     </View>
   );
 }
@@ -233,18 +278,14 @@ function MiniStat({ label, value }: { label: string; value: number }) {
 function ActionRow({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
   return (
     <TouchableOpacity
-      onPress={onPress}
-      style={{
-        backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg,
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        borderWidth: 1, borderColor: colors.border,
-      }}
+      onPress={onPress} activeOpacity={0.7}
+      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 15 }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-        <Ionicons name={icon as any} size={20} color={colors.mutedForeground} />
-        <Text style={{ color: colors.foreground, fontWeight: '500', fontSize: fontSize.base }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Ionicons name={icon as any} size={19} color={colors.mutedForeground} />
+        <Text style={{ color: colors.foreground, fontWeight: '500', fontSize: 14 }}>{label}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.border} />
+      <Ionicons name="chevron-forward" size={16} color={colors.border} />
     </TouchableOpacity>
   );
 }

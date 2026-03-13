@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
 import { generatePDF, generateWord, downloadBlob, type CVData } from '../../lib/document-generator';
-import { colors, spacing, radius, fontSize as FS, shadows } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 // Load PDF.js from CDN at runtime (avoids Metro bundler issues)
 let pdfjsLib: any = null;
@@ -420,31 +420,31 @@ export default function EdgeScreen() {
     >
       {/* Header */}
       <View style={{
-        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing.lg, paddingHorizontal: spacing.xl,
-        flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+        backgroundColor: colors.background, paddingTop: 56, paddingBottom: 12, paddingHorizontal: 20,
+        flexDirection: 'row', alignItems: 'center', gap: 12,
         borderBottomWidth: 1, borderColor: colors.border,
       }}>
         <TouchableOpacity onPress={() => setDrawerOpen(true)} style={{ padding: 4 }}>
-          <Ionicons name="menu-outline" size={24} color={colors.foreground} />
+          <Ionicons name="menu-outline" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{
-          width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight,
+          width: 36, height: 36, borderRadius: 12, backgroundColor: colors.primaryLight,
           justifyContent: 'center', alignItems: 'center',
         }}>
-          <Text style={{ fontSize: 20 }}>🧠</Text>
+          <Ionicons name="sparkles" size={18} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.foreground, fontSize: FS.lg + 1, fontWeight: '700' }}>EDGE</Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: FS.xs + 1 }} numberOfLines={1}>
+          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '800' }}>EDGE</Text>
+          <Text style={{ color: colors.mutedForeground, fontSize: 11 }} numberOfLines={1}>
             {activeConversationId && conversations?.find(c => c.id === activeConversationId)?.title || 'Nouvelle conversation'}
           </Text>
         </View>
         <TouchableOpacity onPress={handleNewConversation} style={{ padding: 6 }}>
-          <Ionicons name="create-outline" size={22} color={colors.primary} />
+          <Ionicons name="create-outline" size={20} color={colors.primary} />
         </TouchableOpacity>
         {messages.length > 0 && (
           <TouchableOpacity onPress={handleExport} style={{ padding: 6 }}>
-            <Ionicons name="download-outline" size={22} color={colors.primary} />
+            <Ionicons name="download-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -453,17 +453,17 @@ export default function EdgeScreen() {
       <Modal visible={drawerOpen} animationType="slide" transparent>
         <View style={{ flex: 1, flexDirection: 'row' }}>
           <View style={{
-            width: 300, maxWidth: '80%', backgroundColor: colors.sidebar, flex: 1,
-            paddingTop: 60, paddingBottom: 40, borderRightWidth: 1, borderColor: colors.sidebarBorder,
+            width: 300, maxWidth: '80%', backgroundColor: colors.card, flex: 1,
+            paddingTop: 56, paddingBottom: 40, borderRightWidth: 1, borderColor: colors.border,
           }}>
             {/* Drawer header */}
             <View style={{
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, borderBottomWidth: 1, borderColor: colors.sidebarBorder,
+              paddingHorizontal: 18, paddingBottom: 16, borderBottomWidth: 1, borderColor: colors.border,
             }}>
-              <Text style={{ color: colors.sidebarForeground, fontSize: FS.lg + 1, fontWeight: '700' }}>Conversations</Text>
+              <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '800' }}>Conversations</Text>
               <TouchableOpacity onPress={() => setDrawerOpen(false)}>
-                <Ionicons name="close" size={24} color={colors.mutedForeground} />
+                <Ionicons name="close" size={22} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
 
@@ -471,17 +471,17 @@ export default function EdgeScreen() {
             <TouchableOpacity
               onPress={handleNewConversation}
               style={{
-                flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2,
-                margin: spacing.md, paddingHorizontal: spacing.lg - 2, paddingVertical: spacing.md,
-                backgroundColor: colors.primary, borderRadius: radius.lg,
+                flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center',
+                margin: 12, paddingHorizontal: 14, paddingVertical: 11,
+                backgroundColor: colors.primary, borderRadius: 12,
               }}
             >
-              <Ionicons name="add-circle-outline" size={20} color={colors.primaryForeground} />
-              <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: FS.base }}>Nouvelle conversation</Text>
+              <Ionicons name="add-circle-outline" size={18} color="#fff" />
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Nouvelle conversation</Text>
             </TouchableOpacity>
 
             {/* Conversations list */}
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: spacing.sm }}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 8 }}>
               {(conversations ?? []).map((conv) => {
                 const isActive = conv.id === activeConversationId;
                 const isEditing = editingConvId === conv.id;
@@ -490,13 +490,13 @@ export default function EdgeScreen() {
                     key={conv.id}
                     onPress={() => handleSwitchConversation(conv.id)}
                     style={{
-                      flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2,
-                      paddingHorizontal: spacing.md, paddingVertical: spacing.md, marginVertical: 2,
-                      backgroundColor: isActive ? colors.sidebarAccent : 'transparent',
-                      borderRadius: radius.md,
+                      flexDirection: 'row', alignItems: 'center', gap: 10,
+                      paddingHorizontal: 12, paddingVertical: 11, marginVertical: 2,
+                      backgroundColor: isActive ? colors.primaryLight : 'transparent',
+                      borderRadius: 10,
                     }}
                   >
-                    <Ionicons name="chatbubble-outline" size={16} color={isActive ? colors.primary : colors.mutedForeground} />
+                    <Ionicons name="chatbubble-outline" size={15} color={isActive ? colors.primary : colors.mutedForeground} />
                     {isEditing ? (
                       <TextInput
                         autoFocus
@@ -505,17 +505,17 @@ export default function EdgeScreen() {
                         onBlur={() => { handleRenameConversation(conv.id, editingTitle); }}
                         onSubmitEditing={() => { handleRenameConversation(conv.id, editingTitle); }}
                         style={{
-                          flex: 1, color: colors.foreground, fontSize: FS.sm + 1, borderBottomWidth: 1,
+                          flex: 1, color: colors.foreground, fontSize: 13, borderBottomWidth: 1,
                           borderColor: colors.primary, paddingVertical: 2,
                         }}
                         maxLength={200}
                       />
                     ) : (
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: colors.sidebarForeground, fontSize: FS.sm + 1, fontWeight: isActive ? '600' : '400' }} numberOfLines={1}>
+                        <Text style={{ color: colors.foreground, fontSize: 13, fontWeight: isActive ? '700' : '400' }} numberOfLines={1}>
                           {conv.title}
                         </Text>
-                        <Text style={{ color: colors.mutedForeground, fontSize: FS.xs, marginTop: 2 }}>
+                        <Text style={{ color: colors.mutedForeground, fontSize: 11, marginTop: 2 }}>
                           {conv._count.messages} msg · {formatDate(conv.updatedAt)}
                         </Text>
                       </View>
@@ -540,7 +540,7 @@ export default function EdgeScreen() {
                 );
               })}
               {(!conversations || conversations.length === 0) && (
-                <Text style={{ color: colors.mutedForeground, textAlign: 'center', marginTop: 32, fontSize: FS.sm + 1 }}>
+                <Text style={{ color: colors.mutedForeground, textAlign: 'center', marginTop: 32, fontSize: 13 }}>
                   Aucune conversation{'\n'}Envoie ton premier message !
                 </Text>
               )}
@@ -572,7 +572,7 @@ export default function EdgeScreen() {
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.sm, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 8, flexGrow: 1 }}
         ListEmptyComponent={<WelcomeMessage />}
         renderItem={({ item }) => {
           const parsed = item.role === 'user' ? parseMessageContent(item.content) : null;
@@ -582,38 +582,38 @@ export default function EdgeScreen() {
           return (
           <View style={{
             alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '80%', marginBottom: spacing.sm + 2,
+            maxWidth: '82%', marginBottom: 10,
           }}>
             {/* Attachment preview */}
             {item.attachment?.type === 'image' && item.attachment.uri && (
               <Image
                 source={{ uri: item.attachment.uri }}
-                style={{ width: 180, height: 120, borderRadius: radius.lg, marginBottom: 4 }}
+                style={{ width: 180, height: 120, borderRadius: 14, marginBottom: 4 }}
                 resizeMode="cover"
               />
             )}
             {(item.attachment?.type === 'document' || hasEmbeddedDoc) && (
               <View style={{
                 flexDirection: 'row', alignItems: 'center', gap: 6,
-                backgroundColor: colors.primaryLight, borderRadius: radius.md, paddingHorizontal: spacing.sm + 2, paddingVertical: 6,
+                backgroundColor: colors.primaryLight, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
                 marginBottom: 4, borderWidth: 1, borderColor: colors.primaryMedium,
               }}>
-                <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-                <Text style={{ fontSize: FS.xs + 1, color: colors.primary, fontWeight: '600' }}>
+                <Ionicons name="document-text-outline" size={15} color={colors.primary} />
+                <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
                   {item.attachment?.name ?? embeddedFileName}
                 </Text>
               </View>
             )}
             <View style={{
               backgroundColor: item.role === 'user' ? colors.primary : colors.card,
-              borderRadius: radius.xl,
-              borderBottomRightRadius: item.role === 'user' ? radius.xs : radius.xl,
-              borderBottomLeftRadius: item.role === 'assistant' ? radius.xs : radius.xl,
-              paddingHorizontal: spacing.lg - 2, paddingVertical: spacing.sm + 2,
+              borderRadius: 18,
+              borderBottomRightRadius: item.role === 'user' ? 4 : 18,
+              borderBottomLeftRadius: item.role === 'assistant' ? 4 : 18,
+              paddingHorizontal: 14, paddingVertical: 10,
               ...(item.role === 'assistant' ? { borderWidth: 1, borderColor: colors.border } : {}),
             }}>
               <Text style={{
-                color: item.role === 'user' ? colors.primaryForeground : colors.foreground, fontSize: FS.base, lineHeight: 22,
+                color: item.role === 'user' ? '#fff' : colors.foreground, fontSize: 14, lineHeight: 21,
               }}>
                 {displayContent || (hasEmbeddedDoc ? 'Fichier envoyé' : item.content)}
               </Text>
@@ -623,42 +623,42 @@ export default function EdgeScreen() {
             </Text>
             {/* Download buttons for generated documents */}
             {item.role === 'assistant' && item.actions?.some((a: any) => a.type === 'DOWNLOAD_DOCUMENT') && (
-              <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                 {item.actions!.filter((a: any) => a.type === 'DOWNLOAD_DOCUMENT').map((action: any, i: number) => (
-                  <View key={i} style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
                     <TouchableOpacity
                       onPress={() => handleDownloadPDF(action)}
                       disabled={!!downloadingFormat}
                       style={{
                         flexDirection: 'row', alignItems: 'center', gap: 6,
-                        backgroundColor: '#E74C3C', borderRadius: radius.lg,
-                        paddingHorizontal: spacing.lg - 2, paddingVertical: 9,
+                        backgroundColor: '#E74C3C', borderRadius: 10,
+                        paddingHorizontal: 14, paddingVertical: 9,
                         opacity: downloadingFormat === 'pdf' ? 0.6 : 1,
                       }}
                     >
                       {downloadingFormat === 'pdf' ? (
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
-                        <Ionicons name="document-text" size={16} color="#fff" />
+                        <Ionicons name="document-text" size={15} color="#fff" />
                       )}
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: FS.sm }}>PDF</Text>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>PDF</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDownloadWord(action)}
                       disabled={!!downloadingFormat}
                       style={{
                         flexDirection: 'row', alignItems: 'center', gap: 6,
-                        backgroundColor: '#2B5797', borderRadius: radius.lg,
-                        paddingHorizontal: spacing.lg - 2, paddingVertical: 9,
+                        backgroundColor: '#2B5797', borderRadius: 10,
+                        paddingHorizontal: 14, paddingVertical: 9,
                         opacity: downloadingFormat === 'word' ? 0.6 : 1,
                       }}
                     >
                       {downloadingFormat === 'word' ? (
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
-                        <Ionicons name="document" size={16} color="#fff" />
+                        <Ionicons name="document" size={15} color="#fff" />
                       )}
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: FS.sm }}>Word</Text>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Word</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -670,17 +670,17 @@ export default function EdgeScreen() {
 
       {/* Suggestions */}
       {lastAssistantMsg?.suggestedFollowups && lastAssistantMsg.suggestedFollowups.length > 0 && (
-        <View style={{ paddingHorizontal: spacing.lg, paddingBottom: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        <View style={{ paddingHorizontal: 16, paddingBottom: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {lastAssistantMsg.suggestedFollowups.map((s: string, i: number) => (
             <TouchableOpacity
               key={i}
               onPress={() => handleSuggestion(s)}
               style={{
-                paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.xl,
+                paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
                 borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.primaryLight,
               }}
             >
-              <Text style={{ fontSize: FS.sm, color: colors.primary, fontWeight: '500' }}>{s}</Text>
+              <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>{s}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -688,13 +688,13 @@ export default function EdgeScreen() {
 
       {/* Typing indicator */}
       {sendMutation.isPending && (
-        <View style={{ paddingHorizontal: spacing.lg, paddingBottom: 4 }}>
+        <View style={{ paddingHorizontal: 16, paddingBottom: 4 }}>
           <View style={{
-            backgroundColor: colors.card, alignSelf: 'flex-start', borderRadius: radius.xl,
-            borderBottomLeftRadius: radius.xs, paddingHorizontal: spacing.lg - 2, paddingVertical: spacing.sm + 2,
+            backgroundColor: colors.card, alignSelf: 'flex-start', borderRadius: 18,
+            borderBottomLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 10,
             borderWidth: 1, borderColor: colors.border,
           }}>
-            <Text style={{ color: colors.mutedForeground, fontSize: FS.sm + 1 }}>EDGE réfléchit...</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>EDGE réfléchit...</Text>
           </View>
         </View>
       )}
@@ -703,23 +703,23 @@ export default function EdgeScreen() {
       {isProcessingFile && (
         <View style={{
           flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10,
-          backgroundColor: colors.primaryLight, borderTopWidth: 1, borderColor: colors.primaryMedium, gap: spacing.sm,
+          backgroundColor: colors.primaryLight, borderTopWidth: 1, borderColor: colors.primaryMedium, gap: 8,
         }}>
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={{ fontSize: FS.sm, color: colors.primary, fontWeight: '500' }}>Extraction du texte du PDF...</Text>
+          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Extraction du texte du PDF...</Text>
         </View>
       )}
       {attachment && (
         <View style={{
-          flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-          backgroundColor: colors.primaryLight, borderTopWidth: 1, borderColor: colors.primaryMedium, gap: spacing.sm,
+          flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8,
+          backgroundColor: colors.primaryLight, borderTopWidth: 1, borderColor: colors.primaryMedium, gap: 8,
         }}>
           {attachment.type === 'image' && attachment.uri ? (
             <Image source={{ uri: attachment.uri }} style={{ width: 40, height: 40, borderRadius: 6 }} />
           ) : (
-            <Ionicons name="document-text" size={24} color={colors.primary} />
+            <Ionicons name="document-text" size={22} color={colors.primary} />
           )}
-          <Text style={{ flex: 1, fontSize: FS.sm, color: colors.primary, fontWeight: '500' }} numberOfLines={1}>
+          <Text style={{ flex: 1, fontSize: 12, color: colors.primary, fontWeight: '600' }} numberOfLines={1}>
             {attachment.name}
           </Text>
           <TouchableOpacity onPress={() => setAttachment(null)}>
@@ -730,25 +730,24 @@ export default function EdgeScreen() {
 
       {/* Input */}
       <View style={{
-        paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 88,
-        backgroundColor: colors.muted,
+        paddingHorizontal: 12, paddingTop: 10, paddingBottom: 88,
+        backgroundColor: colors.card,
         borderTopWidth: 1, borderColor: colors.border,
       }}>
         <View style={{
-          flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm,
-          backgroundColor: colors.card, borderRadius: radius['2xl'] + 8, borderWidth: 1,
-          borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-          ...shadows.sm,
+          flexDirection: 'row', alignItems: 'flex-end', gap: 6,
+          backgroundColor: colors.muted, borderRadius: 24, borderWidth: 1,
+          borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 6,
         }}>
           {/* Attach */}
           <TouchableOpacity
             onPress={() => Platform.OS === 'web' && fileInputRef.current?.click()}
             style={{
-              width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
+              width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center',
               backgroundColor: colors.primaryLight,
             }}
           >
-            <Ionicons name="attach" size={20} color={colors.primary} />
+            <Ionicons name="attach" size={18} color={colors.primary} />
           </TouchableOpacity>
 
           {/* Text input */}
@@ -766,8 +765,8 @@ export default function EdgeScreen() {
               }
             }}
             style={{
-              flex: 1, fontSize: FS.base, maxHeight: 120,
-              color: colors.foreground, paddingVertical: 8, paddingHorizontal: 4,
+              flex: 1, fontSize: 14, maxHeight: 120,
+              color: colors.foreground, paddingVertical: 7, paddingHorizontal: 4,
             }}
           />
 
@@ -775,11 +774,11 @@ export default function EdgeScreen() {
           <TouchableOpacity
             onPress={handleVoice}
             style={{
-              width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
+              width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center',
               backgroundColor: isRecording ? colors.destructive : colors.primaryLight,
             }}
           >
-            <Ionicons name={isRecording ? 'stop-circle' : 'mic-outline'} size={20} color={isRecording ? colors.primaryForeground : colors.primary} />
+            <Ionicons name={isRecording ? 'stop-circle' : 'mic-outline'} size={18} color={isRecording ? '#fff' : colors.primary} />
           </TouchableOpacity>
 
           {/* Send */}
@@ -787,15 +786,15 @@ export default function EdgeScreen() {
             onPress={handleSend}
             disabled={(!input.trim() && !attachment) || sendMutation.isPending}
             style={{
-              width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center',
-              backgroundColor: (input.trim() || attachment) ? colors.primary : colors.muted,
+              width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center',
+              backgroundColor: (input.trim() || attachment) ? colors.primary : colors.border,
             }}
           >
-            <Ionicons name="send" size={17} color={(input.trim() || attachment) ? colors.primaryForeground : colors.mutedForeground} />
+            <Ionicons name="send" size={16} color={(input.trim() || attachment) ? '#fff' : colors.mutedForeground} />
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: FS.xs, color: colors.mutedForeground, marginTop: 6, textAlign: 'center' }}>
+        <Text style={{ fontSize: 10, color: colors.mutedForeground, marginTop: 5, textAlign: 'center' }}>
           ↵ Entrée pour envoyer · Shift+↵ nouvelle ligne · 📎 documents &amp; images
         </Text>
       </View>
@@ -805,39 +804,41 @@ export default function EdgeScreen() {
 
 function WelcomeMessage() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, paddingBottom: 40 }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, paddingBottom: 40 }}>
       <View style={{
-        width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryLight,
-        justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg,
+        width: 64, height: 64, borderRadius: 20, backgroundColor: colors.primaryLight,
+        justifyContent: 'center', alignItems: 'center', marginBottom: 16,
       }}>
-        <Text style={{ fontSize: 36 }}>🧠</Text>
+        <Ionicons name="sparkles" size={30} color={colors.primary} />
       </View>
-      <Text style={{ fontSize: FS.xl, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
+      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground, textAlign: 'center', letterSpacing: -0.3 }}>
         Salut ! Moi c'est EDGE
       </Text>
-      <Text style={{ fontSize: FS.sm + 1, color: colors.mutedForeground, textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 }}>
-        Ton compagnon de recherche d'emploi. Dis-moi ce que tu cherches et je m'occupe du reste 💪
+      <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>
+        Ton compagnon de recherche d'emploi.{"\n"}Dis-moi ce que tu cherches et je m'occupe du reste
       </Text>
-      <View style={{ marginTop: spacing.xl, gap: spacing.sm, width: '100%' }}>
-        <SuggestionChip text="🔍 Cherche-moi un poste de développeur à Paris" />
-        <SuggestionChip text="📝 Prépare un CV pour une offre tech" />
-        <SuggestionChip text="🎭 Lance une simulation d'entretien" />
-        <SuggestionChip text="📊 Mes statistiques de recherche" />
+      <View style={{ marginTop: 24, gap: 8, width: '100%' }}>
+        <SuggestionChip text="Cherche-moi un poste de développeur" icon="search" />
+        <SuggestionChip text="Prépare un CV pour une offre tech" icon="document-text" />
+        <SuggestionChip text="Lance une simulation d'entretien" icon="mic" />
+        <SuggestionChip text="Mes statistiques de recherche" icon="bar-chart" />
       </View>
-      <Text style={{ fontSize: FS.xs + 1, color: colors.border, marginTop: spacing.lg, textAlign: 'center' }}>
-        💡 Astuce : envoie un document (CV, offre) ou une photo pour que je l'analyse
+      <Text style={{ fontSize: 11, color: colors.border, marginTop: 20, textAlign: 'center' }}>
+        Astuce : envoie un document ou une photo pour que je l'analyse
       </Text>
     </View>
   );
 }
 
-function SuggestionChip({ text }: { text: string }) {
+function SuggestionChip({ text, icon }: { text: string; icon: string }) {
   return (
     <TouchableOpacity style={{
-      borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: spacing.lg - 2,
-      paddingVertical: spacing.sm + 2, backgroundColor: colors.card,
+      borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 14,
+      paddingVertical: 12, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', gap: 10,
     }}>
-      <Text style={{ color: colors.foreground, fontSize: FS.sm + 1 }}>{text}</Text>
+      <Ionicons name={icon as any} size={16} color={colors.primary} />
+      <Text style={{ color: colors.foreground, fontSize: 13, flex: 1 }}>{text}</Text>
+      <Ionicons name="chevron-forward" size={14} color={colors.border} />
     </TouchableOpacity>
   );
 }

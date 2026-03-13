@@ -1,22 +1,15 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, FlatList, RefreshControl } from 'react-native';
-import { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
-import { colors, spacing, radius, fontSize, shadows } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 export default function SquadScreen() {
-  const queryClient = useQueryClient();
-
   const { data: mySquad, isLoading, refetch } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
-      try {
-        const { data } = await api.get('/squads/mine');
-        return data.data;
-      } catch {
-        return null;
-      }
+      try { const { data } = await api.get('/squads/mine'); return data.data; } catch { return null; }
     },
   });
 
@@ -28,14 +21,11 @@ export default function SquadScreen() {
     );
   }
 
-  if (!mySquad) {
-    return <NoSquadView onJoined={() => refetch()} />;
-  }
-
+  if (!mySquad) return <NoSquadView onJoined={() => refetch()} />;
   return <SquadDetailView squad={mySquad} />;
 }
 
-// ─── No Squad: Join or Create ───
+// ─── No Squad ────────────────────────────────────────────────────────────────
 function NoSquadView({ onJoined }: { onJoined: () => void }) {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
@@ -44,144 +34,139 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
 
   const { data: available } = useQuery({
     queryKey: ['availableSquads'],
-    queryFn: async () => {
-      const { data } = await api.get('/squads/available');
-      return data.data;
-    },
+    queryFn: async () => { const { data } = await api.get('/squads/available'); return data.data; },
   });
 
-  const joinMutation = useMutation({
-    mutationFn: async (squadId: string) => {
-      await api.post(`/squads/${squadId}/join`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mySquad'] });
-      onJoined();
-    },
+  const joinMut = useMutation({
+    mutationFn: async (id: string) => { await api.post(`/squads/${id}/join`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mySquad'] }); onJoined(); },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      await api.post('/squads', { name, description });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mySquad'] });
-      onJoined();
-    },
+  const createMut = useMutation({
+    mutationFn: async () => { await api.post('/squads', { name, description }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mySquad'] }); onJoined(); },
   });
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Header */}
-      <View style={{
-        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing['2xl'], paddingHorizontal: spacing.xl,
-        borderBottomWidth: 1, borderColor: colors.border,
-      }}>
-        <Text style={{ color: colors.foreground, fontSize: fontSize['2xl'], fontWeight: '700' }}>🤝 Escouade</Text>
-        <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm + 1, marginTop: spacing.xs }}>
+      <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20 }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 }}>Escouade</Text>
+        <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 4 }}>
           Rejoins un groupe de 5-8 personnes pour vous entraider
         </Text>
       </View>
 
-      {/* Create Squad */}
-      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl }}>
+      <View style={{ paddingHorizontal: 16 }}>
+        {/* Create form or button */}
         {!showCreate ? (
           <TouchableOpacity
             onPress={() => setShowCreate(true)}
             style={{
-              backgroundColor: colors.primary, borderRadius: radius.lg, padding: spacing.lg,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
-              ...shadows.lg,
+              backgroundColor: colors.primary, borderRadius: 16, padding: 16,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24,
             }}
           >
-            <Ionicons name="add-circle" size={20} color={colors.primaryForeground} />
-            <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: fontSize.base + 1 }}>Créer une escouade</Text>
+            <Ionicons name="add-circle" size={20} color="#fff" />
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Créer une escouade</Text>
           </TouchableOpacity>
         ) : (
-          <View style={{ backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadows.sm }}>
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 20, padding: 18,
+            borderWidth: 1, borderColor: colors.border, marginBottom: 24,
+          }}>
             <TextInput
-              value={name}
-              onChangeText={setName}
+              value={name} onChangeText={setName}
               placeholder="Nom de l'escouade"
               placeholderTextColor={colors.mutedForeground}
-              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, fontSize: fontSize.base, color: colors.foreground, marginBottom: spacing.md }}
+              style={{
+                borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12,
+                fontSize: 14, color: colors.foreground, marginBottom: 10,
+              }}
             />
             <TextInput
-              value={description}
-              onChangeText={setDescription}
+              value={description} onChangeText={setDescription}
               placeholder="Description (optionnel)"
               placeholderTextColor={colors.mutedForeground}
               multiline
-              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, fontSize: fontSize.base, color: colors.foreground, height: 80, textAlignVertical: 'top', marginBottom: spacing.md }}
+              style={{
+                borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12,
+                fontSize: 14, color: colors.foreground, height: 72, textAlignVertical: 'top', marginBottom: 12,
+              }}
             />
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 onPress={() => setShowCreate(false)}
-                style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, alignItems: 'center' }}
+                style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center' }}
               >
-                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Annuler</Text>
+                <Text style={{ color: colors.mutedForeground, fontWeight: '600', fontSize: 14 }}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => createMutation.mutate()}
-                disabled={!name.trim() || createMutation.isPending}
+                onPress={() => createMut.mutate()}
+                disabled={!name.trim() || createMut.isPending}
                 style={{
-                  flex: 1, backgroundColor: name.trim() ? colors.primary : colors.border, borderRadius: radius.md, padding: spacing.md, alignItems: 'center',
+                  flex: 1, backgroundColor: name.trim() ? colors.primary : colors.border,
+                  borderRadius: 12, padding: 12, alignItems: 'center',
                 }}
               >
-                <Text style={{ color: colors.primaryForeground, fontWeight: '600' }}>
-                  {createMutation.isPending ? 'Création...' : 'Créer'}
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+                  {createMut.isPending ? 'Création...' : 'Créer'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
-      </View>
 
-      {/* Available Squads */}
-      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing['2xl'] }}>
-        <Text style={{ fontSize: fontSize.lg + 1, fontWeight: '700', color: colors.foreground, marginBottom: spacing.md }}>
+        {/* Available squads */}
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
           Escouades disponibles
         </Text>
+
         {available?.length > 0 ? (
-          available.map((squad: any) => (
-            <View key={squad.id} style={{
-              backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.sm,
-              borderWidth: 1, borderColor: colors.border, ...shadows.sm,
-            }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 20, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+          }}>
+            {available.map((sq: any, i: number) => (
+              <View key={sq.id} style={{
+                padding: 16, borderBottomWidth: i < available.length - 1 ? 1 : 0, borderColor: colors.border,
+                flexDirection: 'row', alignItems: 'center', gap: 14,
+              }}>
+                <View style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
+                }}>
+                  <Ionicons name="people" size={20} color={colors.primary} />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: fontSize.base + 1, fontWeight: '600', color: colors.foreground }}>{squad.name}</Text>
-                  {squad.description && (
-                    <Text style={{ color: colors.mutedForeground, marginTop: 2, fontSize: fontSize.sm }} numberOfLines={2}>
-                      {squad.description}
-                    </Text>
-                  )}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm }}>
-                    <Ionicons name="people" size={14} color={colors.primary} />
-                    <Text style={{ fontSize: fontSize.sm, color: colors.primary, fontWeight: '500' }}>
-                      {squad._count?.members ?? 0}/8 membres
-                    </Text>
-                  </View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{sq.name}</Text>
+                  <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
+                    {sq._count?.members ?? 0}/8 membres
+                  </Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => joinMutation.mutate(squad.id)}
-                  disabled={joinMutation.isPending}
+                  onPress={() => joinMut.mutate(sq.id)}
+                  disabled={joinMut.isPending}
                   style={{
-                    backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md,
+                    backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
                   }}
                 >
-                  <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: fontSize.sm }}>Rejoindre</Text>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>Rejoindre</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          ))
+            ))}
+          </View>
         ) : (
-          <View style={{ alignItems: 'center', paddingVertical: spacing['3xl'] }}>
-            <View style={{ width: 56, height: 56, borderRadius: radius.xl, backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md }}>
-              <Ionicons name="people-outline" size={24} color={colors.mutedForeground} />
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 20, padding: 40,
+            borderWidth: 1, borderColor: colors.border, alignItems: 'center',
+          }}>
+            <View style={{
+              width: 48, height: 48, borderRadius: 14, backgroundColor: colors.muted,
+              justifyContent: 'center', alignItems: 'center', marginBottom: 10,
+            }}>
+              <Ionicons name="people-outline" size={22} color={colors.mutedForeground} />
             </View>
-            <Text style={{ color: colors.mutedForeground, textAlign: 'center' }}>
-              Aucune escouade disponible pour le moment
+            <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: 'center' }}>
+              Aucune escouade disponible
             </Text>
           </View>
         )}
@@ -190,13 +175,12 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
   );
 }
 
-// ─── Squad Detail: Members + Chat ───
+// ─── Squad Detail ────────────────────────────────────────────────────────────
 function SquadDetailView({ squad }: { squad: any }) {
   const [message, setMessage] = useState('');
   const [tab, setTab] = useState<'chat' | 'membres'>('chat');
-  const queryClient = useQueryClient();
 
-  const { data: messages, refetch: refetchMessages } = useQuery({
+  const { data: messages, refetch } = useQuery({
     queryKey: ['squadMessages', squad.id],
     queryFn: async () => {
       const { data } = await api.get(`/squads/${squad.id}/messages?limit=50`);
@@ -205,46 +189,52 @@ function SquadDetailView({ squad }: { squad: any }) {
     refetchInterval: 5000,
   });
 
-  const sendMutation = useMutation({
-    mutationFn: async (content: string) => {
-      await api.post(`/squads/${squad.id}/messages`, { content });
-    },
-    onSuccess: () => refetchMessages(),
+  const sendMut = useMutation({
+    mutationFn: async (content: string) => { await api.post(`/squads/${squad.id}/messages`, { content }); },
+    onSuccess: () => refetch(),
   });
 
   const handleSend = () => {
-    const text = message.trim();
-    if (!text || sendMutation.isPending) return;
+    const t = message.trim();
+    if (!t || sendMut.isPending) return;
     setMessage('');
-    sendMutation.mutate(text);
+    sendMut.mutate(t);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View style={{
-        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing.lg, paddingHorizontal: spacing.xl,
-        borderBottomWidth: 1, borderColor: colors.border,
-      }}>
-        <Text style={{ color: colors.foreground, fontSize: fontSize.xl, fontWeight: '700' }}>{squad.name}</Text>
-        <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm, marginTop: 2 }}>
-          {squad.members?.length ?? 0} membres
-        </Text>
+      <View style={{ paddingTop: 56, paddingBottom: 12, paddingHorizontal: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{
+            width: 40, height: 40, borderRadius: 12,
+            backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
+          }}>
+            <Ionicons name="people" size={20} color={colors.primary} />
+          </View>
+          <View>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground }}>{squad.name}</Text>
+            <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{squad.members?.length ?? 0} membres</Text>
+          </View>
+        </View>
       </View>
 
       {/* Tabs */}
-      <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border }}>
-        {(['chat', 'membres'] as const).map((t) => (
+      <View style={{
+        flexDirection: 'row', marginHorizontal: 16, backgroundColor: colors.muted,
+        borderRadius: 12, padding: 3, marginBottom: 6,
+      }}>
+        {(['chat', 'membres'] as const).map(t => (
           <TouchableOpacity
             key={t}
             onPress={() => setTab(t)}
             style={{
-              flex: 1, paddingVertical: spacing.md, alignItems: 'center',
-              borderBottomWidth: 2, borderColor: tab === t ? colors.primary : 'transparent',
+              flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10,
+              backgroundColor: tab === t ? colors.card : 'transparent',
             }}
           >
-            <Text style={{ fontWeight: '600', color: tab === t ? colors.primary : colors.mutedForeground }}>
-              {t === 'chat' ? '💬 Chat' : '👥 Membres'}
+            <Text style={{ fontWeight: '700', fontSize: 13, color: tab === t ? colors.foreground : colors.mutedForeground }}>
+              {t === 'chat' ? 'Chat' : 'Membres'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -255,98 +245,111 @@ function SquadDetailView({ squad }: { squad: any }) {
           <FlatList
             data={messages ?? []}
             keyExtractor={(item: any) => item.id}
-            contentContainerStyle={{ padding: spacing.lg, flexGrow: 1 }}
-            inverted={false}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
             renderItem={({ item }: { item: any }) => (
-              <View style={{ marginBottom: spacing.md }}>
-                <Text style={{ fontSize: fontSize.xs + 1, fontWeight: '600', color: colors.primary }}>
-                  {item.user?.fullName ?? 'Membre'}
-                </Text>
-                <View style={{
-                  backgroundColor: colors.card, borderRadius: radius.xl, borderTopLeftRadius: radius.xs + 2,
-                  padding: spacing.md, marginTop: 2, borderWidth: 1, borderColor: colors.border,
-                }}>
-                  <Text style={{ color: colors.foreground, fontSize: fontSize.sm + 1 }}>{item.content}</Text>
+              <View style={{ marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                  <View style={{
+                    width: 24, height: 24, borderRadius: 8,
+                    backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
+                  }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: colors.primary }}>
+                      {(item.user?.fullName ?? '?')[0].toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.foreground }}>
+                    {item.user?.fullName ?? 'Membre'}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: colors.border }}>
+                    {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
                 </View>
-                <Text style={{ fontSize: 10, color: colors.border, marginTop: 2 }}>
-                  {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
+                <View style={{
+                  backgroundColor: colors.card, borderRadius: 16, borderTopLeftRadius: 4,
+                  padding: 12, marginLeft: 32, borderWidth: 1, borderColor: colors.border,
+                }}>
+                  <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 19 }}>{item.content}</Text>
+                </View>
               </View>
             )}
             ListEmptyComponent={
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <View style={{ width: 56, height: 56, borderRadius: radius.xl, backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md }}>
-                  <Ionicons name="chatbubbles-outline" size={24} color={colors.mutedForeground} />
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
+                <View style={{
+                  width: 48, height: 48, borderRadius: 14, backgroundColor: colors.muted,
+                  justifyContent: 'center', alignItems: 'center', marginBottom: 10,
+                }}>
+                  <Ionicons name="chatbubbles-outline" size={22} color={colors.mutedForeground} />
                 </View>
-                <Text style={{ color: colors.mutedForeground }}>Commence la conversation !</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Commence la conversation !</Text>
               </View>
             }
           />
           {/* Input */}
           <View style={{
-            flexDirection: 'row', alignItems: 'flex-end', padding: spacing.md, backgroundColor: colors.card,
-            borderTopWidth: 1, borderColor: colors.border, gap: spacing.sm,
+            flexDirection: 'row', alignItems: 'flex-end', padding: 12, gap: 8,
+            backgroundColor: colors.card, borderTopWidth: 1, borderColor: colors.border,
           }}>
             <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Message à l'escouade..."
+              value={message} onChangeText={setMessage}
+              placeholder="Message..."
               placeholderTextColor={colors.mutedForeground}
               multiline
               style={{
-                flex: 1, backgroundColor: colors.muted, borderRadius: radius.full, paddingHorizontal: spacing.lg,
-                paddingVertical: spacing.md, fontSize: fontSize.base, maxHeight: 80, color: colors.foreground,
+                flex: 1, backgroundColor: colors.muted, borderRadius: 20,
+                paddingHorizontal: 16, paddingVertical: 10, fontSize: 14,
+                maxHeight: 80, color: colors.foreground,
               }}
             />
             <TouchableOpacity
               onPress={handleSend}
-              disabled={!message.trim() || sendMutation.isPending}
+              disabled={!message.trim() || sendMut.isPending}
               style={{
-                width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
+                width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center',
                 backgroundColor: message.trim() ? colors.primary : colors.muted,
               }}
             >
-              <Ionicons name="send" size={18} color={message.trim() ? colors.primaryForeground : colors.mutedForeground} />
+              <Ionicons name="send" size={17} color={message.trim() ? '#fff' : colors.mutedForeground} />
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg }}>
-          {squad.members?.map((member: any) => (
-            <View key={member.id} style={{
-              backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg - 2, marginBottom: spacing.sm,
-              flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-              borderWidth: 1, borderColor: colors.border, ...shadows.sm,
-            }}>
-              <View style={{
-                width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight,
-                justifyContent: 'center', alignItems: 'center',
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 20, borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+          }}>
+            {squad.members?.map((m: any, i: number) => (
+              <View key={m.id} style={{
+                flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16,
+                borderBottomWidth: i < (squad.members?.length ?? 1) - 1 ? 1 : 0, borderColor: colors.border,
               }}>
-                <Text style={{ fontSize: fontSize.lg + 1, fontWeight: '700', color: colors.primary }}>
-                  {(member.user?.fullName ?? '?')[0].toUpperCase()}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: fontSize.base, fontWeight: '600', color: colors.foreground }}>
-                  {member.user?.fullName ?? 'Membre'}
-                </Text>
-                <Text style={{ fontSize: fontSize.xs + 1, color: colors.mutedForeground, marginTop: 2 }}>
-                  {member.role === 'LEADER' ? '👑 Leader' : '✅ Membre actif'}
-                </Text>
-              </View>
-              <View style={{
-                backgroundColor: member.status === 'ACTIVE' ? colors.successLight : colors.warningLight,
-                paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.full,
-              }}>
-                <Text style={{
-                  fontSize: fontSize.xs, fontWeight: '600',
-                  color: member.status === 'ACTIVE' ? colors.success : colors.warning,
+                <View style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                 }}>
-                  {member.status === 'ACTIVE' ? 'Actif' : 'En attente'}
-                </Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.primary }}>
+                    {(m.user?.fullName ?? '?')[0].toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{m.user?.fullName ?? 'Membre'}</Text>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>
+                    {m.role === 'LEADER' ? '👑 Leader' : 'Membre'}
+                  </Text>
+                </View>
+                <View style={{
+                  backgroundColor: m.status === 'ACTIVE' ? 'rgba(34,197,94,0.10)' : 'rgba(245,158,11,0.10)',
+                  paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
+                }}>
+                  <Text style={{
+                    fontSize: 11, fontWeight: '600',
+                    color: m.status === 'ACTIVE' ? colors.success : colors.warning,
+                  }}>
+                    {m.status === 'ACTIVE' ? 'Actif' : 'En attente'}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))}
+            ))}
+          </View>
         </ScrollView>
       )}
     </View>
