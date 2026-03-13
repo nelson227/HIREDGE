@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
+import { colors, spacing, radius, fontSize, shadows } from '../../lib/theme';
 
 export default function SquadScreen() {
   const queryClient = useQueryClient();
@@ -21,8 +22,8 @@ export default function SquadScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA' }}>
-        <Text style={{ color: '#ADB5BD' }}>Chargement...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ color: colors.mutedForeground }}>Chargement...</Text>
       </View>
     );
   }
@@ -70,62 +71,64 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
   });
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F8F9FA' }} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* Header */}
       <View style={{
-        backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 24, paddingHorizontal: 20,
-        borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing['2xl'], paddingHorizontal: spacing.xl,
+        borderBottomWidth: 1, borderColor: colors.border,
       }}>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>🤝 Escouade</Text>
-        <Text style={{ color: '#A29BFE', fontSize: 14, marginTop: 4 }}>
+        <Text style={{ color: colors.foreground, fontSize: fontSize['2xl'], fontWeight: '700' }}>🤝 Escouade</Text>
+        <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm + 1, marginTop: spacing.xs }}>
           Rejoins un groupe de 5-8 personnes pour vous entraider
         </Text>
       </View>
 
       {/* Create Squad */}
-      <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl }}>
         {!showCreate ? (
           <TouchableOpacity
             onPress={() => setShowCreate(true)}
             style={{
-              backgroundColor: '#6C5CE7', borderRadius: 12, padding: 16,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+              backgroundColor: colors.primary, borderRadius: radius.lg, padding: spacing.lg,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+              ...shadows.lg,
             }}
           >
-            <Ionicons name="add-circle" size={20} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Créer une escouade</Text>
+            <Ionicons name="add-circle" size={20} color={colors.primaryForeground} />
+            <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: fontSize.base + 1 }}>Créer une escouade</Text>
           </TouchableOpacity>
         ) : (
-          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
+          <View style={{ backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadows.sm }}>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="Nom de l'escouade"
-              placeholderTextColor="#ADB5BD"
-              style={{ borderWidth: 1, borderColor: '#E9ECEF', borderRadius: 8, padding: 12, fontSize: 15, color: '#2D3436', marginBottom: 10 }}
+              placeholderTextColor={colors.mutedForeground}
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, fontSize: fontSize.base, color: colors.foreground, marginBottom: spacing.md }}
             />
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Description (optionnel)"
-              placeholderTextColor="#ADB5BD"
+              placeholderTextColor={colors.mutedForeground}
               multiline
-              style={{ borderWidth: 1, borderColor: '#E9ECEF', borderRadius: 8, padding: 12, fontSize: 15, color: '#2D3436', height: 80, textAlignVertical: 'top', marginBottom: 12 }}
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, fontSize: fontSize.base, color: colors.foreground, height: 80, textAlignVertical: 'top', marginBottom: spacing.md }}
             />
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <TouchableOpacity
                 onPress={() => setShowCreate(false)}
-                style={{ flex: 1, borderWidth: 1, borderColor: '#DEE2E6', borderRadius: 8, padding: 12, alignItems: 'center' }}
+                style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, alignItems: 'center' }}
               >
-                <Text style={{ color: '#495057', fontWeight: '600' }}>Annuler</Text>
+                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => createMutation.mutate()}
                 disabled={!name.trim() || createMutation.isPending}
                 style={{
-                  flex: 1, backgroundColor: name.trim() ? '#6C5CE7' : '#CED4DA', borderRadius: 8, padding: 12, alignItems: 'center',
+                  flex: 1, backgroundColor: name.trim() ? colors.primary : colors.border, borderRadius: radius.md, padding: spacing.md, alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>
+                <Text style={{ color: colors.primaryForeground, fontWeight: '600' }}>
                   {createMutation.isPending ? 'Création...' : 'Créer'}
                 </Text>
               </TouchableOpacity>
@@ -135,27 +138,27 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
       </View>
 
       {/* Available Squads */}
-      <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 12 }}>
+      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing['2xl'] }}>
+        <Text style={{ fontSize: fontSize.lg + 1, fontWeight: '700', color: colors.foreground, marginBottom: spacing.md }}>
           Escouades disponibles
         </Text>
         {available?.length > 0 ? (
           available.map((squad: any) => (
             <View key={squad.id} style={{
-              backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 8,
-              borderWidth: 1, borderColor: '#E9ECEF',
+              backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.sm,
+              borderWidth: 1, borderColor: colors.border, ...shadows.sm,
             }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#2D3436' }}>{squad.name}</Text>
+                  <Text style={{ fontSize: fontSize.base + 1, fontWeight: '600', color: colors.foreground }}>{squad.name}</Text>
                   {squad.description && (
-                    <Text style={{ color: '#868E96', marginTop: 2, fontSize: 13 }} numberOfLines={2}>
+                    <Text style={{ color: colors.mutedForeground, marginTop: 2, fontSize: fontSize.sm }} numberOfLines={2}>
                       {squad.description}
                     </Text>
                   )}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
-                    <Ionicons name="people" size={14} color="#6C5CE7" />
-                    <Text style={{ fontSize: 13, color: '#6C5CE7' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm }}>
+                    <Ionicons name="people" size={14} color={colors.primary} />
+                    <Text style={{ fontSize: fontSize.sm, color: colors.primary, fontWeight: '500' }}>
                       {squad._count?.members ?? 0}/8 membres
                     </Text>
                   </View>
@@ -164,18 +167,23 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
                   onPress={() => joinMutation.mutate(squad.id)}
                   disabled={joinMutation.isPending}
                   style={{
-                    backgroundColor: '#6C5CE7', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
+                    backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md,
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>Rejoindre</Text>
+                  <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: fontSize.sm }}>Rejoindre</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ))
         ) : (
-          <Text style={{ color: '#ADB5BD', textAlign: 'center', paddingVertical: 20 }}>
-            Aucune escouade disponible pour le moment
-          </Text>
+          <View style={{ alignItems: 'center', paddingVertical: spacing['3xl'] }}>
+            <View style={{ width: 56, height: 56, borderRadius: radius.xl, backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md }}>
+              <Ionicons name="people-outline" size={24} color={colors.mutedForeground} />
+            </View>
+            <Text style={{ color: colors.mutedForeground, textAlign: 'center' }}>
+              Aucune escouade disponible pour le moment
+            </Text>
+          </View>
         )}
       </View>
     </ScrollView>
@@ -212,29 +220,30 @@ function SquadDetailView({ squad }: { squad: any }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20,
+        backgroundColor: colors.card, paddingTop: 60, paddingBottom: spacing.lg, paddingHorizontal: spacing.xl,
+        borderBottomWidth: 1, borderColor: colors.border,
       }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>{squad.name}</Text>
-        <Text style={{ color: '#A29BFE', fontSize: 13, marginTop: 2 }}>
+        <Text style={{ color: colors.foreground, fontSize: fontSize.xl, fontWeight: '700' }}>{squad.name}</Text>
+        <Text style={{ color: colors.mutedForeground, fontSize: fontSize.sm, marginTop: 2 }}>
           {squad.members?.length ?? 0} membres
         </Text>
       </View>
 
       {/* Tabs */}
-      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#E9ECEF' }}>
+      <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border }}>
         {(['chat', 'membres'] as const).map((t) => (
           <TouchableOpacity
             key={t}
             onPress={() => setTab(t)}
             style={{
-              flex: 1, paddingVertical: 12, alignItems: 'center',
-              borderBottomWidth: 2, borderColor: tab === t ? '#6C5CE7' : 'transparent',
+              flex: 1, paddingVertical: spacing.md, alignItems: 'center',
+              borderBottomWidth: 2, borderColor: tab === t ? colors.primary : 'transparent',
             }}
           >
-            <Text style={{ fontWeight: '600', color: tab === t ? '#6C5CE7' : '#ADB5BD' }}>
+            <Text style={{ fontWeight: '600', color: tab === t ? colors.primary : colors.mutedForeground }}>
               {t === 'chat' ? '💬 Chat' : '👥 Membres'}
             </Text>
           </TouchableOpacity>
@@ -246,44 +255,47 @@ function SquadDetailView({ squad }: { squad: any }) {
           <FlatList
             data={messages ?? []}
             keyExtractor={(item: any) => item.id}
-            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            contentContainerStyle={{ padding: spacing.lg, flexGrow: 1 }}
             inverted={false}
             renderItem={({ item }: { item: any }) => (
-              <View style={{ marginBottom: 10 }}>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: '#6C5CE7' }}>
+              <View style={{ marginBottom: spacing.md }}>
+                <Text style={{ fontSize: fontSize.xs + 1, fontWeight: '600', color: colors.primary }}>
                   {item.user?.fullName ?? 'Membre'}
                 </Text>
                 <View style={{
-                  backgroundColor: '#fff', borderRadius: 12, borderTopLeftRadius: 4,
-                  padding: 10, marginTop: 2, borderWidth: 1, borderColor: '#E9ECEF',
+                  backgroundColor: colors.card, borderRadius: radius.xl, borderTopLeftRadius: radius.xs + 2,
+                  padding: spacing.md, marginTop: 2, borderWidth: 1, borderColor: colors.border,
                 }}>
-                  <Text style={{ color: '#2D3436', fontSize: 14 }}>{item.content}</Text>
+                  <Text style={{ color: colors.foreground, fontSize: fontSize.sm + 1 }}>{item.content}</Text>
                 </View>
-                <Text style={{ fontSize: 10, color: '#CED4DA', marginTop: 2 }}>
+                <Text style={{ fontSize: 10, color: colors.border, marginTop: 2 }}>
                   {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
             )}
             ListEmptyComponent={
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: '#ADB5BD' }}>Commence la conversation ! 🎉</Text>
+                <View style={{ width: 56, height: 56, borderRadius: radius.xl, backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md }}>
+                  <Ionicons name="chatbubbles-outline" size={24} color={colors.mutedForeground} />
+                </View>
+                <Text style={{ color: colors.mutedForeground }}>Commence la conversation !</Text>
               </View>
             }
           />
           {/* Input */}
           <View style={{
-            flexDirection: 'row', alignItems: 'flex-end', padding: 12, backgroundColor: '#fff',
-            borderTopWidth: 1, borderColor: '#E9ECEF', gap: 8,
+            flexDirection: 'row', alignItems: 'flex-end', padding: spacing.md, backgroundColor: colors.card,
+            borderTopWidth: 1, borderColor: colors.border, gap: spacing.sm,
           }}>
             <TextInput
               value={message}
               onChangeText={setMessage}
               placeholder="Message à l'escouade..."
-              placeholderTextColor="#ADB5BD"
+              placeholderTextColor={colors.mutedForeground}
               multiline
               style={{
-                flex: 1, backgroundColor: '#F1F3F5', borderRadius: 20, paddingHorizontal: 16,
-                paddingVertical: 10, fontSize: 15, maxHeight: 80, color: '#2D3436',
+                flex: 1, backgroundColor: colors.muted, borderRadius: radius.full, paddingHorizontal: spacing.lg,
+                paddingVertical: spacing.md, fontSize: fontSize.base, maxHeight: 80, color: colors.foreground,
               }}
             />
             <TouchableOpacity
@@ -291,44 +303,44 @@ function SquadDetailView({ squad }: { squad: any }) {
               disabled={!message.trim() || sendMutation.isPending}
               style={{
                 width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
-                backgroundColor: message.trim() ? '#6C5CE7' : '#E9ECEF',
+                backgroundColor: message.trim() ? colors.primary : colors.muted,
               }}
             >
-              <Ionicons name="send" size={18} color={message.trim() ? '#fff' : '#ADB5BD'} />
+              <Ionicons name="send" size={18} color={message.trim() ? colors.primaryForeground : colors.mutedForeground} />
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg }}>
           {squad.members?.map((member: any) => (
             <View key={member.id} style={{
-              backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8,
-              flexDirection: 'row', alignItems: 'center', gap: 12,
-              borderWidth: 1, borderColor: '#E9ECEF',
+              backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg - 2, marginBottom: spacing.sm,
+              flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+              borderWidth: 1, borderColor: colors.border, ...shadows.sm,
             }}>
               <View style={{
-                width: 44, height: 44, borderRadius: 22, backgroundColor: '#F0EEFF',
+                width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight,
                 justifyContent: 'center', alignItems: 'center',
               }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#6C5CE7' }}>
+                <Text style={{ fontSize: fontSize.lg + 1, fontWeight: '700', color: colors.primary }}>
                   {(member.user?.fullName ?? '?')[0].toUpperCase()}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#2D3436' }}>
+                <Text style={{ fontSize: fontSize.base, fontWeight: '600', color: colors.foreground }}>
                   {member.user?.fullName ?? 'Membre'}
                 </Text>
-                <Text style={{ fontSize: 12, color: '#868E96', marginTop: 2 }}>
+                <Text style={{ fontSize: fontSize.xs + 1, color: colors.mutedForeground, marginTop: 2 }}>
                   {member.role === 'LEADER' ? '👑 Leader' : '✅ Membre actif'}
                 </Text>
               </View>
               <View style={{
-                backgroundColor: member.status === 'ACTIVE' ? '#00B89415' : '#FFA50015',
-                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+                backgroundColor: member.status === 'ACTIVE' ? colors.successLight : colors.warningLight,
+                paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.full,
               }}>
                 <Text style={{
-                  fontSize: 11, fontWeight: '600',
-                  color: member.status === 'ACTIVE' ? '#00B894' : '#FFA500',
+                  fontSize: fontSize.xs, fontWeight: '600',
+                  color: member.status === 'ACTIVE' ? colors.success : colors.warning,
                 }}>
                   {member.status === 'ACTIVE' ? 'Actif' : 'En attente'}
                 </Text>

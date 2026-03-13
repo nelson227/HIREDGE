@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
+import { colors, spacing, radius, fontSize, shadows } from '../lib/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -86,14 +87,14 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: colors.card }}>
       {/* Progress Bar */}
-      <View style={{ paddingTop: 56, paddingHorizontal: 20 }}>
+      <View style={{ paddingTop: 56, paddingHorizontal: spacing.xl }}>
         <View style={{ flexDirection: 'row', gap: 4 }}>
           {STEPS.map((_, i) => (
             <View key={i} style={{
               flex: 1, height: 3, borderRadius: 2,
-              backgroundColor: i <= step ? '#6C5CE7' : '#E9ECEF',
+              backgroundColor: i <= step ? colors.primary : colors.border,
             }} />
           ))}
         </View>
@@ -110,20 +111,20 @@ export default function OnboardingScreen() {
         {/* Step 0: Welcome */}
         <View style={{ width, paddingHorizontal: 32, justifyContent: 'center' }}>
           <View style={{
-            width: 80, height: 80, borderRadius: 40, backgroundColor: '#6C5CE715',
-            justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 24,
+            width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryLight,
+            justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: spacing['2xl'],
           }}>
             <Text style={{ fontSize: 36 }}>🧠</Text>
           </View>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: '#2D3436', textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize['3xl'], fontWeight: '800', color: colors.foreground, textAlign: 'center' }}>
             Bienvenue sur{'\n'}HIREDGE
           </Text>
-          <Text style={{ fontSize: 15, color: '#868E96', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+          <Text style={{ fontSize: fontSize.base, color: colors.mutedForeground, textAlign: 'center', marginTop: spacing.md, lineHeight: 22 }}>
             Ton compagnon IA pour trouver le job idéal.{'\n'}
             EDGE va analyser ton profil, matcher les offres,{'\n'}
             et t'accompagner à chaque étape.
           </Text>
-          <View style={{ marginTop: 32, gap: 12 }}>
+          <View style={{ marginTop: spacing['3xl'], gap: spacing.md }}>
             <FeatureRow icon="sparkles-outline" text="Matching intelligent des offres" />
             <FeatureRow icon="chatbubble-outline" text="Coach IA conversationnel" />
             <FeatureRow icon="people-outline" text="Escouades de motivation" />
@@ -133,8 +134,8 @@ export default function OnboardingScreen() {
 
         {/* Step 1: Profile */}
         <View style={{ width, paddingHorizontal: 32, paddingTop: 40 }}>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: '#2D3436' }}>Parle-nous de toi</Text>
-          <Text style={{ fontSize: 13, color: '#868E96', marginTop: 4, marginBottom: 24 }}>
+          <Text style={{ fontSize: fontSize.xl + 2, fontWeight: '700', color: colors.foreground }}>Parle-nous de toi</Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.mutedForeground, marginTop: 4, marginBottom: spacing['2xl'] }}>
             Ces infos aident EDGE à personnaliser tes recommandations
           </Text>
           <Label text="Titre professionnel" />
@@ -160,11 +161,11 @@ export default function OnboardingScreen() {
 
         {/* Step 2: Skills */}
         <View style={{ width, paddingHorizontal: 32, paddingTop: 40 }}>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: '#2D3436' }}>Tes compétences</Text>
-          <Text style={{ fontSize: 13, color: '#868E96', marginTop: 4, marginBottom: 20 }}>
+          <Text style={{ fontSize: fontSize.xl + 2, fontWeight: '700', color: colors.foreground }}>Tes compétences</Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.mutedForeground, marginTop: 4, marginBottom: spacing.xl }}>
             Sélectionne celles qui te correspondent ({form.skills.length} sélectionnées)
           </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
             {POPULAR_SKILLS.map(s => {
               const selected = form.skills.includes(s);
               return (
@@ -172,12 +173,12 @@ export default function OnboardingScreen() {
                   key={s}
                   onPress={() => toggleSkill(s)}
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    backgroundColor: selected ? '#6C5CE7' : '#F8F9FA',
-                    borderWidth: 1, borderColor: selected ? '#6C5CE7' : '#E9ECEF',
+                    paddingHorizontal: spacing.lg - 2, paddingVertical: spacing.sm, borderRadius: radius.full,
+                    backgroundColor: selected ? colors.primary : colors.muted,
+                    borderWidth: 1, borderColor: selected ? colors.primary : colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '500', color: selected ? '#fff' : '#495057' }}>{s}</Text>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: '500', color: selected ? colors.primaryForeground : colors.foreground }}>{s}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -186,13 +187,13 @@ export default function OnboardingScreen() {
 
         {/* Step 3: Preferences */}
         <View style={{ width, paddingHorizontal: 32, paddingTop: 40 }}>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: '#2D3436' }}>Tes préférences</Text>
-          <Text style={{ fontSize: 13, color: '#868E96', marginTop: 4, marginBottom: 20 }}>
+          <Text style={{ fontSize: fontSize.xl + 2, fontWeight: '700', color: colors.foreground }}>Tes préférences</Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.mutedForeground, marginTop: 4, marginBottom: spacing.xl }}>
             Pour te proposer les meilleures offres
           </Text>
 
           <Label text="Type de contrat" />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xl }}>
             {['CDI', 'CDD', 'FREELANCE', 'STAGE', 'ALTERNANCE'].map(c => {
               const sel = form.contractTypes.includes(c);
               return (
@@ -200,12 +201,12 @@ export default function OnboardingScreen() {
                   key={c}
                   onPress={() => toggleContract(c)}
                   style={{
-                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
-                    backgroundColor: sel ? '#6C5CE7' : '#F8F9FA',
-                    borderWidth: 1, borderColor: sel ? '#6C5CE7' : '#E9ECEF',
+                    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm + 2, borderRadius: radius.lg,
+                    backgroundColor: sel ? colors.primary : colors.muted,
+                    borderWidth: 1, borderColor: sel ? colors.primary : colors.border,
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#fff' : '#495057' }}>{c}</Text>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: sel ? colors.primaryForeground : colors.foreground }}>{c}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -222,29 +223,29 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             onPress={() => setForm(p => ({ ...p, remote: !p.remote }))}
             style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: form.remote ? '#6C5CE710' : '#F8F9FA',
-              padding: 14, borderRadius: 12, marginTop: 8,
-              borderWidth: 1, borderColor: form.remote ? '#6C5CE7' : '#E9ECEF',
+              flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2,
+              backgroundColor: form.remote ? colors.primaryLight : colors.muted,
+              padding: spacing.md + 2, borderRadius: radius.lg, marginTop: spacing.sm,
+              borderWidth: 1, borderColor: form.remote ? colors.primary : colors.border,
             }}
           >
-            <Ionicons name={form.remote ? 'checkbox' : 'square-outline'} size={22} color={form.remote ? '#6C5CE7' : '#ADB5BD'} />
-            <Text style={{ fontSize: 14, color: '#2D3436' }}>Remote uniquement</Text>
+            <Ionicons name={form.remote ? 'checkbox' : 'square-outline'} size={22} color={form.remote ? colors.primary : colors.mutedForeground} />
+            <Text style={{ fontSize: fontSize.sm + 1, color: colors.foreground }}>Remote uniquement</Text>
           </TouchableOpacity>
         </View>
 
         {/* Step 4: Ready */}
         <View style={{ width, paddingHorizontal: 32, justifyContent: 'center', alignItems: 'center' }}>
           <View style={{
-            width: 100, height: 100, borderRadius: 50, backgroundColor: '#00B89415',
-            justifyContent: 'center', alignItems: 'center', marginBottom: 24,
+            width: 100, height: 100, borderRadius: 50, backgroundColor: colors.successLight,
+            justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xl,
           }}>
-            <Ionicons name="checkmark-circle" size={56} color="#00B894" />
+            <Ionicons name="checkmark-circle" size={56} color={colors.success} />
           </View>
-          <Text style={{ fontSize: 26, fontWeight: '800', color: '#2D3436', textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize['2xl'] + 2, fontWeight: '800', color: colors.foreground, textAlign: 'center' }}>
             Tu es prêt ! 🚀
           </Text>
-          <Text style={{ fontSize: 14, color: '#868E96', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+          <Text style={{ fontSize: fontSize.sm + 1, color: colors.mutedForeground, textAlign: 'center', marginTop: spacing.md, lineHeight: 22 }}>
             EDGE va commencer à chercher des offres{'\n'}
             correspondant à ton profil.{'\n\n'}
             Tu peux toujours modifier tes préférences plus tard.
@@ -255,16 +256,16 @@ export default function OnboardingScreen() {
       {/* Bottom Nav */}
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, paddingTop: 12,
-        borderTopWidth: 1, borderTopColor: '#F1F3F5',
+        paddingHorizontal: spacing.xl, paddingBottom: Platform.OS === 'ios' ? 36 : spacing.xl, paddingTop: spacing.md,
+        borderTopWidth: 1, borderTopColor: colors.border,
       }}>
         {step > 0 ? (
           <TouchableOpacity onPress={goBack}>
-            <Text style={{ color: '#868E96', fontSize: 15 }}>Retour</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.md }}>Retour</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
-            <Text style={{ color: '#868E96', fontSize: 15 }}>Passer</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: fontSize.md }}>Passer</Text>
           </TouchableOpacity>
         )}
 
@@ -272,11 +273,11 @@ export default function OnboardingScreen() {
           onPress={goNext}
           disabled={saveMutation.isPending}
           style={{
-            backgroundColor: '#6C5CE7', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24,
-            opacity: saveMutation.isPending ? 0.6 : 1,
+            backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: radius.full,
+            opacity: saveMutation.isPending ? 0.6 : 1, ...shadows.lg,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+          <Text style={{ color: colors.primaryForeground, fontWeight: '700', fontSize: fontSize.md }}>
             {step === STEPS.length - 1 ? (saveMutation.isPending ? 'Enregistrement...' : "C'est parti !") : 'Suivant'}
           </Text>
         </TouchableOpacity>
@@ -287,20 +288,20 @@ export default function OnboardingScreen() {
 
 function FeatureRow({ icon, text }: { icon: string; text: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
       <View style={{
-        width: 36, height: 36, borderRadius: 18, backgroundColor: '#6C5CE710',
+        width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primaryLight,
         justifyContent: 'center', alignItems: 'center',
       }}>
-        <Ionicons name={icon as any} size={18} color="#6C5CE7" />
+        <Ionicons name={icon as any} size={18} color={colors.primary} />
       </View>
-      <Text style={{ fontSize: 14, color: '#2D3436' }}>{text}</Text>
+      <Text style={{ fontSize: fontSize.sm + 1, color: colors.foreground }}>{text}</Text>
     </View>
   );
 }
 
 function Label({ text }: { text: string }) {
-  return <Text style={{ fontSize: 13, fontWeight: '600', color: '#495057', marginBottom: 6 }}>{text}</Text>;
+  return <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.foreground, marginBottom: spacing.xs + 2 }}>{text}</Text>;
 }
 
 function Input({ multiline, ...props }: any) {
@@ -309,12 +310,12 @@ function Input({ multiline, ...props }: any) {
       {...props}
       multiline={multiline}
       style={{
-        backgroundColor: '#F8F9FA', borderRadius: 12, paddingHorizontal: 14,
-        paddingVertical: 12, fontSize: 14, color: '#2D3436', marginBottom: 16,
-        borderWidth: 1, borderColor: '#E9ECEF',
+        backgroundColor: colors.muted, borderRadius: radius.lg, paddingHorizontal: spacing.md + 2,
+        paddingVertical: spacing.md, fontSize: fontSize.sm + 1, color: colors.foreground, marginBottom: spacing.lg,
+        borderWidth: 1, borderColor: colors.border,
         ...(multiline ? { minHeight: 80, textAlignVertical: 'top' } : {}),
       }}
-      placeholderTextColor="#ADB5BD"
+      placeholderTextColor={colors.mutedForeground}
     />
   );
 }

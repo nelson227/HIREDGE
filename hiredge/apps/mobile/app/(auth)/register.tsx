@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuthStore } from '../../stores/auth.store';
+import { colors, spacing, radius, fontSize, shadows } from '../../lib/theme';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -38,57 +39,63 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#fff' }}
+      style={{ flex: 1, backgroundColor: colors.card }}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: spacing['2xl'] }}>
         <View style={{ alignItems: 'center', marginBottom: 48 }}>
-          <Text style={{ fontSize: 36, fontWeight: '800', color: '#6C5CE7' }}>HIREDGE</Text>
-          <Text style={{ fontSize: 16, color: '#868E96', marginTop: 8 }}>
+          <Text style={{ fontSize: fontSize['3xl'] + 8, fontWeight: '800', color: colors.primary }}>HIREDGE</Text>
+          <Text style={{ fontSize: fontSize.base + 1, color: colors.mutedForeground, marginTop: spacing.sm }}>
             Crée ton compte en 30 secondes
           </Text>
         </View>
 
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: spacing.lg }}>
           <View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#495057', marginBottom: 6 }}>Email</Text>
+            <Text style={{ fontSize: fontSize.sm + 1, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>Email</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
               placeholder="ton@email.com"
+              placeholderTextColor={colors.mutedForeground}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
               style={{
-                borderWidth: 1, borderColor: '#DEE2E6', borderRadius: 12,
-                padding: 14, fontSize: 16, backgroundColor: '#F8F9FA',
+                borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg,
+                padding: spacing.lg - 2, fontSize: fontSize.base + 1, backgroundColor: colors.muted,
+                color: colors.foreground,
               }}
             />
           </View>
 
           <View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#495057', marginBottom: 6 }}>Mot de passe</Text>
+            <Text style={{ fontSize: fontSize.sm + 1, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>Mot de passe</Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
               placeholder="Min. 8 caractères"
+              placeholderTextColor={colors.mutedForeground}
               secureTextEntry
               style={{
-                borderWidth: 1, borderColor: '#DEE2E6', borderRadius: 12,
-                padding: 14, fontSize: 16, backgroundColor: '#F8F9FA',
+                borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg,
+                padding: spacing.lg - 2, fontSize: fontSize.base + 1, backgroundColor: colors.muted,
+                color: colors.foreground,
               }}
             />
           </View>
 
           <View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#495057', marginBottom: 6 }}>Confirmer</Text>
+            <Text style={{ fontSize: fontSize.sm + 1, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>Confirmer</Text>
             <TextInput
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               placeholder="Retape ton mot de passe"
+              placeholderTextColor={colors.mutedForeground}
               secureTextEntry
               style={{
-                borderWidth: 1, borderColor: '#DEE2E6', borderRadius: 12,
-                padding: 14, fontSize: 16, backgroundColor: '#F8F9FA',
+                borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg,
+                padding: spacing.lg - 2, fontSize: fontSize.base + 1, backgroundColor: colors.muted,
+                color: colors.foreground,
               }}
             />
           </View>
@@ -97,20 +104,21 @@ export default function RegisterScreen() {
             onPress={handleRegister}
             disabled={loading}
             style={{
-              backgroundColor: loading ? '#A29BFE' : '#6C5CE7',
-              padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8,
+              backgroundColor: loading ? colors.primaryMedium : colors.primary,
+              padding: spacing.lg, borderRadius: radius.lg, alignItems: 'center', marginTop: spacing.sm,
+              ...shadows.lg,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+            <Text style={{ color: colors.primaryForeground, fontSize: fontSize.base + 1, fontWeight: '700' }}>
               {loading ? 'Création...' : 'Créer mon compte'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={{ alignItems: 'center', marginTop: 24 }}>
+        <View style={{ alignItems: 'center', marginTop: spacing['2xl'] }}>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <Text style={{ color: '#6C5CE7', fontSize: 14 }}>
+              <Text style={{ color: colors.primary, fontSize: fontSize.sm + 1 }}>
                 Déjà un compte ? <Text style={{ fontWeight: '700' }}>Se connecter</Text>
               </Text>
             </TouchableOpacity>

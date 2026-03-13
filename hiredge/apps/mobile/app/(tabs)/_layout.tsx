@@ -3,16 +3,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { useAuthStore } from '../../stores/auth.store';
+import { colors } from '../../lib/theme';
 
 function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName: any; focused: boolean; color: string }) {
   return (
     <View style={{
       alignItems: 'center',
       justifyContent: 'center',
-      width: 44,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: focused ? '#F0EEFF' : 'transparent',
+      width: 48,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: focused ? colors.primaryLight : 'transparent',
     }}>
       <Ionicons name={focused ? focusedName : name} size={22} color={color} />
     </View>
@@ -31,31 +32,30 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6C5CE7',
-        tabBarInactiveTintColor: '#9B9FAD',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 0,
-          borderRadius: 28,
-          marginHorizontal: 16,
-          marginBottom: Platform.OS === 'ios' ? 24 : 12,
-          height: 68,
-          position: 'absolute',
-          shadowColor: '#6C5CE7',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
-          elevation: 12,
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: 64,
           paddingHorizontal: 4,
+          ...Platform.select({
+            ios: {
+              paddingBottom: 20,
+              height: 84,
+            },
+            default: {},
+          }),
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '600',
           marginTop: 2,
         },
         tabBarItemStyle: {
           paddingTop: 8,
-          paddingBottom: 6,
+          paddingBottom: 4,
         },
       }}
     >
