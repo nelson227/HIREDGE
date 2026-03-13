@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,12 +17,12 @@ import {
   Image as ImageIcon,
   Loader2,
   ChevronLeft,
-  MoreVertical,
   Search,
   Briefcase,
   FileText,
   Target,
   Users,
+  LogIn,
 } from "lucide-react"
 import { edgeApi } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -58,6 +59,7 @@ export default function AssistantPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
+  const [authError, setAuthError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -83,6 +85,7 @@ export default function AssistantPage() {
   const loadConversations = async () => {
     try {
       setIsLoadingConversations(true)
+      setAuthError(false)
       const { data } = await edgeApi.getConversations()
       if (data.success) {
         setConversations(data.data)
@@ -92,8 +95,11 @@ export default function AssistantPage() {
           setCurrentConversation(active.id)
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load conversations:", error)
+      if (error.response?.status === 401) {
+        setAuthError(true)
+      }
     } finally {
       setIsLoadingConversations(false)
     }
@@ -240,6 +246,28 @@ export default function AssistantPage() {
     reader.readAsDataURL(file)
   }
 
+  // Show auth error state
+  if (authError) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-8 h-8 text-destructive" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Connexion requise</h2>
+            <p className="text-muted-foreground mb-6">
+              Tu dois te connecter pour accéder à EDGE, ton assistant IA.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/login">Se connecter</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="h-[calc(100vh-4rem)] flex">
       {/* Sidebar - Conversations */}
@@ -250,7 +278,7 @@ export default function AssistantPage() {
         )}
       >
         <div className="p-4 border-b">
-          <Button onClick={createNewConversation} className="w-full gap-2">
+          <Button onClick={createNewConversation} className="w-full gap-2" disabled={authError}>
             <Plus className="w-4 h-4" />
             Nouvelle conversation
           </Button>

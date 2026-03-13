@@ -35,7 +35,11 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
+        if (!refreshToken) {
+          // No refresh token - user needs to login
+          // Don't redirect automatically, let the component handle it
+          return Promise.reject(error);
+        }
 
         const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
 
@@ -46,10 +50,11 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — logout and redirect to login
+        // Refresh failed — clear tokens but don't redirect
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        // Return the original error so the component can handle it
+        return Promise.reject(error);
       }
     }
 

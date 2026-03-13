@@ -5,17 +5,38 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkles, Eye, EyeOff, ArrowRight } from "lucide-react"
+import { authApi } from "@/lib/api"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    window.location.href = "/dashboard"
+    setError("")
+    
+    try {
+      const { data } = await authApi.login(email, password)
+      
+      if (data.success) {
+        // Save tokens to localStorage
+        localStorage.setItem('accessToken', data.data.accessToken)
+        localStorage.setItem('refreshToken', data.data.refreshToken)
+        // Redirect to dashboard
+        window.location.href = "/dashboard"
+      } else {
+        setError(data.error?.message || "Erreur de connexion")
+      }
+    } catch (err: any) {
+      console.error("Login error:", err)
+      setError(err.response?.data?.error?.message || "Email ou mot de passe incorrect")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -41,6 +62,12 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                {error}
+              </div>
+            )}
+            
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground">
                 Email
@@ -49,6 +76,8 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="h-11"
               />
@@ -68,6 +97,8 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="h-11 pr-10"
                 />
