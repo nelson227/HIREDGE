@@ -89,10 +89,12 @@ export default function AssistantPage() {
       const { data } = await edgeApi.getConversations()
       if (data.success) {
         setConversations(data.data)
-        // Select the most recent active conversation
-        const active = data.data.find((c: Conversation) => c.isActive)
-        if (active) {
-          setCurrentConversation(active.id)
+        // Only auto-select if no conversation is currently selected
+        if (!currentConversation) {
+          const active = data.data.find((c: Conversation) => c.isActive)
+          if (active) {
+            setCurrentConversation(active.id)
+          }
         }
       }
     } catch (error: any) {
@@ -163,9 +165,25 @@ export default function AssistantPage() {
       const { data } = await edgeApi.chat(text, currentConversation || undefined)
       if (data.success) {
         // Update conversation ID if new
-        if (data.data.conversationId && !currentConversation) {
-          setCurrentConversation(data.data.conversationId)
-          loadConversations() // Refresh to get the new conversation
+        if (data.data.conversationId) {
+          const newConvId = data.data.conversationId
+          
+          if (!currentConversation) {
+            // Add new conversation to list optimistically
+            const newConv: Conversation = {
+              id: newConvId,
+              title: text.slice(0, 30) + (text.length > 30 ? '...' : ''),
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              _count: { messages: 1 }
+            }
+            setConversations(prev => [newConv, ...prev])
+          }
+          setCurrentConversation(newConvId)
+          
+          // Refresh conversations list after a short delay to get the real title
+          setTimeout(() => loadConversations(), 1000)
         }
 
         // Add assistant response
