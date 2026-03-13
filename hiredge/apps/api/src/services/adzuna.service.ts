@@ -81,7 +81,7 @@ export class AdzunaService {
         throw new Error(`Adzuna API error: ${response.status}`);
       }
 
-      const data: AdzunaResponse = await response.json();
+      const data = (await response.json()) as AdzunaResponse;
       console.log(`[Adzuna] ${data.results.length} offres trouvées (total: ${data.count})`);
 
       return data.results;
