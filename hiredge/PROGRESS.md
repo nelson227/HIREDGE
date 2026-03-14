@@ -22,6 +22,7 @@
 | **CI/CD & Déploiement** | 100% | ✅ Complet |
 | **Docker** | 100% | ✅ Complet |
 | **Config Production** | 100% | ✅ Complet |
+| **Import d'offres** | 100% | ✅ Complet (Adzuna + JSearch) |
 
 **Progression globale : 100% ✅ PROJET COMPLET**
 
@@ -150,7 +151,79 @@
 ### 10. Configuration Production ✅
 - [x] `.env.example` — Toutes les variables d'environnement documentées par catégorie
 - [x] `package.json` — Scripts : test, test:api, test:mobile, docker:up/down/build/logs, db:push/generate/migrate/seed
-- [x] `prisma/seed.ts` — Données démo : utilisateur (Amadou Diallo, Full-Stack JS), 3 entreprises, 3 offres, 1 escouade
+- [x] `prisma/seed.ts` — Données démo canadiennes : utilisateur (Amadou Diallo, Full-Stack JS, Montréal), 3 entreprises (Shopify, Element AI, Wealthsimple), 3 offres à Toronto/Montréal, 1 escouade
+
+### 11. Import d'offres d'emploi — Sources multiples ✅
+
+#### Stratégie
+HIREDGE cible exclusivement le **marché canadien** au lancement. Les offres sont importées depuis 2 agrégateurs API qui couvrent les plateformes majeures :
+
+#### Sources de données
+
+| Service | Plateformes couvertes | Clé requise | Tier gratuit |
+|---------|----------------------|-------------|-------------|
+| **Adzuna** | Adzuna, agrégation multi-sources Canada | `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | Illimité |
+| **JSearch (RapidAPI)** | **LinkedIn**, **Indeed**, **Glassdoor**, ZipRecruiter, + autres sites | `JSEARCH_API_KEY` | 500 req/mois |
+
+#### Services backend
+
+| Fichier | Rôle |
+|---------|------|
+| `src/services/adzuna.service.ts` | Client Adzuna API — recherche, import, déduplique, normalise |
+| `src/services/jsearch.service.ts` | Client JSearch/RapidAPI — agrège LinkedIn/Indeed/Glassdoor, normalise salaires (horaire/mensuel → annuel), extrait ville/pays |
+
+#### Scripts d'import
+
+| Script | Usage |
+|--------|-------|
+| `scripts/import-jobs.ts` | Import combiné **Adzuna + JSearch** — script principal |
+| `scripts/import-jsearch.ts` | Import JSearch uniquement — 9 requêtes (dev, data, devops) pour Montréal, Toronto, Vancouver |
+
+#### Fonctionnalités d'import
+- [x] Déduplication par `externalId` + `source` (pas de doublons)
+- [x] Création automatique des entreprises (`company`) avec logo, site web, industrie
+- [x] Normalisation salariale (horaire × 2080, mensuel × 12, hebdo × 52 → annuel)
+- [x] `locationCountry = 'CA'` et `salaryCurrency = 'CAD'` forcés pour le marché canadien
+- [x] Extraction de `locationCity` depuis les données brutes
+- [x] Source originale préservée (`linkedin`, `indeed`, `glassdoor`, `adzuna`, etc.)
+- [x] Détection du type de contrat (FULLTIME → CDI, CONTRACT → CDD, etc.)
+- [x] Détection du statut remote/hybride via regex dans titre + description
+- [x] Extraction de compétences depuis le titre et la description (pour Adzuna)
+- [x] Rate limiting entre requêtes (500ms-1s) pour respecter les quotas
+
+#### Variables d'environnement requises
+```env
+# Adzuna (adzuna.com/developers)
+ADZUNA_APP_ID=your_app_id
+ADZUNA_APP_KEY=your_app_key
+
+# JSearch / RapidAPI (rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch)
+JSEARCH_API_KEY=your_rapidapi_key
+```
+
+#### Commandes d'import
+```bash
+cd apps/api
+
+# Import combiné (Adzuna + JSearch)
+npx tsx --env-file=.env scripts/import-jobs.ts
+
+# Import JSearch uniquement (LinkedIn, Indeed, Glassdoor)
+npx tsx --env-file=.env scripts/import-jsearch.ts
+
+# Seed données démo (3 entreprises CA + 3 offres + 1 squad)
+npx prisma db seed
+```
+
+#### Répartition actuelle (mars 2026)
+| Source | Offres |
+|--------|--------|
+| Adzuna | 140 |
+| LinkedIn | 14 |
+| Indeed | 5 |
+| Glassdoor | 1 |
+| Autres (RBC, Uber, TD, etc.) | 19 |
+| **Total** | **179** |
 
 ---
 
@@ -192,6 +265,18 @@
 - **EAS Build** : 3 profils (development, preview, production) + config submit stores
 - **Production** : .env.example complet, scripts npm, seed.ts avec données démo
 - **Layout** : Routing mis à jour pour tous les nouveaux écrans
+
+### Session 5 — Intégration Web & Import d'offres 🇨🇦
+- **App Web Next.js** : Dashboard complet, pages jobs, profil, interviews, notifications, éclaireurs, analytics
+- **Auth guard** : Layout dashboard avec vérification auth + loading screen + redirect /login
+- **Corrections critiques** : Bug de casse registerSchema (`'candidate'` vs `'CANDIDATE'`), auto-création profil, proxy next.config.mjs, intercepteur Axios 401
+- **Page /interview** : Écran de lancement de simulation (4 types d'entretien, tips)
+- **Seed data canadien** : Profil démo basé à Montréal, entreprises (Shopify, Element AI, Wealthsimple), offres à Toronto/Montréal
+- **Service Adzuna** : Import massif d'offres canadiennes (Montréal, Toronto, Vancouver) — 140 offres
+- **Service JSearch** : Intégration RapidAPI agrégeant **LinkedIn, Indeed, Glassdoor** — 39 offres supplémentaires
+- **Script import combiné** : `import-jobs.ts` combine Adzuna + JSearch en une commande
+- **Nettoyage Canada-only** : Purge des offres non-canadiennes, correctifs `locationCountry`, `salaryCurrency`, `locationCity`
+- **Total** : 179 offres en base, 5 sources (Adzuna, LinkedIn, Indeed, Glassdoor, autres)
 
 ---
 
