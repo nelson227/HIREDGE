@@ -14,6 +14,15 @@ interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+// Mutex to prevent parallel refresh attempts
+let isRefreshing = false;
+let refreshSubscribers: ((success: boolean) => void)[] = [];
+
+function onRefreshDone(success: boolean) {
+  refreshSubscribers.forEach((cb) => cb(success));
+  refreshSubscribers = [];
+}
+
 // Response interceptor — handle token refresh via httpOnly cookies
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
@@ -23,19 +32,37 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // If already refreshing, wait for the result
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshSubscribers.push((success: boolean) => {
+            if (success) {
+              resolve(api(originalRequest));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
+
+      isRefreshing = true;
+
       try {
-        // Refresh token is sent automatically via httpOnly cookie
         const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
 
         if (data.success) {
-          // New cookies are set by the server — just retry
+          isRefreshing = false;
+          onRefreshDone(true);
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — let the error propagate
-        // The dashboard layout auth guard handles redirect to /login
+        isRefreshing = false;
+        onRefreshDone(false);
         return Promise.reject(error);
       }
+
+      isRefreshing = false;
+      onRefreshDone(false);
     }
 
     return Promise.reject(error);

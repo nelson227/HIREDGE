@@ -18,14 +18,14 @@ function setTokenCookies(reply: FastifyReply, accessToken: string, refreshToken:
     httpOnly: true,
     secure: isProduction,
     sameSite: 'lax',
-    path: '/api/v1/auth',
+    path: '/',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 }
 
 function clearTokenCookies(reply: FastifyReply) {
   reply.clearCookie('access_token', { path: '/' });
-  reply.clearCookie('refresh_token', { path: '/api/v1/auth' });
+  reply.clearCookie('refresh_token', { path: '/' });
 }
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
