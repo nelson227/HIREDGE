@@ -92,10 +92,18 @@ export default function JobsPage() {
   const [hasMore, setHasMore] = useState(false)
   const [sortBy, setSortBy] = useState<"match" | "date">("match")
 
-  // Load jobs on mount and when filters change
+  // Load saved jobs from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("hiredge_saved_jobs")
+      if (saved) setSavedJobs(JSON.parse(saved))
+    } catch { /* no-op */ }
+  }, [])
+
+  // Reload when filters or sort change
   useEffect(() => {
     loadJobs()
-  }, [])
+  }, [contractFilter, sortBy])
 
   const loadJobs = async (params: JobSearchParams = {}, append = false) => {
     try {
@@ -118,9 +126,10 @@ export default function JobsPage() {
       if (data.success) {
         const newJobs = data.data || []
         // Sort by match score if available
-        const sortedJobs = sortBy === "match" 
-          ? newJobs.sort((a: Job, b: Job) => (b.matchScore || 0) - (a.matchScore || 0))
-          : newJobs
+        const sortedJobs = [...newJobs].sort((a: Job, b: Job) => {
+          if (sortBy === "match") return (b.matchScore || 0) - (a.matchScore || 0)
+          return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+        })
         
         if (append) {
           setJobs(prev => [...prev, ...sortedJobs])
@@ -162,9 +171,11 @@ export default function JobsPage() {
   }
 
   const toggleSave = (jobId: string) => {
-    setSavedJobs((prev) =>
-      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
-    )
+    setSavedJobs((prev) => {
+      const next = prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+      try { localStorage.setItem("hiredge_saved_jobs", JSON.stringify(next)) } catch { /* no-op */ }
+      return next
+    })
   }
 
   const getMatchScore = (job: Job) => job.match || job.matchScore || 0
@@ -191,6 +202,15 @@ export default function JobsPage() {
               className="pl-9"
             />
           </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as "match" | "date")}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="match">Pertinence</SelectItem>
+              <SelectItem value="date">Date</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="w-4 h-4" />
           </Button>

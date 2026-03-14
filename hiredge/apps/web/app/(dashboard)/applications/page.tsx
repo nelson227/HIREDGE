@@ -266,7 +266,7 @@ export default function ApplicationsPage() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <Link
-                                  href={`/job/${app.jobId}`}
+                                  href={`/jobs/${app.jobId}`}
                                   className="font-medium text-foreground hover:text-primary truncate block"
                                 >
                                   {app.role}
@@ -278,9 +278,32 @@ export default function ApplicationsPage() {
                                   </span>
                                 </div>
                               </div>
-                              <button className="text-muted-foreground hover:text-foreground">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </button>
+                              <div className="relative group">
+                                <button className="text-muted-foreground hover:text-foreground">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                                <div className="absolute right-0 top-6 z-10 w-40 rounded-lg border border-border bg-background shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                  <Link
+                                    href={`/jobs/${app.jobId}`}
+                                    className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded-t-lg"
+                                  >
+                                    Voir l'offre
+                                  </Link>
+                                  <button
+                                    onClick={async () => {
+                                      if (confirm('Retirer cette candidature ?')) {
+                                        try {
+                                          await applicationsApi.withdraw(app.id)
+                                          loadApplications()
+                                        } catch { alert('Erreur lors du retrait') }
+                                      }
+                                    }}
+                                    className="block w-full text-left px-3 py-2 text-sm text-destructive hover:bg-muted rounded-b-lg"
+                                  >
+                                    Retirer
+                                  </button>
+                                </div>
+                              </div>
                             </div>
 
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">

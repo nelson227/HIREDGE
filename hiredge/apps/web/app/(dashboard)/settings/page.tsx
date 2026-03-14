@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -19,9 +20,10 @@ import {
   Shield,
   Trash2,
   LogOut,
-  ChevronRight,
   Check,
+  Loader2,
 } from "lucide-react"
+import { profileApi, authApi } from "@/lib/api"
 
 const notificationSettings = [
   {
@@ -93,10 +95,88 @@ const settingsSections = [
 ]
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState("account")
   const [notifications, setNotifications] = useState(notificationSettings)
   const [privacy, setPrivacy] = useState(privacySettings)
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [accountForm, setAccountForm] = useState({ firstName: "", lastName: "", email: "", phone: "" })
+  const [prefForm, setPrefForm] = useState({ salaryMin: "", salaryMax: "", city: "", country: "" })
+  const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" })
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true)
+      const { data } = await profileApi.get()
+      if (data.success && data.data) {
+        const p = data.data
+        setAccountForm({
+          firstName: p.firstName || "",
+          lastName: p.lastName || "",
+          email: p.user?.email || "",
+          phone: p.phone || "",
+        })
+        setPrefForm({
+          salaryMin: p.salaryMin?.toString() || "",
+          salaryMax: p.salaryMax?.toString() || "",
+          city: p.city || "",
+          country: p.country || "",
+        })
+      }
+    } catch { /* no-op */ }
+    finally { setLoading(false) }
+  }
+
+  const saveAccount = async () => {
+    setSaving(true)
+    setMessage("")
+    try {
+      await profileApi.update({
+        firstName: accountForm.firstName,
+        lastName: accountForm.lastName,
+        phone: accountForm.phone,
+      })
+      setMessage("Modifications sauvegardées !")
+      setTimeout(() => setMessage(""), 3000)
+    } catch { setMessage("Erreur lors de la sauvegarde") }
+    finally { setSaving(false) }
+  }
+
+  const savePreferences = async () => {
+    setSaving(true)
+    setMessage("")
+    try {
+      await profileApi.update({
+        salaryMin: prefForm.salaryMin ? parseInt(prefForm.salaryMin) : undefined,
+        salaryMax: prefForm.salaryMax ? parseInt(prefForm.salaryMax) : undefined,
+        city: prefForm.city,
+        country: prefForm.country,
+      })
+      setMessage("Préférences sauvegardées !")
+      setTimeout(() => setMessage(""), 3000)
+    } catch { setMessage("Erreur lors de la sauvegarde") }
+    finally { setSaving(false) }
+  }
+
+  const handleDeleteAccount = () => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) return
+    if (!confirm("Dernière confirmation : toutes vos données seront supprimées définitivement.")) return
+    alert("La suppression de compte sera bientôt disponible. Contactez le support.")
+  }
+
+  const handleLogout = async () => {
+    try { await authApi.logout() } catch { /* no-op */ }
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
+    router.push("/login")
+  }
 
   const toggleNotification = (id: string) => {
     setNotifications(notifications.map(n => 
@@ -114,10 +194,13 @@ export default function SettingsPage() {
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your account settings and preferences
-        </p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Paramètres</h1>
+        <p className="text-muted-foreground mt-1">Gérez votre compte et vos préférences</p>
+        {message && (
+          <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes("Erreur") ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+            {message}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -152,48 +235,64 @@ export default function SettingsPage() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Account Information</CardTitle>
-                  <CardDescription>Update your personal details and email</CardDescription>
+                  <CardTitle>Informations du compte</CardTitle>
+                  <CardDescription>Modifiez vos informations personnelles</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">First Name</label>
-                      <Input defaultValue="Sarah" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Last Name</label>
-                      <Input defaultValue="Chen" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Email Address</label>
-                    <Input type="email" defaultValue="sarah@example.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Phone Number</label>
-                    <Input type="tel" defaultValue="+1 (555) 123-4567" />
-                  </div>
-                  <Button>Save Changes</Button>
+                  {loading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground">Prénom</label>
+                          <Input value={accountForm.firstName} onChange={(e) => setAccountForm({...accountForm, firstName: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground">Nom</label>
+                          <Input value={accountForm.lastName} onChange={(e) => setAccountForm({...accountForm, lastName: e.target.value})} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Email</label>
+                        <Input type="email" value={accountForm.email} disabled className="opacity-60" />
+                        <p className="text-xs text-muted-foreground">L&apos;email ne peut pas être modifié</p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Téléphone</label>
+                        <Input type="tel" value={accountForm.phone} onChange={(e) => setAccountForm({...accountForm, phone: e.target.value})} />
+                      </div>
+                      <Button onClick={saveAccount} disabled={saving}>
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Sauvegarder
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
               <Card className="border-destructive/50">
                 <CardHeader>
-                  <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                  <CardDescription>Irreversible actions for your account</CardDescription>
+                  <CardTitle className="text-destructive">Zone dangereuse</CardTitle>
+                  <CardDescription>Actions irréversibles</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5">
                     <div>
-                      <p className="font-medium text-foreground">Delete Account</p>
-                      <p className="text-sm text-muted-foreground">
-                        Permanently delete your account and all associated data
-                      </p>
+                      <p className="font-medium text-foreground">Supprimer le compte</p>
+                      <p className="text-sm text-muted-foreground">Supprime définitivement votre compte et toutes vos données</p>
                     </div>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                    <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
+                      <Trash2 className="w-4 h-4 mr-2" />Supprimer
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+                    <div>
+                      <p className="font-medium text-foreground">Se déconnecter</p>
+                      <p className="text-sm text-muted-foreground">Déconnectez-vous de votre session</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />Déconnexion
                     </Button>
                   </div>
                 </CardContent>
@@ -324,29 +423,34 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Job Preferences</CardTitle>
-                  <CardDescription>Help EDGE find better matches for you</CardDescription>
+                  <CardTitle>Préférences d&apos;emploi</CardTitle>
+                  <CardDescription>Aidez EDGE à trouver les meilleures offres</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Preferred Roles</label>
-                    <Input defaultValue="Product Designer, UX Lead, Design Director" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Preferred Locations</label>
-                    <Input defaultValue="Remote, San Francisco, New York" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Ville préférée</label>
+                      <Input value={prefForm.city} onChange={(e) => setPrefForm({...prefForm, city: e.target.value})} placeholder="Ex: Paris" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Pays</label>
+                      <Input value={prefForm.country} onChange={(e) => setPrefForm({...prefForm, country: e.target.value})} placeholder="Ex: France" />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Min Salary</label>
-                      <Input defaultValue="$120,000" />
+                      <label className="text-sm font-medium text-foreground">Salaire min (€/an)</label>
+                      <Input type="number" value={prefForm.salaryMin} onChange={(e) => setPrefForm({...prefForm, salaryMin: e.target.value})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Max Salary</label>
-                      <Input defaultValue="$180,000" />
+                      <label className="text-sm font-medium text-foreground">Salaire max (€/an)</label>
+                      <Input type="number" value={prefForm.salaryMax} onChange={(e) => setPrefForm({...prefForm, salaryMax: e.target.value})} />
                     </div>
                   </div>
-                  <Button>Save Preferences</Button>
+                  <Button onClick={savePreferences} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Sauvegarder les préférences
+                  </Button>
                 </CardContent>
               </Card>
             </>
@@ -354,70 +458,22 @@ export default function SettingsPage() {
 
           {/* Billing Section */}
           {activeSection === "billing" && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Plan</CardTitle>
-                  <CardDescription>Manage your subscription</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground">Pro Plan</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          Active
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        $29/month · Renews on April 12, 2026
-                      </p>
-                    </div>
-                    <Button variant="outline">Manage Plan</Button>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <h4 className="font-medium text-foreground">Plan Features</h4>
-                    {[
-                      "Unlimited job matches",
-                      "AI-generated application dossiers",
-                      "Squad access",
-                      "Scout insights",
-                      "Priority support",
-                    ].map((feature) => (
-                      <div key={feature} className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-success" />
-                        <span className="text-muted-foreground">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                  <CardDescription>Manage your payment details</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                        <CreditCard className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">Visa ending in 4242</p>
-                        <p className="text-sm text-muted-foreground">Expires 12/2027</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      Update
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+            <Card>
+              <CardHeader>
+                <CardTitle>Abonnement</CardTitle>
+                <CardDescription>Gérez votre abonnement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="font-semibold text-foreground mb-2">Bientôt disponible</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    La gestion des abonnements et paiements sera disponible prochainement.
+                    Vous bénéficiez actuellement d&apos;un accès gratuit.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Security Section */}
@@ -447,56 +503,20 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Two-Factor Authentication</CardTitle>
-                  <CardDescription>Add an extra layer of security</CardDescription>
+                  <CardTitle>Authentification à deux facteurs</CardTitle>
+                  <CardDescription>Bientôt disponible</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between p-4 rounded-xl border border-border">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-success" />
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">2FA Enabled</p>
-                        <p className="text-sm text-muted-foreground">Using authenticator app</p>
+                        <p className="font-medium text-foreground">2FA</p>
+                        <p className="text-sm text-muted-foreground">Sera disponible prochainement</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">Configure</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Sessions</CardTitle>
-                  <CardDescription>Manage your logged in devices</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-border">
-                    {[
-                      { device: "MacBook Pro", location: "San Francisco, CA", current: true },
-                      { device: "iPhone 15", location: "San Francisco, CA", current: false },
-                    ].map((session, i) => (
-                      <div key={i} className="flex items-center justify-between p-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-foreground">{session.device}</p>
-                            {session.current && (
-                              <span className="px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-medium">
-                                Current
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{session.location}</p>
-                        </div>
-                        {!session.current && (
-                          <Button variant="ghost" size="sm">
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Sign Out
-                          </Button>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>

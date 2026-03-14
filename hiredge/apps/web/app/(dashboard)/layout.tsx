@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,8 +22,10 @@ import {
   Bell,
   Search,
   ChevronRight,
+  LogOut,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { profileApi, authApi, notificationsApi } from "@/lib/api"
 
 const sidebarItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -48,6 +50,75 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string } | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    // Check auth
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    if (!token) {
+      window.location.href = '/login'
+      return
+    }
+
+    // Fetch user profile
+    profileApi.get()
+      .then(({ data }) => {
+        if (data.success && data.data) {
+          setUserInfo({
+            firstName: data.data.firstName || '',
+            lastName: data.data.lastName || '',
+            email: data.data.user?.email || '',
+          })
+        }
+      })
+      .catch(() => {
+        // If profile fails, try authApi.me
+        authApi.me().then(({ data }) => {
+          if (data.success && data.data) {
+            setUserInfo({
+              firstName: data.data.candidateProfile?.firstName || data.data.email?.split('@')[0] || '',
+              lastName: data.data.candidateProfile?.lastName || '',
+              email: data.data.email || '',
+            })
+          }
+        }).catch(() => {})
+      })
+
+    // Fetch unread notifications count
+    notificationsApi.list(true)
+      .then(({ data }) => {
+        if (data.success) {
+          setUnreadCount(data.data?.length || 0)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const userInitials = userInfo 
+    ? `${userInfo.firstName?.[0] || ''}${userInfo.lastName?.[0] || ''}`.toUpperCase() || 'U'
+    : 'U'
+  const userName = userInfo 
+    ? `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'Utilisateur'
+    : 'Chargement...'
+  const userEmail = userInfo?.email || ''
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/jobs?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery("")
+    }
+  }
+
+  const handleLogout = async () => {
+    try { await authApi.logout() } catch {}
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    window.location.href = '/login'
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,13 +206,15 @@ export default function DashboardLayout({
             <div className="mt-4 p-3 rounded-lg bg-sidebar-accent">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-sidebar-primary flex items-center justify-center">
-                  <span className="text-sm font-semibold text-sidebar-primary-foreground">SC</span>
+                  <span className="text-sm font-semibold text-sidebar-primary-foreground">{userInitials}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">Sarah Chen</p>
-                  <p className="text-xs text-sidebar-foreground/60 truncate">sarah@example.com</p>
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">{userEmail}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-sidebar-foreground/40" />
+                <button onClick={handleLogout} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title="Se déconnecter">
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -163,20 +236,26 @@ export default function DashboardLayout({
               </button>
               
               {/* Search */}
-              <div className="hidden sm:block relative w-64 lg:w-80">
+              <form onSubmit={handleSearch} className="hidden sm:block relative w-64 lg:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search jobs, companies..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 bg-muted/50 border-transparent focus:border-border"
                 />
-              </div>
+              </form>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
+              <Button variant="ghost" size="icon" className="relative" asChild>
+                <Link href="/notifications">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-destructive" />
+                  )}
+                </Link>
               </Button>
 
               {/* EDGE Quick Access */}

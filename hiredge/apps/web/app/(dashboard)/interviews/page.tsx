@@ -13,11 +13,10 @@ import {
   Star,
   ChevronRight,
   Loader2,
-  Video,
   Calendar,
   MessageSquare,
 } from "lucide-react"
-import { interviewsApi, applicationsApi } from "@/lib/api"
+import { interviewsApi } from "@/lib/api"
 
 interface Interview {
   id: string
@@ -41,7 +40,6 @@ interface UpcomingInterview {
 }
 
 export default function InterviewsPage() {
-  const [selectedMode, setSelectedMode] = useState<"ai" | "company" | null>(null)
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [upcomingInterviews, setUpcomingInterviews] = useState<UpcomingInterview[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +53,7 @@ export default function InterviewsPage() {
       setLoading(true)
       const [interviewsRes, upcomingRes] = await Promise.all([
         interviewsApi.list().catch(() => ({ data: { data: [] } })),
-        fetch("/api/v1/interviews").then(r => r.json()).catch(() => ({ data: [] }))
+        interviewsApi.list({ status: 'upcoming' }).catch(() => ({ data: { data: [] } }))
       ])
 
       if (interviewsRes.data?.data) {
@@ -129,12 +127,7 @@ export default function InterviewsPage() {
       {/* Quick Start Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card
-          className={`cursor-pointer transition-all ${
-            selectedMode === "ai"
-              ? "border-primary ring-2 ring-primary/20"
-              : "hover:border-primary/30"
-          }`}
-          onClick={() => setSelectedMode("ai")}
+          className="hover:border-primary/30 transition-all"
         >
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
@@ -158,12 +151,7 @@ export default function InterviewsPage() {
         </Card>
 
         <Card
-          className={`cursor-pointer transition-all ${
-            selectedMode === "company"
-              ? "border-primary ring-2 ring-primary/20"
-              : "hover:border-primary/30"
-          }`}
-          onClick={() => setSelectedMode("company")}
+          className="hover:border-primary/30 transition-all"
         >
           <CardContent className="p-6">
             <div className="flex items-start gap-4">

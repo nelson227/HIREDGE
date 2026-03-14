@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,129 +10,186 @@ import {
   MapPin,
   Briefcase,
   Link as LinkIcon,
-  FileText,
-  Upload,
   Edit3,
   Check,
   X,
   Plus,
   Trash2,
   ExternalLink,
+  Loader2,
+  Save,
+  Phone,
 } from "lucide-react"
+import { profileApi } from "@/lib/api"
 
-const initialProfile = {
-  firstName: "Sarah",
-  lastName: "Chen",
-  email: "sarah@example.com",
-  phone: "+1 (555) 123-4567",
-  location: "San Francisco, CA",
-  headline: "Senior Product Designer",
-  bio: "Product designer with 6+ years of experience creating user-centered digital products. Specialized in design systems, UX research, and leading cross-functional teams.",
-  website: "https://sarahchen.design",
-  linkedin: "https://linkedin.com/in/sarahchen",
-  github: "https://github.com/sarahchen",
+interface Skill {
+  id: string
+  name: string
+  level: string
 }
 
-const initialSkills = [
-  "Figma",
-  "Design Systems",
-  "UX Research",
-  "Prototyping",
-  "User Testing",
-  "Wireframing",
-  "Accessibility",
-  "Design Thinking",
-]
+interface Experience {
+  id: string
+  title: string
+  company: string
+  location?: string
+  startDate: string
+  endDate?: string | null
+  current: boolean
+  description?: string
+}
 
-const initialExperience = [
-  {
-    id: "1",
-    title: "Lead Product Designer",
-    company: "DesignStudio",
-    location: "San Francisco, CA",
-    startDate: "2021",
-    endDate: "Present",
-    description: "Led design system initiative and managed team of 4 designers.",
-  },
-  {
-    id: "2",
-    title: "Senior UX Designer",
-    company: "TechStartup",
-    location: "Remote",
-    startDate: "2019",
-    endDate: "2021",
-    description: "Redesigned core product experience, improving engagement by 45%.",
-  },
-  {
-    id: "3",
-    title: "Product Designer",
-    company: "DigitalAgency",
-    location: "New York, NY",
-    startDate: "2017",
-    endDate: "2019",
-    description: "Worked on multiple client projects across fintech and healthcare.",
-  },
-]
+interface Education {
+  id: string
+  degree: string
+  institution: string
+  field?: string
+  startDate: string
+  endDate?: string | null
+  current: boolean
+}
 
-const initialEducation = [
-  {
-    id: "1",
-    degree: "Master of Design",
-    school: "Stanford University",
-    year: "2017",
-  },
-  {
-    id: "2",
-    degree: "Bachelor of Fine Arts",
-    school: "Rhode Island School of Design",
-    year: "2015",
-  },
-]
+interface ProfileData {
+  firstName: string
+  lastName: string
+  title: string
+  bio: string
+  phone: string
+  city: string
+  country: string
+  linkedinUrl: string
+  portfolioUrl: string
+  completionScore: number
+  skills: Skill[]
+  experiences: Experience[]
+  educations: Education[]
+  user?: { email: string }
+}
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(initialProfile)
-  const [skills, setSkills] = useState(initialSkills)
-  const [experience] = useState(initialExperience)
-  const [education] = useState(initialEducation)
+  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  const [isEditingBasic, setIsEditingBasic] = useState(false)
   const [isEditingBio, setIsEditingBio] = useState(false)
+  const [editForm, setEditForm] = useState({
+    firstName: "", lastName: "", title: "", phone: "", city: "", country: "",
+    linkedinUrl: "", portfolioUrl: "",
+  })
+  const [editedBio, setEditedBio] = useState("")
   const [newSkill, setNewSkill] = useState("")
-  const [editedBio, setEditedBio] = useState(profile.bio)
+  const [addingSkill, setAddingSkill] = useState(false)
 
-  const handleSaveBio = () => {
-    setProfile({ ...profile, bio: editedBio })
-    setIsEditingBio(false)
+  const [showNewExp, setShowNewExp] = useState(false)
+  const [newExp, setNewExp] = useState({ company: "", title: "", description: "", startDate: "", endDate: "", current: false })
+  const [showNewEdu, setShowNewEdu] = useState(false)
+  const [newEdu, setNewEdu] = useState({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
+
+  useEffect(() => { loadProfile() }, [])
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true)
+      const { data } = await profileApi.get()
+      if (data.success && data.data) {
+        const p = data.data
+        setProfile(p)
+        setEditForm({
+          firstName: p.firstName || "", lastName: p.lastName || "", title: p.title || "",
+          phone: p.phone || "", city: p.city || "", country: p.country || "",
+          linkedinUrl: p.linkedinUrl || "", portfolioUrl: p.portfolioUrl || "",
+        })
+        setEditedBio(p.bio || "")
+      }
+    } catch { setError("Erreur lors du chargement du profil") }
+    finally { setLoading(false) }
   }
 
-  const handleAddSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()])
-      setNewSkill("")
-    }
+  const saveBasicInfo = async () => {
+    setSaving(true)
+    try { await profileApi.update(editForm); await loadProfile(); setIsEditingBasic(false) }
+    catch { alert("Erreur lors de la sauvegarde") }
+    finally { setSaving(false) }
   }
 
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setSkills(skills.filter((skill) => skill !== skillToRemove))
+  const saveBio = async () => {
+    setSaving(true)
+    try { await profileApi.update({ bio: editedBio }); await loadProfile(); setIsEditingBio(false) }
+    catch { alert("Erreur lors de la sauvegarde") }
+    finally { setSaving(false) }
   }
+
+  const handleAddSkill = async () => {
+    if (!newSkill.trim()) return
+    setAddingSkill(true)
+    try { await profileApi.addSkill({ name: newSkill.trim(), level: "intermediate" }); setNewSkill(""); await loadProfile() }
+    catch { alert("Erreur lors de l'ajout") }
+    finally { setAddingSkill(false) }
+  }
+
+  const handleRemoveSkill = async (skillId: string) => {
+    try { await profileApi.removeSkill(skillId); await loadProfile() }
+    catch { alert("Erreur lors de la suppression") }
+  }
+
+  const handleAddExperience = async () => {
+    if (!newExp.company || !newExp.title || !newExp.startDate) return
+    try {
+      await profileApi.addExperience(newExp)
+      setShowNewExp(false)
+      setNewExp({ company: "", title: "", description: "", startDate: "", endDate: "", current: false })
+      await loadProfile()
+    } catch { alert("Erreur lors de l'ajout") }
+  }
+
+  const handleRemoveExperience = async (expId: string) => {
+    if (!confirm("Supprimer cette expérience ?")) return
+    try { await profileApi.removeExperience(expId); await loadProfile() }
+    catch { alert("Erreur lors de la suppression") }
+  }
+
+  const handleAddEducation = async () => {
+    if (!newEdu.institution || !newEdu.degree || !newEdu.startDate) return
+    try {
+      await profileApi.addEducation(newEdu)
+      setShowNewEdu(false)
+      setNewEdu({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
+      await loadProfile()
+    } catch { alert("Erreur lors de l'ajout") }
+  }
+
+  const handleRemoveEducation = async (eduId: string) => {
+    if (!confirm("Supprimer cette formation ?")) return
+    try { await profileApi.removeEducation(eduId); await loadProfile() }
+    catch { alert("Erreur lors de la suppression") }
+  }
+
+  const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("fr-CA", { year: "numeric", month: "short" }) : ""
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  )
+
+  if (error || !profile) return (
+    <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+      <div className="text-center">
+        <p className="text-destructive mb-4">{error || "Profil introuvable"}</p>
+        <Button onClick={loadProfile}>Réessayer</Button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">My Profile</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your professional profile and preferences
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <FileText className="w-4 h-4 mr-2" />
-            Download CV
-          </Button>
-          <Button>
-            <Upload className="w-4 h-4 mr-2" />
-            Update CV
-          </Button>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Mon Profil</h1>
+          <p className="text-muted-foreground mt-1">Gérez votre profil professionnel</p>
         </div>
       </div>
 
@@ -142,90 +199,125 @@ export default function ProfilePage() {
           {/* Basic Info Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Basic Information</CardTitle>
-              <Button variant="ghost" size="sm">
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
+              <CardTitle>Informations de base</CardTitle>
+              {!isEditingBasic ? (
+                <Button variant="ghost" size="sm" onClick={() => setIsEditingBasic(true)}>
+                  <Edit3 className="w-4 h-4 mr-2" />Modifier
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingBasic(false)}><X className="w-4 h-4" /></Button>
+                  <Button size="sm" onClick={saveBasicInfo} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}Sauvegarder
+                  </Button>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
-              <div className="flex items-start gap-6">
-                {/* Avatar */}
-                <div className="relative">
+              {isEditingBasic ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Prénom</label>
+                      <Input value={editForm.firstName} onChange={(e) => setEditForm({...editForm, firstName: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nom</label>
+                      <Input value={editForm.lastName} onChange={(e) => setEditForm({...editForm, lastName: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Titre professionnel</label>
+                    <Input value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} placeholder="Ex: Développeur Full Stack" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Téléphone</label>
+                    <Input value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Ville</label>
+                      <Input value={editForm.city} onChange={(e) => setEditForm({...editForm, city: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Pays</label>
+                      <Input value={editForm.country} onChange={(e) => setEditForm({...editForm, country: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">LinkedIn</label>
+                    <Input value={editForm.linkedinUrl} onChange={(e) => setEditForm({...editForm, linkedinUrl: e.target.value})} placeholder="https://linkedin.com/in/..." />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Portfolio</label>
+                    <Input value={editForm.portfolioUrl} onChange={(e) => setEditForm({...editForm, portfolioUrl: e.target.value})} placeholder="https://..." />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-6">
                   <div className="w-24 h-24 rounded-2xl bg-primary flex items-center justify-center">
                     <span className="text-3xl font-bold text-primary-foreground">
-                      {profile.firstName[0]}{profile.lastName[0]}
+                      {(profile.firstName?.[0] || "")}{(profile.lastName?.[0] || "")}
                     </span>
                   </div>
-                  <button className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center hover:bg-muted/80 transition-colors">
-                    <Upload className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">
-                      {profile.firstName} {profile.lastName}
-                    </h2>
-                    <p className="text-muted-foreground">{profile.headline}</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-foreground">{profile.email}</span>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-foreground">{profile.firstName} {profile.lastName}</h2>
+                      <p className="text-muted-foreground">{profile.title || "Pas de titre"}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-foreground">{profile.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <LinkIcon className="w-4 h-4 text-muted-foreground" />
-                      <a href={profile.website} className="text-primary hover:underline">
-                        {profile.website.replace("https://", "")}
-                      </a>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Briefcase className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-foreground">6+ years experience</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {profile.user?.email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="w-4 h-4 text-muted-foreground" /><span className="text-foreground">{profile.user.email}</span>
+                        </div>
+                      )}
+                      {profile.phone && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="w-4 h-4 text-muted-foreground" /><span className="text-foreground">{profile.phone}</span>
+                        </div>
+                      )}
+                      {(profile.city || profile.country) && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="w-4 h-4 text-muted-foreground" /><span className="text-foreground">{[profile.city, profile.country].filter(Boolean).join(", ")}</span>
+                        </div>
+                      )}
+                      {profile.linkedinUrl && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                          <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">LinkedIn</a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Bio Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>About Me</CardTitle>
+              <CardTitle>À propos</CardTitle>
               {!isEditingBio ? (
-                <Button variant="ghost" size="sm" onClick={() => setIsEditingBio(true)}>
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit
+                <Button variant="ghost" size="sm" onClick={() => { setEditedBio(profile.bio || ""); setIsEditingBio(true) }}>
+                  <Edit3 className="w-4 h-4 mr-2" />Modifier
                 </Button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditingBio(false)}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" onClick={handleSaveBio}>
-                    <Check className="w-4 h-4 mr-2" />
-                    Save
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingBio(false)}><X className="w-4 h-4" /></Button>
+                  <Button size="sm" onClick={saveBio} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Check className="w-4 h-4 mr-1" />}Sauvegarder
                   </Button>
                 </div>
               )}
             </CardHeader>
             <CardContent>
               {isEditingBio ? (
-                <textarea
-                  value={editedBio}
-                  onChange={(e) => setEditedBio(e.target.value)}
+                <textarea value={editedBio} onChange={(e) => setEditedBio(e.target.value)}
                   className="w-full min-h-[120px] p-3 rounded-lg border border-border bg-background text-foreground text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                  placeholder="Décrivez votre parcours professionnel..." />
               ) : (
-                <p className="text-muted-foreground leading-relaxed">{profile.bio}</p>
+                <p className="text-muted-foreground leading-relaxed">{profile.bio || "Aucune description. Cliquez sur Modifier pour ajouter une bio."}</p>
               )}
             </CardContent>
           </Card>
@@ -233,15 +325,36 @@ export default function ProfilePage() {
           {/* Experience Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Experience</CardTitle>
-              <Button variant="ghost" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
+              <CardTitle>Expériences</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowNewExp(true)}><Plus className="w-4 h-4 mr-2" />Ajouter</Button>
             </CardHeader>
             <CardContent className="p-0">
+              {showNewExp && (
+                <div className="p-6 border-b border-border bg-muted/30 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input placeholder="Titre du poste *" value={newExp.title} onChange={(e) => setNewExp({...newExp, title: e.target.value})} />
+                    <Input placeholder="Entreprise *" value={newExp.company} onChange={(e) => setNewExp({...newExp, company: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input type="date" value={newExp.startDate} onChange={(e) => setNewExp({...newExp, startDate: e.target.value})} />
+                    <Input type="date" value={newExp.endDate} onChange={(e) => setNewExp({...newExp, endDate: e.target.value})} disabled={newExp.current} />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={newExp.current} onChange={(e) => setNewExp({...newExp, current: e.target.checked, endDate: ""})} />Poste actuel
+                  </label>
+                  <textarea placeholder="Description..." value={newExp.description} onChange={(e) => setNewExp({...newExp, description: e.target.value})}
+                    className="w-full min-h-[80px] p-3 rounded-lg border border-border bg-background text-sm resize-none" />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleAddExperience}>Ajouter</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setShowNewExp(false)}>Annuler</Button>
+                  </div>
+                </div>
+              )}
               <div className="divide-y divide-border">
-                {experience.map((exp) => (
+                {profile.experiences.length === 0 && !showNewExp && (
+                  <div className="p-8 text-center text-muted-foreground text-sm">Aucune expérience ajoutée.</div>
+                )}
+                {profile.experiences.map((exp) => (
                   <div key={exp.id} className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex gap-4">
@@ -252,13 +365,13 @@ export default function ProfilePage() {
                           <h4 className="font-semibold text-foreground">{exp.title}</h4>
                           <p className="text-sm text-primary">{exp.company}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {exp.startDate} - {exp.endDate} · {exp.location}
+                            {fmtDate(exp.startDate)} - {exp.current ? "Présent" : (exp.endDate ? fmtDate(exp.endDate) : "N/A")}
                           </p>
-                          <p className="text-sm text-muted-foreground mt-2">{exp.description}</p>
+                          {exp.description && <p className="text-sm text-muted-foreground mt-2">{exp.description}</p>}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="shrink-0">
-                        <Edit3 className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => handleRemoveExperience(exp.id)}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -270,15 +383,32 @@ export default function ProfilePage() {
           {/* Education Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Education</CardTitle>
-              <Button variant="ghost" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
+              <CardTitle>Formation</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowNewEdu(true)}><Plus className="w-4 h-4 mr-2" />Ajouter</Button>
             </CardHeader>
             <CardContent className="p-0">
+              {showNewEdu && (
+                <div className="p-6 border-b border-border bg-muted/30 space-y-3">
+                  <Input placeholder="Établissement *" value={newEdu.institution} onChange={(e) => setNewEdu({...newEdu, institution: e.target.value})} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input placeholder="Diplôme *" value={newEdu.degree} onChange={(e) => setNewEdu({...newEdu, degree: e.target.value})} />
+                    <Input placeholder="Domaine" value={newEdu.field} onChange={(e) => setNewEdu({...newEdu, field: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input type="date" value={newEdu.startDate} onChange={(e) => setNewEdu({...newEdu, startDate: e.target.value})} />
+                    <Input type="date" value={newEdu.endDate} onChange={(e) => setNewEdu({...newEdu, endDate: e.target.value})} disabled={newEdu.current} />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleAddEducation}>Ajouter</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setShowNewEdu(false)}>Annuler</Button>
+                  </div>
+                </div>
+              )}
               <div className="divide-y divide-border">
-                {education.map((edu) => (
+                {profile.educations.length === 0 && !showNewEdu && (
+                  <div className="p-8 text-center text-muted-foreground text-sm">Aucune formation ajoutée.</div>
+                )}
+                {profile.educations.map((edu) => (
                   <div key={edu.id} className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex gap-4">
@@ -287,12 +417,15 @@ export default function ProfilePage() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-foreground">{edu.degree}</h4>
-                          <p className="text-sm text-primary">{edu.school}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{edu.year}</p>
+                          <p className="text-sm text-primary">{edu.institution}</p>
+                          {edu.field && <p className="text-xs text-muted-foreground">{edu.field}</p>}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {fmtDate(edu.startDate)} - {edu.current ? "En cours" : (edu.endDate ? fmtDate(edu.endDate) : "N/A")}
+                          </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="shrink-0">
-                        <Edit3 className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => handleRemoveEducation(edu.id)}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -306,53 +439,35 @@ export default function ProfilePage() {
         <div className="space-y-6">
           {/* Profile Completion */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Profile Completion</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Complétion du profil</CardTitle></CardHeader>
             <CardContent>
               <div className="flex items-center justify-center mb-4">
                 <div className="relative w-24 h-24">
                   <svg className="w-full h-full -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="40"
-                      strokeWidth="6"
-                      fill="none"
-                      className="stroke-muted"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="40"
-                      strokeWidth="6"
-                      fill="none"
-                      strokeDasharray={`${(85 / 100) * 251} 251`}
-                      className="stroke-success"
-                      strokeLinecap="round"
-                    />
+                    <circle cx="48" cy="48" r="40" strokeWidth="6" fill="none" className="stroke-muted" />
+                    <circle cx="48" cy="48" r="40" strokeWidth="6" fill="none"
+                      strokeDasharray={`${((profile.completionScore || 0) / 100) * 251} 251`}
+                      className="stroke-success" strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-foreground">85%</span>
+                    <span className="text-2xl font-bold text-foreground">{profile.completionScore || 0}%</span>
                   </div>
                 </div>
               </div>
               <div className="space-y-2">
                 {[
-                  { label: "Add portfolio link", done: true },
-                  { label: "Complete work history", done: true },
-                  { label: "Add certifications", done: false },
-                  { label: "Set job preferences", done: true },
+                  { label: "Nom et prénom", done: !!(profile.firstName && profile.lastName) },
+                  { label: "Titre professionnel", done: !!profile.title },
+                  { label: "Bio / description", done: !!profile.bio },
+                  { label: "Au moins 1 compétence", done: profile.skills.length > 0 },
+                  { label: "Au moins 1 expérience", done: profile.experiences.length > 0 },
+                  { label: "Profil LinkedIn", done: !!profile.linkedinUrl },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                      item.done ? "bg-success" : "bg-muted"
-                    }`}>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? "bg-success" : "bg-muted"}`}>
                       {item.done && <Check className="w-3 h-3 text-success-foreground" />}
                     </div>
-                    <span className={item.done ? "text-muted-foreground line-through" : "text-foreground"}>
-                      {item.label}
-                    </span>
+                    <span className={item.done ? "text-muted-foreground line-through" : "text-foreground"}>{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -361,36 +476,22 @@ export default function ProfilePage() {
 
           {/* Skills Card */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Skills</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Compétences</CardTitle></CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
-                {skills.map((skill) => (
-                  <div
-                    key={skill}
-                    className="group flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium"
-                  >
-                    {skill}
-                    <button
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                {profile.skills.map((skill) => (
+                  <div key={skill.id} className="group flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    {skill.name}
+                    <button onClick={() => handleRemoveSkill(skill.id)} className="opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
+                {profile.skills.length === 0 && <p className="text-sm text-muted-foreground">Aucune compétence</p>}
               </div>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Add skill..."
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
-                  className="flex-1"
-                />
-                <Button size="icon" onClick={handleAddSkill} disabled={!newSkill.trim()}>
-                  <Plus className="w-4 h-4" />
+                <Input placeholder="Ajouter une compétence..." value={newSkill} onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddSkill()} className="flex-1" />
+                <Button size="icon" onClick={handleAddSkill} disabled={!newSkill.trim() || addingSkill}>
+                  {addingSkill ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 </Button>
               </div>
             </CardContent>
@@ -398,33 +499,39 @@ export default function ProfilePage() {
 
           {/* Social Links */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Social Links</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Liens</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { label: "LinkedIn", url: profile.linkedin, icon: "LI" },
-                { label: "GitHub", url: profile.github, icon: "GH" },
-                { label: "Website", url: profile.website, icon: "WB" },
-              ].map((link) => (
-                <div key={link.label} className="flex items-center gap-3">
+              {profile.linkedinUrl && (
+                <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-xs font-semibold text-muted-foreground">{link.icon}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">LI</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{link.label}</p>
-                    <a
-                      href={link.url}
-                      className="text-xs text-primary hover:underline truncate block"
-                    >
-                      {link.url.replace("https://", "")}
+                    <p className="text-sm font-medium text-foreground">LinkedIn</p>
+                    <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block">
+                      {profile.linkedinUrl.replace("https://", "")}
                     </a>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
+                  <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer"><Button variant="ghost" size="icon"><ExternalLink className="w-4 h-4" /></Button></a>
                 </div>
-              ))}
+              )}
+              {profile.portfolioUrl && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <span className="text-xs font-semibold text-muted-foreground">WB</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">Portfolio</p>
+                    <a href={profile.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block">
+                      {profile.portfolioUrl.replace("https://", "")}
+                    </a>
+                  </div>
+                  <a href={profile.portfolioUrl} target="_blank" rel="noopener noreferrer"><Button variant="ghost" size="icon"><ExternalLink className="w-4 h-4" /></Button></a>
+                </div>
+              )}
+              {!profile.linkedinUrl && !profile.portfolioUrl && (
+                <p className="text-sm text-muted-foreground">Aucun lien. Modifiez vos infos pour en ajouter.</p>
+              )}
             </CardContent>
           </Card>
         </div>
