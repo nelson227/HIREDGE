@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +19,9 @@ import {
   Loader2,
   Save,
   Phone,
+  Upload,
+  FileText,
+  AlertCircle,
 } from "lucide-react"
 import { profileApi } from "@/lib/api"
 
@@ -60,6 +63,7 @@ interface ProfileData {
   linkedinUrl: string
   portfolioUrl: string
   completionScore: number
+  cvUrl: string | null
   skills: Skill[]
   experiences: Experience[]
   educations: Education[]
@@ -88,6 +92,12 @@ export default function ProfilePage() {
   const [newEdu, setNewEdu] = useState({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
   const [feedbackMsg, setFeedbackMsg] = useState("")
   const showFeedback = (msg: string) => { setFeedbackMsg(msg); setTimeout(() => setFeedbackMsg(""), 3000) }
+
+  // CV upload state
+  const cvInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingCv, setUploadingCv] = useState(false)
+  const [cvError, setCvError] = useState("")
+  const [cvSuccess, setCvSuccess] = useState("")
 
   useEffect(() => { loadProfile() }, [])
 
@@ -166,6 +176,45 @@ export default function ProfilePage() {
     if (!confirm("Supprimer cette formation ?")) return
     try { await profileApi.removeEducation(eduId); await loadProfile() }
     catch { showFeedback("Erreur lors de la suppression") }
+  }
+
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Reset input so same file can be re-selected
+    e.target.value = ""
+
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ]
+    if (!validTypes.includes(file.type)) {
+      setCvError("Format non supporté. Utilisez un fichier PDF ou DOCX.")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCvError("Le fichier ne doit pas dépasser 5 Mo.")
+      return
+    }
+
+    setCvError("")
+    setCvSuccess("")
+    setUploadingCv(true)
+    try {
+      const { data } = await profileApi.uploadCv(file)
+      if (data.success) {
+        setCvSuccess("CV importé et profil mis à jour avec succès !")
+        setTimeout(() => setCvSuccess(""), 5000)
+        await loadProfile()
+      } else {
+        setCvError(data.error?.message || "Erreur lors de l'analyse du CV")
+      }
+    } catch (err: any) {
+      setCvError(err.response?.data?.error?.message || "Erreur lors de l'envoi du CV")
+    } finally {
+      setUploadingCv(false)
+    }
   }
 
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("fr-FR", { year: "numeric", month: "short" }) : ""
@@ -442,6 +491,87 @@ export default function ProfilePage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* CV Upload Card */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Mon CV</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {cvError && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs">
+                  <AlertCircle className="w-3 h-3 shrink-0" />
+                  <span>{cvError}</span>
+                  <button onClick={() => setCvError("")} className="ml-auto"><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              {cvSuccess && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-success/10 text-success text-xs">
+                  <Check className="w-3 h-3 shrink-0" />
+                  <span>{cvSuccess}</span>
+                </div>
+              )}
+
+              {profile.cvUrl ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">CV importé</p>
+                      <p className="text-xs text-muted-foreground truncate">Profil rempli automatiquement</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => cvInputRef.current?.click()}
+                    disabled={uploadingCv}
+                  >
+                    {uploadingCv ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Analyse en cours...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Upload className="w-4 h-4" />
+                        Remplacer le CV
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                  onClick={() => cvInputRef.current?.click()}
+                >
+                  {uploadingCv ? (
+                    <div className="space-y-2">
+                      <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
+                      <p className="text-sm font-medium text-foreground">Analyse du CV en cours...</p>
+                      <p className="text-xs text-muted-foreground">L'IA extrait vos informations</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Upload className="w-8 h-8 text-muted-foreground mx-auto" />
+                      <p className="text-sm font-medium text-foreground">Importer un CV</p>
+                      <p className="text-xs text-muted-foreground">PDF ou DOCX, max 5 Mo</p>
+                      <p className="text-xs text-primary">Votre profil sera rempli automatiquement</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <input
+                ref={cvInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc"
+                onChange={handleCvUpload}
+                className="hidden"
+              />
+            </CardContent>
+          </Card>
+
           {/* Profile Completion */}
           <Card>
             <CardHeader><CardTitle className="text-base">Complétion du profil</CardTitle></CardHeader>

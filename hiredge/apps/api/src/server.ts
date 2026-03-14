@@ -4,6 +4,9 @@ import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 import { env } from './config/env';
 import prisma from './db/prisma';
 import { authenticate } from './middleware/auth';
@@ -51,6 +54,18 @@ async function buildServer() {
 
   await app.register(rateLimit, {
     global: false,
+  });
+
+  await app.register(multipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max
+    },
+  });
+
+  await app.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'uploads'),
+    prefix: '/uploads/',
+    decorateReply: true,
   });
 
   await app.register(jwt, {

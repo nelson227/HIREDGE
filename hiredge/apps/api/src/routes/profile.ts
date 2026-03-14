@@ -1,7 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
 import { updateProfileSchema, addSkillSchema, addExperienceSchema } from '@hiredge/shared';
 import { profileService } from '../services/profile.service';
+import { cvService } from '../services/cv.service';
 import { AppError } from '../services/auth.service';
+import path from 'path';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
   // All profile routes require authentication
@@ -170,6 +172,86 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       await profileService.removeEducation(request.user.id, id);
       return reply.send({ success: true, data: { message: 'Formation supprimée' } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: { code: err.code, message: err.message },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // POST /profile/cv — Upload and parse CV (PDF or DOCX)
+  fastify.post('/cv', async (request, reply) => {
+    try {
+      const data = await request.file();
+      if (!data) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'NO_FILE', message: 'Aucun fichier envoyé' },
+        });
+      }
+
+      const allowedMimes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+      ];
+
+      if (!allowedMimes.includes(data.mimetype)) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'INVALID_FORMAT', message: 'Format non supporté. Utilisez PDF ou DOCX.' },
+        });
+      }
+
+      const buffer = await data.toBuffer();
+
+      // 5MB max for CV
+      if (buffer.length > 5 * 1024 * 1024) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'FILE_TOO_LARGE', message: 'Le fichier ne doit pas dépasser 5 Mo.' },
+        });
+      }
+
+      const result = await cvService.uploadAndParse(
+        request.user.id,
+        buffer,
+        data.mimetype,
+        data.filename,
+      );
+
+      return reply.send({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: { code: err.code, message: err.message },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // GET /profile/cv/download — Download the user's CV file
+  fastify.get('/cv/download', async (request, reply) => {
+    try {
+      const cvPath = await cvService.getCvPath(request.user.id);
+      if (!cvPath) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NO_CV', message: 'Aucun CV trouvé' },
+        });
+      }
+
+      const absolutePath = path.join(process.cwd(), cvPath);
+      return reply.sendFile(path.basename(absolutePath), path.dirname(absolutePath));
     } catch (err) {
       if (err instanceof AppError) {
         return reply.status(err.statusCode).send({

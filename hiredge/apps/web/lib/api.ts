@@ -111,6 +111,27 @@ export const profileApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  uploadCv: (file: File) => {
+    const formData = new FormData();
+    formData.append('cv', file);
+    return api.post('/profile/cv', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000, // 60s — AI parsing can take time
+    });
+  },
+  downloadCv: () => api.get('/profile/cv/download', { responseType: 'blob' }),
+  addSkill: (data: { name: string; level: string; yearsOfExperience?: number }) =>
+    api.post('/profile/skills', data),
+  removeSkill: (skillId: string) =>
+    api.delete(`/profile/skills/${skillId}`),
+  addExperience: (data: any) =>
+    api.post('/profile/experiences', data),
+  removeExperience: (expId: string) =>
+    api.delete(`/profile/experiences/${expId}`),
+  addEducation: (data: any) =>
+    api.post('/profile/educations', data),
+  removeEducation: (eduId: string) =>
+    api.delete(`/profile/educations/${eduId}`),
 };
 
 // ─── Interviews ──────────────────────────────────────────────────

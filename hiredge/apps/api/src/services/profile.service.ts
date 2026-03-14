@@ -77,7 +77,7 @@ export class ProfileService {
       },
     });
 
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
     return skill;
   }
 
@@ -89,7 +89,7 @@ export class ProfileService {
     if (!skill) throw new AppError('SKILL_NOT_FOUND', 'Compétence introuvable', 404);
 
     await prisma.skill.delete({ where: { id: skillId } });
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
   }
 
   async addExperience(userId: string, data: {
@@ -117,7 +117,7 @@ export class ProfileService {
       },
     });
 
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
     return experience;
   }
 
@@ -129,7 +129,7 @@ export class ProfileService {
     if (!exp) throw new AppError('EXPERIENCE_NOT_FOUND', 'Expérience introuvable', 404);
 
     await prisma.experience.delete({ where: { id: experienceId } });
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
   }
 
   async addEducation(userId: string, data: {
@@ -155,7 +155,7 @@ export class ProfileService {
       },
     });
 
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
     return education;
   }
 
@@ -167,7 +167,7 @@ export class ProfileService {
     if (!edu) throw new AppError('EDUCATION_NOT_FOUND', 'Formation introuvable', 404);
 
     await prisma.education.delete({ where: { id: educationId } });
-    await this.recalcCompletion(userId);
+    await this.recalcCompletionScore(userId);
   }
 
   private calculateCompletion(profile: any): number {
@@ -185,7 +185,7 @@ export class ProfileService {
     return Math.min(score, 100);
   }
 
-  private async recalcCompletion(userId: string) {
+  async recalcCompletionScore(userId: string) {
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId },
       include: { skills: true, experiences: true, educations: true },
