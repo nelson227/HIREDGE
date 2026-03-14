@@ -23,10 +23,10 @@ async function main() {
           lastName: 'Diallo',
           title: 'Développeur Full-Stack JavaScript',
           bio: 'Passionné par le développement web et mobile. 4 ans d\'expérience avec React, Node.js et TypeScript.',
-          city: 'Paris',
-          country: 'FR',
-          salaryMin: 40000,
-          salaryMax: 50000,
+          city: 'Montreal',
+          country: 'CA',
+          salaryMin: 70000,
+          salaryMax: 90000,
           remotePreference: 'HYBRID',
           yearsExperience: 4,
           completionScore: 80,
@@ -44,16 +44,16 @@ async function main() {
             create: [
               {
                 title: 'Développeur Full-Stack',
-                company: 'TechStart Africa',
-                location: 'Paris',
+                company: 'Shopify',
+                location: 'Montreal',
                 startDate: new Date('2022-03-01'),
                 current: true,
                 description: 'Développement d\'applications web et mobile avec React, Node.js et PostgreSQL.',
               },
               {
                 title: 'Développeur Frontend',
-                company: 'DigiAgence',
-                location: 'Lyon',
+                company: 'Lightspeed Commerce',
+                location: 'Montreal',
                 startDate: new Date('2020-06-01'),
                 endDate: new Date('2022-02-28'),
                 current: false,
@@ -64,7 +64,7 @@ async function main() {
           educations: {
             create: [
               {
-                institution: 'Université Paris-Saclay',
+                institution: 'Université de Montréal',
                 degree: 'Master',
                 field: 'Informatique',
                 startDate: new Date('2018-09-01'),
@@ -86,11 +86,11 @@ async function main() {
       update: {},
       create: {
         id: 'comp-1',
-        name: 'TechAfrica',
+        name: 'Shopify',
         industry: 'Technology',
-        sizeRange: '50-200',
-        location: 'Paris',
-        website: 'https://techafrica.io',
+        sizeRange: '5000+',
+        location: 'Toronto',
+        website: 'https://shopify.com',
       },
     }),
     prisma.company.upsert({
@@ -98,11 +98,11 @@ async function main() {
       update: {},
       create: {
         id: 'comp-2',
-        name: 'DataSenegal',
+        name: 'Element AI',
         industry: 'Data & AI',
-        sizeRange: '10-50',
-        location: 'Dakar',
-        website: 'https://datasenegal.sn',
+        sizeRange: '200-500',
+        location: 'Montreal',
+        website: 'https://elementai.com',
       },
     }),
     prisma.company.upsert({
@@ -110,11 +110,11 @@ async function main() {
       update: {},
       create: {
         id: 'comp-3',
-        name: 'FintechCongo',
+        name: 'Wealthsimple',
         industry: 'Fintech',
-        sizeRange: '50-200',
-        location: 'Kinshasa',
-        website: 'https://fintechcongo.cd',
+        sizeRange: '500-1000',
+        location: 'Toronto',
+        website: 'https://wealthsimple.com',
       },
     }),
   ]);
@@ -125,14 +125,14 @@ async function main() {
   const jobs = await Promise.all([
     prisma.job.create({
       data: {
-        title: 'Développeur React Senior',
-        description: 'Nous recherchons un développeur React expérimenté pour rejoindre notre équipe produit. Vous travaillerez sur notre plateforme SaaS B2B destinée aux entreprises africaines.',
-        location: 'Paris',
-        locationCity: 'Paris',
-        locationCountry: 'FR',
+        title: 'Senior React Developer',
+        description: 'We are looking for an experienced React developer to join our product team. You will work on our e-commerce platform serving millions of merchants worldwide.',
+        location: 'Toronto, ON',
+        locationCity: 'Toronto',
+        locationCountry: 'CA',
         contractType: 'CDI',
-        salaryMin: 50000,
-        salaryMax: 65000,
+        salaryMin: 90000,
+        salaryMax: 120000,
         remote: true,
         status: 'ACTIVE',
         companyId: 'comp-1',
@@ -146,13 +146,13 @@ async function main() {
     prisma.job.create({
       data: {
         title: 'Data Engineer',
-        description: 'Mission : concevoir et maintenir nos pipelines de données. Stack : Python, Spark, Airflow, BigQuery. Environnement international et stimulant.',
-        location: 'Dakar',
-        locationCity: 'Dakar',
-        locationCountry: 'SN',
+        description: 'Design and maintain our data pipelines. Stack: Python, Spark, Airflow, BigQuery. International and stimulating environment in the heart of Montreal\'s AI hub.',
+        location: 'Montreal, QC',
+        locationCity: 'Montreal',
+        locationCountry: 'CA',
         contractType: 'CDI',
-        salaryMin: 35000,
-        salaryMax: 50000,
+        salaryMin: 80000,
+        salaryMax: 105000,
         remote: false,
         status: 'ACTIVE',
         companyId: 'comp-2',
@@ -165,14 +165,14 @@ async function main() {
     }),
     prisma.job.create({
       data: {
-        title: 'Chef de Projet Digital',
-        description: 'Pilotez le développement de notre application mobile de paiement. Gestion d\'une équipe de 5 développeurs.',
-        location: 'Kinshasa',
-        locationCity: 'Kinshasa',
-        locationCountry: 'CD',
+        title: 'Digital Project Manager',
+        description: 'Lead the development of our mobile investment platform. Manage a team of 5 developers in a fast-paced fintech environment.',
+        location: 'Toronto, ON',
+        locationCity: 'Toronto',
+        locationCountry: 'CA',
         contractType: 'CDI',
-        salaryMin: 30000,
-        salaryMax: 45000,
+        salaryMin: 85000,
+        salaryMax: 110000,
         remote: false,
         status: 'ACTIVE',
         companyId: 'comp-3',
@@ -191,7 +191,7 @@ async function main() {
   const squad = await prisma.squad.create({
     data: {
       name: 'Les Conquérants Tech',
-      description: 'Escouade de devs qui veulent décrocher un CDI avant fin 2024 !',
+      description: 'Escouade de devs au Canada qui veulent décrocher un emploi tech !',
       status: 'FORMING',
       members: {
         create: {

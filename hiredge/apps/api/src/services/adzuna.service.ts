@@ -143,18 +143,26 @@ export class AdzunaService {
             });
           }
 
+          // Extraire la ville depuis les données Adzuna
+          const locationCity = adzunaJob.location.area?.[adzunaJob.location.area.length - 1] || location;
+          const countryCode = COUNTRY_CODES[country.toLowerCase()] || 'ca';
+          const salaryCurrency = countryCode === 'ca' ? 'CAD' : countryCode === 'us' ? 'USD' : 'EUR';
+
           // Créer l'offre
           await prisma.job.create({
             data: {
               title: adzunaJob.title,
               description: adzunaJob.description || 'No description available',
               location: adzunaJob.location.display_name,
+              locationCity,
+              locationCountry: countryCode.toUpperCase(),
               companyId: company.id,
               source: 'adzuna',
               externalId: adzunaJob.id,
               sourceUrl: adzunaJob.redirect_url,
               salaryMin: adzunaJob.salary_min ? Math.round(adzunaJob.salary_min) : null,
               salaryMax: adzunaJob.salary_max ? Math.round(adzunaJob.salary_max) : null,
+              salaryCurrency,
               contractType: this.mapContractType(adzunaJob.contract_type, adzunaJob.contract_time),
               remote: this.detectRemote(adzunaJob.title, adzunaJob.description || ''),
               status: 'ACTIVE',
