@@ -294,7 +294,11 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
   private async buildContext(userId: string, intent: DetectedIntent, conversationId?: string): Promise<EdgeContext> {
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId },
-      include: { skills: true, experiences: { take: 3, orderBy: { startDate: 'desc' } } },
+      include: {
+        skills: true,
+        experiences: { take: 5, orderBy: { startDate: 'desc' } },
+        educations: { take: 3, orderBy: { startDate: 'desc' } },
+      },
     });
 
     const recentMessages = await this.getRecentMessages(userId, this.MAX_CONTEXT_MESSAGES, conversationId);
@@ -353,8 +357,14 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         firstName: profile.firstName,
         lastName: profile.lastName,
         title: profile.title,
+        bio: profile.bio,
+        phone: profile.phone,
+        city: profile.city,
+        country: profile.country,
+        linkedinUrl: profile.linkedinUrl,
         skills: profile.skills.map((s: any) => s.name),
         experience: profile.experiences.map((e: any) => `${e.title} chez ${e.company}`),
+        education: profile.educations.map((e: any) => `${e.degree} à ${e.institution}`),
       } : null,
       recentMessages,
       intentData,
@@ -558,9 +568,16 @@ TES CAPACITÉS (tu PEUX faire tout cela) :
 Si l'utilisateur demande un document PDF ou Word, dis-lui de formuler sa demande avec "génère mon CV" ou "en pdf" ou "en word".
 
 PROFIL UTILISATEUR :
-${context.userProfile ? `Titre: ${context.userProfile.title ?? 'Non renseigné'}
+${context.userProfile ? `Prénom: ${context.userProfile.firstName ?? 'Non renseigné'}
+Nom: ${context.userProfile.lastName ?? 'Non renseigné'}
+Titre: ${context.userProfile.title ?? 'Non renseigné'}
+Bio: ${context.userProfile.bio ?? 'Non renseignée'}
+Téléphone: ${context.userProfile.phone ?? 'Non renseigné'}
+Ville: ${context.userProfile.city ?? 'Non renseignée'}${context.userProfile.country ? ', ' + context.userProfile.country : ''}
+LinkedIn: ${context.userProfile.linkedinUrl ?? 'Non renseigné'}
 Compétences: ${(context.userProfile.skills ?? []).join(', ') || 'Non renseignées'}
-Expériences: ${(context.userProfile.experience ?? []).join(', ') || 'Non renseignées'}` : 'Profil non encore renseigné.'}
+Expériences: ${(context.userProfile.experience ?? []).join(', ') || 'Non renseignées'}
+Formation: ${(context.userProfile.education ?? []).join(', ') || 'Non renseignée'}` : 'Profil non encore renseigné.'}
 `;
 
     if (context.intentData) {
