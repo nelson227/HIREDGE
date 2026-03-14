@@ -70,8 +70,6 @@ export class AdzunaService {
     url.searchParams.set('where', location);
     url.searchParams.set('content-type', 'application/json');
 
-    console.log(`[Adzuna] Recherche: "${keywords}" à "${location}" (${countryCode})`);
-
     try {
       const response = await fetch(url.toString());
 
@@ -82,7 +80,6 @@ export class AdzunaService {
       }
 
       const data = (await response.json()) as AdzunaResponse;
-      console.log(`[Adzuna] ${data.results.length} offres trouvées (total: ${data.count})`);
 
       return data.results;
     } catch (error: any) {

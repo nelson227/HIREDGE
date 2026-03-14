@@ -1,11 +1,45 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyReply } from 'fastify';
 import { registerSchema, loginSchema } from '@hiredge/shared';
 import { authService, AppError } from '../services/auth.service';
+import { env } from '../config/env';
 import prisma from '../db/prisma';
 
+const isProduction = env.NODE_ENV === 'production';
+
+function setTokenCookies(reply: FastifyReply, accessToken: string, refreshToken: string) {
+  reply.setCookie('access_token', accessToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 15 * 60, // 15 min
+  });
+  reply.setCookie('refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/api/v1/auth',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  });
+}
+
+function clearTokenCookies(reply: FastifyReply) {
+  reply.clearCookie('access_token', { path: '/' });
+  reply.clearCookie('refresh_token', { path: '/api/v1/auth' });
+}
+
 const authRoutes: FastifyPluginAsync = async (fastify) => {
+  const authRateLimit = {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute',
+      },
+    },
+  };
+
   // POST /auth/register
-  fastify.post('/register', async (request, reply) => {
+  fastify.post('/register', authRateLimit, async (request, reply) => {
     const parsed = registerSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -33,6 +67,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         request.ip,
       );
 
+      setTokenCookies(reply, accessToken, refreshToken);
+
       return reply.status(201).send({
         success: true,
         data: { user, accessToken, refreshToken },
@@ -49,7 +85,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /auth/login
-  fastify.post('/login', async (request, reply) => {
+  fastify.post('/login', authRateLimit, async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -77,6 +113,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         request.ip,
       );
 
+      setTokenCookies(reply, accessToken, refreshToken);
+
       return reply.send({
         success: true,
         data: { user, accessToken, refreshToken },
@@ -94,7 +132,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /auth/refresh
   fastify.post('/refresh', async (request, reply) => {
-    const { refreshToken } = request.body as { refreshToken?: string };
+    const body = request.body as { refreshToken?: string };
+    const refreshToken = body?.refreshToken || request.cookies?.refresh_token;
     if (!refreshToken) {
       return reply.status(400).send({
         success: false,
@@ -137,12 +176,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         request.ip,
       );
 
+      setTokenCookies(reply, newAccessToken, newRefreshToken);
+
       return reply.send({
         success: true,
         data: { accessToken: newAccessToken, refreshToken: newRefreshToken },
       });
     } catch (err) {
       if (err instanceof AppError) {
+        // On refresh failure, clear cookies
+        clearTokenCookies(reply);
         return reply.status(err.statusCode).send({
           success: false,
           error: { code: err.code, message: err.message },
@@ -154,7 +197,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /auth/logout (authenticated)
   fastify.post('/logout', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    const { refreshToken } = request.body as { refreshToken?: string };
+    const body = request.body as { refreshToken?: string };
+    const refreshToken = body?.refreshToken || request.cookies?.refresh_token;
 
     if (refreshToken) {
       await authService.revokeRefreshToken(refreshToken);
@@ -166,12 +210,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       await authService.blacklistAccessToken(token, 900); // 15 min TTL
     }
 
+    clearTokenCookies(reply);
+
     return reply.send({ success: true, data: { message: 'Déconnecté avec succès' } });
   });
 
   // POST /auth/logout-all (authenticated) - revoke all sessions
   fastify.post('/logout-all', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     await authService.revokeAllUserSessions(request.user.id);
+
+    clearTokenCookies(reply);
 
     return reply.send({ success: true, data: { message: 'Toutes les sessions révoquées' } });
   });

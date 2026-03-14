@@ -64,6 +64,11 @@ export class EdgeService {
 
     // If an image is attached, use the vision model directly
     if (imageBase64 && openai) {
+      // Validate image size (max 10MB base64 ≈ ~7.5MB raw)
+      const MAX_BASE64_SIZE = 10 * 1024 * 1024;
+      if (imageBase64.length > MAX_BASE64_SIZE) {
+        throw new AppError('IMAGE_TOO_LARGE', 'Image trop volumineuse (max 10 Mo)', 413);
+      }
       const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false }, convId);
       const response = await this.analyzeImage(message, imageBase64, context);
       await this.saveMessages(userId, message, response.message, convId);
@@ -145,7 +150,9 @@ export class EdgeService {
       // Clean the base64 — extract the raw data if it includes the data URI prefix
       const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1]! : imageBase64;
       const mimeMatch = imageBase64.match(/^data:(image\/[a-zA-Z+]+);/);
-      const mimeType = mimeMatch?.[1] ?? 'image/jpeg';
+      const rawMime = mimeMatch?.[1] ?? 'image/jpeg';
+      const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const mimeType = ALLOWED_MIMES.includes(rawMime) ? rawMime : 'image/jpeg';
 
       const completion = await openai!.chat.completions.create({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -222,7 +229,6 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
           ],
         });
         const raw = completion.choices[0]!.message.content ?? '{}';
-        console.log('[EDGE] Intent detected via LLM:', raw);
         return JSON.parse(raw);
       } catch (err: any) {
         console.error('[EDGE] Intent detection LLM error:', err?.message ?? err);
@@ -409,7 +415,6 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
         });
         const responseText = completion.choices[0]!.message.content
           ?? "Je suis là pour t'aider ! Que puis-je faire pour toi ?";
-        console.log('[EDGE] Response generated via LLM');
         return {
           message: responseText,
           actions: this.getActions(intent),

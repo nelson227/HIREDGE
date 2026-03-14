@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HIREDGE - AI-Powered Job Search Platform',
-  description: 'Find your dream job faster with AI-powered job matching, personalized applications, and community support. Never search for a job alone again.',
-  generator: 'v0.app',
+  title: 'HIREDGE - Recherche d\'emploi augmentée par l\'IA',
+  description: 'Trouvez votre emploi idéal plus vite grâce au matching IA, aux candidatures personnalisées et au soutien communautaire. Ne cherchez plus jamais seul.',
   icons: {
     icon: [
       {
@@ -41,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
         {children}
         <Analytics />

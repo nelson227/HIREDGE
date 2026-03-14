@@ -28,38 +28,38 @@ import { profileApi, authApi } from "@/lib/api"
 const notificationSettings = [
   {
     id: "new_matches",
-    label: "New Job Matches",
-    description: "Get notified when EDGE finds new jobs matching your profile",
+    label: "Nouvelles offres compatibles",
+    description: "Soyez notifié quand EDGE trouve des offres correspondant à votre profil",
     enabled: true,
   },
   {
     id: "application_updates",
-    label: "Application Updates",
-    description: "Status changes and responses from employers",
+    label: "Mises à jour de candidatures",
+    description: "Changements de statut et réponses des employeurs",
     enabled: true,
   },
   {
     id: "squad_activity",
-    label: "Squad Activity",
-    description: "Messages and updates from your squad",
+    label: "Activité de l'escouade",
+    description: "Messages et mises à jour de votre escouade",
     enabled: true,
   },
   {
     id: "interview_reminders",
-    label: "Interview Reminders",
-    description: "Reminders before scheduled interviews",
+    label: "Rappels d'entretiens",
+    description: "Rappels avant vos entretiens programmés",
     enabled: true,
   },
   {
     id: "weekly_digest",
-    label: "Weekly Digest",
-    description: "Summary of your job search progress",
+    label: "Résumé hebdomadaire",
+    description: "Récapitulatif de votre progression dans la recherche d'emploi",
     enabled: false,
   },
   {
     id: "marketing",
-    label: "Product Updates",
-    description: "New features and improvements to HIREDGE",
+    label: "Nouveautés produit",
+    description: "Nouvelles fonctionnalités et améliorations d'HIREDGE",
     enabled: false,
   },
 ]
@@ -67,31 +67,31 @@ const notificationSettings = [
 const privacySettings = [
   {
     id: "profile_visibility",
-    label: "Profile Visibility",
-    description: "Allow scouts and squad members to see your profile",
+    label: "Visibilité du profil",
+    description: "Permettre aux éclaireurs et membres d'escouade de voir votre profil",
     enabled: true,
   },
   {
     id: "anonymous_mode",
-    label: "Anonymous Mode",
-    description: "Hide your identity when browsing company insights",
+    label: "Mode anonyme",
+    description: "Masquer votre identité lors de la consultation des infos entreprises",
     enabled: false,
   },
   {
     id: "data_sharing",
-    label: "Data Sharing",
-    description: "Help improve EDGE by sharing anonymized usage data",
+    label: "Partage de données",
+    description: "Aider à améliorer EDGE en partageant des données d'utilisation anonymisées",
     enabled: true,
   },
 ]
 
 const settingsSections = [
-  { id: "account", label: "Account", icon: User },
+  { id: "account", label: "Compte", icon: User },
   { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "privacy", label: "Privacy", icon: Shield },
-  { id: "preferences", label: "Preferences", icon: Globe },
-  { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "security", label: "Security", icon: Lock },
+  { id: "privacy", label: "Confidentialité", icon: Shield },
+  { id: "preferences", label: "Préférences", icon: Globe },
+  { id: "billing", label: "Abonnement", icon: CreditCard },
+  { id: "security", label: "Sécurité", icon: Lock },
 ]
 
 export default function SettingsPage() {
@@ -173,8 +173,6 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* no-op */ }
-    localStorage.removeItem("accessToken")
-    localStorage.removeItem("refreshToken")
     router.push("/login")
   }
 
@@ -304,8 +302,8 @@ export default function SettingsPage() {
           {activeSection === "notifications" && (
             <Card>
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Choose what updates you want to receive</CardDescription>
+                <CardTitle>Préférences de notifications</CardTitle>
+                <CardDescription>Choisissez les mises à jour que vous souhaitez recevoir</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
@@ -348,8 +346,8 @@ export default function SettingsPage() {
           {activeSection === "privacy" && (
             <Card>
               <CardHeader>
-                <CardTitle>Privacy Settings</CardTitle>
-                <CardDescription>Control how your data is used and shared</CardDescription>
+                <CardTitle>Paramètres de confidentialité</CardTitle>
+                <CardDescription>Contrôlez comment vos données sont utilisées et partagées</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
@@ -388,15 +386,15 @@ export default function SettingsPage() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>Customize how HIREDGE looks</CardDescription>
+                <CardTitle>Apparence</CardTitle>
+                <CardDescription>Personnalisez l'apparence d'HIREDGE</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
                     {[
-                      { id: "light", label: "Light", icon: Sun },
-                      { id: "dark", label: "Dark", icon: Moon },
-                      { id: "system", label: "System", icon: Globe },
+                      { id: "light", label: "Clair", icon: Sun },
+                      { id: "dark", label: "Sombre", icon: Moon },
+                      { id: "system", label: "Système", icon: Globe },
                     ].map((option) => (
                       <button
                         key={option.id}
@@ -481,23 +479,23 @@ export default function SettingsPage() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Password</CardTitle>
-                  <CardDescription>Change your password</CardDescription>
+                <CardTitle>Mot de passe</CardTitle>
+                <CardDescription>Modifier votre mot de passe</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Current Password</label>
+                    <label className="text-sm font-medium text-foreground">Mot de passe actuel</label>
                     <Input type="password" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">New Password</label>
+                    <label className="text-sm font-medium text-foreground">Nouveau mot de passe</label>
                     <Input type="password" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Confirm New Password</label>
+                    <label className="text-sm font-medium text-foreground">Confirmer le nouveau mot de passe</label>
                     <Input type="password" />
                   </div>
-                  <Button>Update Password</Button>
+                  <Button>Modifier le mot de passe</Button>
                 </CardContent>
               </Card>
 

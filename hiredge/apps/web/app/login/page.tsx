@@ -23,16 +23,12 @@ export default function LoginPage() {
       const { data } = await authApi.login(email, password)
       
       if (data.success) {
-        // Save tokens to localStorage
-        localStorage.setItem('accessToken', data.data.accessToken)
-        localStorage.setItem('refreshToken', data.data.refreshToken)
-        // Redirect to dashboard
+        // Tokens are set as httpOnly cookies by the server
         window.location.href = "/dashboard"
       } else {
         setError(data.error?.message || "Erreur de connexion")
       }
     } catch (err: any) {
-      console.error("Login error:", err)
       setError(err.response?.data?.error?.message || "Email ou mot de passe incorrect")
     } finally {
       setIsLoading(false)
@@ -54,9 +50,9 @@ export default function LoginPage() {
 
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Bon retour parmi nous</h1>
             <p className="text-muted-foreground">
-              Sign in to continue your job search journey
+              Connectez-vous pour continuer votre recherche d'emploi
             </p>
           </div>
 
@@ -75,7 +71,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -86,17 +82,17 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
+                  Mot de passe
                 </label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
+                <Link href="#" className="text-sm text-primary hover:underline">
+                  Mot de passe oublié ?
                 </Link>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Entrez votre mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -106,7 +102,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -117,11 +113,11 @@ export default function LoginPage() {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Signing in...
+                  Connexion en cours...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Sign in
+                  Se connecter
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -140,9 +136,9 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            {"Don't have an account?"}{" "}
+            Pas encore de compte ?{" "}
             <Link href="/signup" className="text-primary font-medium hover:underline">
-              Sign up
+              Créer un compte
             </Link>
           </p>
         </div>
@@ -156,19 +152,19 @@ export default function LoginPage() {
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-4 text-balance">
-              Your AI companion is waiting
+              Votre compagnon IA vous attend
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              EDGE has been learning about the job market and is ready to help you find your next opportunity. Sign in to continue where you left off.
+              EDGE a analysé le marché de l'emploi et est prêt à vous aider à trouver votre prochaine opportunité. Connectez-vous pour reprendre là où vous en étiez.
             </p>
           </div>
 
           <div className="space-y-4">
             {[
-              "Access your personalized job matches",
-              "Continue conversations with EDGE",
-              "Track your application progress",
-              "Connect with your support squad",
+              "Accédez à vos offres personnalisées",
+              "Reprenez vos conversations avec EDGE",
+              "Suivez l'avancement de vos candidatures",
+              "Connectez-vous à votre escouade",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">

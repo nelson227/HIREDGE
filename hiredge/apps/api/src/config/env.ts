@@ -1,3 +1,13 @@
+const isProduction = process.env.NODE_ENV === 'production';
+
+// In production, JWT secrets MUST be explicitly set
+if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret-change-me')) {
+  throw new Error('FATAL: JWT_SECRET must be set in production. Do not use default secrets.');
+}
+if (isProduction && (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === 'dev-refresh-secret-change-me')) {
+  throw new Error('FATAL: JWT_REFRESH_SECRET must be set in production. Do not use default secrets.');
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',

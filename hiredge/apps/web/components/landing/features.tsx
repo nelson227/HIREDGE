@@ -5,44 +5,44 @@ import { Bot, FileText, Users, Building2, BarChart3, MessageSquare, Sparkles, Ta
 const features = [
   {
     icon: Bot,
-    title: "AI Assistant EDGE",
-    description: "Your personal AI companion that searches jobs, generates applications, analyzes companies, and recommends actions tailored to your profile.",
+    title: "Assistant IA EDGE",
+    description: "Votre compagnon IA personnel qui recherche des offres, génère des candidatures, analyse les entreprises et recommande des actions adaptées à votre profil.",
     highlight: true,
   },
   {
     icon: Target,
-    title: "Smart Job Matching",
-    description: "AI-powered compatibility scores that show how well you match each role, highlighting your strengths and areas to address.",
+    title: "Matching intelligent",
+    description: "Des scores de compatibilité propulsés par l'IA qui montrent votre adéquation avec chaque poste, en mettant en avant vos forces.",
   },
   {
     icon: FileText,
-    title: "Auto-Generated Dossiers",
-    description: "Get complete application packages instantly: adapted CV, motivation letter, company analysis, and recruitment process insights.",
+    title: "Dossiers automatiques",
+    description: "Obtenez des dossiers de candidature complets : CV adapté, lettre de motivation, analyse d'entreprise et insights sur le processus de recrutement.",
   },
   {
     icon: Users,
-    title: "Support Squads",
-    description: "Join small groups of 5-8 candidates with similar profiles. Share experiences, practice interviews, and encourage each other.",
+    title: "Escouades de soutien",
+    description: "Rejoignez un petit groupe de 5 à 8 candidats au profil similaire. Partagez vos expériences, entraînez-vous aux entretiens et encouragez-vous.",
   },
   {
     icon: Building2,
-    title: "Scout Network",
-    description: "Connect with recently hired professionals who share insider knowledge about company culture, hiring processes, and real salaries.",
+    title: "Réseau d'éclaireurs",
+    description: "Connectez-vous avec des professionnels récemment embauchés qui partagent des informations sur la culture d'entreprise, les processus et les salaires.",
   },
   {
     icon: MessageSquare,
-    title: "Interview Prep",
-    description: "Practice with AI mock interviews, get feedback on your answers, and access frequently asked questions for specific companies.",
+    title: "Préparation entretiens",
+    description: "Entraînez-vous avec des simulations d'entretien IA, recevez du feedback sur vos réponses et accédez aux questions fréquentes par entreprise.",
   },
   {
     icon: BarChart3,
-    title: "Application Pipeline",
-    description: "Track all your applications in a visual Kanban board. Never miss a follow-up with smart reminders and status updates.",
+    title: "Pipeline de candidatures",
+    description: "Suivez toutes vos candidatures dans un tableau Kanban visuel. Ne manquez jamais une relance grâce aux rappels intelligents.",
   },
   {
     icon: Shield,
-    title: "Analytics Dashboard",
-    description: "Understand your job search performance with detailed stats on applications, response rates, and success probability.",
+    title: "Tableau analytique",
+    description: "Comprenez la performance de votre recherche avec des statistiques détaillées sur vos candidatures, taux de réponse et probabilités de succès.",
   },
 ]
 
@@ -54,13 +54,13 @@ export function LandingFeatures() {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            <span>Platform Features</span>
+            <span>Fonctionnalités</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-            Everything you need to land your dream job
+            Tout ce qu'il faut pour décrocher le poste idéal
           </h2>
           <p className="text-lg text-muted-foreground text-pretty">
-            HIREDGE combines AI intelligence, community support, and insider knowledge to give you an unfair advantage in your job search.
+            HIREDGE combine intelligence artificielle, soutien communautaire et informations exclusives pour vous donner un avantage décisif.
           </p>
         </div>
 

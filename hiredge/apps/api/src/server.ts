@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
 import { env } from './config/env';
 import prisma from './db/prisma';
 import { authenticate } from './middleware/auth';
@@ -37,6 +39,12 @@ async function buildServer() {
       ? ['https://hiredge.app', 'https://www.hiredge.app']
       : true,
     credentials: true,
+  });
+
+  await app.register(cookie);
+
+  await app.register(rateLimit, {
+    global: false,
   });
 
   await app.register(jwt, {

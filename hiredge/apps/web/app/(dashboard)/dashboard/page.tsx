@@ -155,8 +155,7 @@ export default function DashboardPage() {
       if (squadRes.status === 'fulfilled' && squadRes.value.data.success) {
         setSquad(squadRes.value.data.data)
       }
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error)
+    } catch {
     } finally {
       setIsLoading(false)
     }
@@ -342,7 +341,7 @@ export default function DashboardPage() {
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
                             {job.location || "Non précisé"}
-                            {job.remote && " (Remote)"}
+                            {job.remote && " (Télétravail)"}
                           </span>
                           <span>{formatSalary(job)}</span>
                           <span className="flex items-center gap-1">
@@ -400,18 +399,18 @@ export default function DashboardPage() {
           {/* Squad Activity */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg font-semibold">Activité Squad</CardTitle>
+              <CardTitle className="text-lg font-semibold">Activité Escouade</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/squad">Voir Squad</Link>
+                <Link href="/squad">Voir l'escouade</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               {!squad ? (
                 <div className="p-6 text-center text-muted-foreground">
                   <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Tu n'as pas encore de Squad</p>
+                  <p className="text-sm">Tu n'as pas encore d'escouade</p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <Link href="/squad">Rejoindre un Squad</Link>
+                    <Link href="/squad">Rejoindre une escouade</Link>
                   </Button>
                 </div>
               ) : recentSquadActivity.length === 0 ? (

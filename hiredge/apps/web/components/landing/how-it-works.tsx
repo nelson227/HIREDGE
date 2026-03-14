@@ -6,26 +6,26 @@ const steps = [
   {
     number: "01",
     icon: Upload,
-    title: "Upload Your CV",
-    description: "Start by uploading your resume. Our AI extracts your skills, experience, and preferences automatically.",
+    title: "Importez votre CV",
+    description: "Commencez par importer votre CV. Notre IA extrait automatiquement vos compétences, expériences et préférences.",
   },
   {
     number: "02",
     icon: MessageSquare,
-    title: "Chat with EDGE",
-    description: "Have a conversation with your AI assistant to refine your profile and understand your ideal role.",
+    title: "Discutez avec EDGE",
+    description: "Conversez avec votre assistant IA pour affiner votre profil et définir le poste idéal.",
   },
   {
     number: "03",
     icon: Target,
-    title: "Get Matched",
-    description: "Receive curated job matches with compatibility scores. Each comes with a complete application dossier.",
+    title: "Recevez vos matchs",
+    description: "Obtenez des offres sélectionnées avec des scores de compatibilité. Chaque offre accompagnée d'un dossier complet.",
   },
   {
     number: "04",
     icon: Rocket,
-    title: "Land Your Job",
-    description: "Apply confidently with AI-crafted materials, squad support, and interview prep to help you succeed.",
+    title: "Décrochez votre emploi",
+    description: "Postulez en confiance avec des documents générés par l'IA, le soutien de votre escouade et la préparation aux entretiens.",
   },
 ]
 
@@ -36,10 +36,10 @@ export function LandingHowItWorks() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-            How HIREDGE Works
+            Comment fonctionne HIREDGE
           </h2>
           <p className="text-lg text-muted-foreground text-pretty">
-            Get started in minutes. Our streamlined process takes you from profile to placement.
+            Démarrez en quelques minutes. Notre processus simplifié vous accompagne du profil à l'embauche.
           </p>
         </div>
 

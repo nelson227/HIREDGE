@@ -17,6 +17,11 @@ declare module '@fastify/jwt' {
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
+    // Try Authorization header first, then fall back to httpOnly cookie
+    if (!request.headers.authorization && request.cookies?.access_token) {
+      request.headers.authorization = `Bearer ${request.cookies.access_token}`;
+    }
+
     const decoded = await request.jwtVerify<{ sub: string; email: string; role: string }>();
 
     const user = await prisma.user.findUnique({

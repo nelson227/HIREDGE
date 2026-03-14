@@ -6,26 +6,26 @@ const stats = [
   {
     icon: TrendingUp,
     value: "3x",
-    label: "Faster job placement",
-    description: "compared to traditional search",
+    label: "Plus rapide",
+    description: "grâce au matching IA",
   },
   {
     icon: Users,
-    value: "50K+",
-    label: "Active candidates",
-    description: "supporting each other",
+    value: "6",
+    label: "Membres par escouade",
+    description: "pour se soutenir mutuellement",
   },
   {
     icon: Briefcase,
-    value: "85%",
-    label: "Success rate",
-    description: "within 3 months",
+    value: "∞",
+    label: "Candidatures assistées",
+    description: "CV et lettres générés par l'IA",
   },
   {
     icon: Clock,
-    value: "10hrs",
-    label: "Saved weekly",
-    description: "on applications",
+    value: "10h",
+    label: "Économisées par semaine",
+    description: "sur vos candidatures",
   },
 ]
 

@@ -27,8 +27,6 @@ import {
   X,
   Download,
   FileDown,
-  Mic,
-  MicOff,
 } from "lucide-react"
 import { edgeApi } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -160,7 +158,6 @@ export default function AssistantPage() {
         }
       }
     } catch (error: any) {
-      console.error("Failed to load conversations:", error)
       if (error.response?.status === 401) {
         setAuthError(true)
       }
@@ -177,7 +174,7 @@ export default function AssistantPage() {
         setMessages(data.data.reverse())
       }
     } catch (error) {
-      console.error("Failed to load messages:", error)
+      // Silent fail — messages will be empty
     }
   }
 
@@ -190,7 +187,7 @@ export default function AssistantPage() {
         setMessages([])
       }
     } catch (error) {
-      console.error("Failed to create conversation:", error)
+      // Silent fail
     }
   }
 
@@ -203,7 +200,7 @@ export default function AssistantPage() {
         setMessages([])
       }
     } catch (error) {
-      console.error("Failed to delete conversation:", error)
+      // Silent fail
     }
   }
 
@@ -278,8 +275,7 @@ export default function AssistantPage() {
         setMessages((prev) => [...prev, assistantMessage])
       }
     } catch (error: any) {
-      console.error("Failed to send message:", error)
-      // Show error message
+      // Show error message in chat
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: "assistant",

@@ -5,28 +5,28 @@ import { Sparkles } from "lucide-react"
 
 const footerLinks = {
   product: [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "/pricing" },
-    { label: "AI Assistant", href: "/edge" },
-    { label: "Squads", href: "/squads" },
-    { label: "Scouts", href: "/scouts" },
+    { label: "Fonctionnalités", href: "#features" },
+    { label: "Tarifs", href: "#" },
+    { label: "Assistant IA", href: "#" },
+    { label: "Escouades", href: "#" },
+    { label: "Éclaireurs", href: "#" },
   ],
   company: [
-    { label: "About", href: "/about" },
-    { label: "Blog", href: "/blog" },
-    { label: "Careers", href: "/careers" },
-    { label: "Press", href: "/press" },
+    { label: "À propos", href: "#" },
+    { label: "Blog", href: "#" },
+    { label: "Carrières", href: "#" },
+    { label: "Presse", href: "#" },
   ],
   resources: [
-    { label: "Help Center", href: "/help" },
-    { label: "Documentation", href: "/docs" },
-    { label: "API", href: "/api" },
-    { label: "Community", href: "/community" },
+    { label: "Centre d'aide", href: "#" },
+    { label: "Documentation", href: "#" },
+    { label: "API", href: "#" },
+    { label: "Communauté", href: "#" },
   ],
   legal: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-    { label: "Security", href: "/security" },
+    { label: "Confidentialité", href: "#" },
+    { label: "CGU", href: "#" },
+    { label: "Sécurité", href: "#" },
   ],
 }
 
@@ -44,13 +44,13 @@ export function LandingFooter() {
               <span className="text-xl font-bold tracking-tight text-foreground">HIREDGE</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-              The AI-powered job search platform that helps you find opportunities faster and never search alone.
+              La plateforme de recherche d'emploi augmentée par l'IA qui vous aide à trouver des opportunités plus rapidement.
             </p>
           </div>
 
           {/* Links Columns */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="font-semibold text-foreground mb-4">Produit</h4>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
@@ -63,7 +63,7 @@ export function LandingFooter() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Company</h4>
+            <h4 className="font-semibold text-foreground mb-4">Entreprise</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -76,7 +76,7 @@ export function LandingFooter() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+            <h4 className="font-semibold text-foreground mb-4">Ressources</h4>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.label}>
@@ -89,7 +89,7 @@ export function LandingFooter() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+            <h4 className="font-semibold text-foreground mb-4">Légal</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
@@ -105,16 +105,16 @@ export function LandingFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} HIREDGE. All rights reserved.
+            © {new Date().getFullYear()} HIREDGE. Tous droits réservés.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="https://twitter.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Twitter
             </Link>
-            <Link href="https://linkedin.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               LinkedIn
             </Link>
-            <Link href="https://github.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               GitHub
             </Link>
           </div>

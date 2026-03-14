@@ -28,19 +28,19 @@ import { Input } from "@/components/ui/input"
 import { profileApi, authApi, notificationsApi } from "@/lib/api"
 
 const sidebarItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "My Jobs", href: "/jobs", icon: Briefcase },
-  { label: "Applications", href: "/applications", icon: FileStack },
-  { label: "AI Assistant", href: "/assistant", icon: Bot },
-  { label: "Interview Prep", href: "/interviews", icon: GraduationCap },
-  { label: "Squad", href: "/squad", icon: Users },
-  { label: "Scouts", href: "/scouts", icon: Building2 },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Offres d'emploi", href: "/jobs", icon: Briefcase },
+  { label: "Candidatures", href: "/applications", icon: FileStack },
+  { label: "Assistant IA", href: "/assistant", icon: Bot },
+  { label: "Entretiens", href: "/interviews", icon: GraduationCap },
+  { label: "Escouade", href: "/squad", icon: Users },
+  { label: "Éclaireurs", href: "/scouts", icon: Building2 },
+  { label: "Analytiques", href: "/analytics", icon: BarChart3 },
 ]
 
 const bottomItems = [
-  { label: "Profile", href: "/profile", icon: User },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Profil", href: "/profile", icon: User },
+  { label: "Paramètres", href: "/settings", icon: Settings },
 ]
 
 export default function DashboardLayout({
@@ -56,14 +56,7 @@ export default function DashboardLayout({
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    // Check auth
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-    if (!token) {
-      window.location.href = '/login'
-      return
-    }
-
-    // Fetch user profile
+    // Fetch user profile (auth is via httpOnly cookies)
     profileApi.get()
       .then(({ data }) => {
         if (data.success && data.data) {
@@ -115,8 +108,6 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch {}
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
     window.location.href = '/login'
   }
 
@@ -147,7 +138,7 @@ export default function DashboardLayout({
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden text-sidebar-foreground"
-              aria-label="Close sidebar"
+              aria-label="Fermer la barre latérale"
             >
               <X className="w-5 h-5" />
             </button>
@@ -230,7 +221,7 @@ export default function DashboardLayout({
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden text-foreground"
-                aria-label="Open sidebar"
+                aria-label="Ouvrir la barre latérale"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -239,7 +230,7 @@ export default function DashboardLayout({
               <form onSubmit={handleSearch} className="hidden sm:block relative w-64 lg:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search jobs, companies..."
+                  placeholder="Chercher offres, entreprises..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 bg-muted/50 border-transparent focus:border-border"
@@ -262,7 +253,7 @@ export default function DashboardLayout({
               <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                 <Link href="/assistant">
                   <Bot className="w-4 h-4 mr-2" />
-                  Ask EDGE
+                  Demander à EDGE
                 </Link>
               </Button>
             </div>

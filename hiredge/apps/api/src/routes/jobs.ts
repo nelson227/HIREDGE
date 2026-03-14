@@ -5,8 +5,8 @@ import { adzunaService } from '../services/adzuna.service';
 import { AppError } from '../services/auth.service';
 
 const jobRoutes: FastifyPluginAsync = async (fastify) => {
-  // POST /jobs/import — import jobs from Adzuna
-  fastify.post('/import', async (request, reply) => {
+  // POST /jobs/import — import jobs from Adzuna (auth required)
+  fastify.post('/import', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { keywords, location, country, maxPages } = request.body as {
       keywords?: string;
       location?: string;
@@ -14,12 +14,15 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
       maxPages?: number;
     };
 
+    // Cap maxPages to prevent abuse
+    const safeMaxPages = Math.min(Math.max(1, maxPages || 3), 10);
+
     try {
       const result = await adzunaService.importJobs({
         keywords: keywords || 'developer',
         location: location || 'Montreal',
         country: country || 'canada',
-        maxPages: maxPages || 3,
+        maxPages: safeMaxPages,
       });
 
       return reply.send({

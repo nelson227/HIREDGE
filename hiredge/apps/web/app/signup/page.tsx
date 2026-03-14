@@ -38,8 +38,7 @@ export default function SignupPage() {
       const { data } = await authApi.register({ email, password, firstName, lastName })
       
       if (data.success) {
-        localStorage.setItem('accessToken', data.data.accessToken)
-        localStorage.setItem('refreshToken', data.data.refreshToken)
+        // Tokens are set as httpOnly cookies by the server
         
         // Update profile with first/last name
         try {
@@ -69,19 +68,19 @@ export default function SignupPage() {
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-4 text-balance">
-              Start your journey to the perfect job
+              Lancez votre recherche vers le poste idéal
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Join thousands of candidates who have accelerated their job search with HIREDGE. Your AI companion EDGE is ready to help.
+              Rejoignez les candidats qui ont accéléré leur recherche d'emploi avec HIREDGE. Votre compagnon IA EDGE est prêt à vous aider.
             </p>
           </div>
 
           <div className="space-y-4">
             {[
-              "AI-powered job matching with 94% accuracy",
-              "Auto-generated application dossiers",
-              "Support from candidates like you",
-              "Insider insights from recent hires",
+              "Matching d'offres propulsé par l'IA",
+              "Dossiers de candidature générés automatiquement",
+              "Soutien de candidats comme vous",
+              "Informations exclusives d'employés récents",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
@@ -107,9 +106,9 @@ export default function SignupPage() {
 
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Créez votre compte</h1>
             <p className="text-muted-foreground">
-              Start your AI-powered job search in minutes
+              Lancez votre recherche d'emploi augmentée par l'IA en quelques minutes
             </p>
           </div>
 
@@ -124,12 +123,12 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <label htmlFor="firstName" className="text-sm font-medium text-foreground">
-                  First name
+                  Prénom
                 </label>
                 <Input
                   id="firstName"
                   type="text"
-                  placeholder="John"
+                  placeholder="Jean"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -138,12 +137,12 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="lastName" className="text-sm font-medium text-foreground">
-                  Last name
+                  Nom
                 </label>
                 <Input
                   id="lastName"
                   type="text"
-                  placeholder="Doe"
+                  placeholder="Dupont"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -154,12 +153,12 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
+                E-mail
               </label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -169,13 +168,13 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
-                Password
+                Mot de passe
               </label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a strong password"
+                  placeholder="Créez un mot de passe sécurisé"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -185,13 +184,13 @@ export default function SignupPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters with a number and symbol
+                Au moins 8 caractères, une majuscule et un chiffre
               </p>
             </div>
 
@@ -203,13 +202,13 @@ export default function SignupPage() {
                 className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground">
-                I agree to the{" "}
-                <Link href="/terms" className="text-primary hover:underline">
-                  Terms of Service
+                J'accepte les{" "}
+                <Link href="#" className="text-primary hover:underline">
+                  Conditions d'utilisation
                 </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-primary hover:underline">
-                  Privacy Policy
+                et la{" "}
+                <Link href="#" className="text-primary hover:underline">
+                  Politique de confidentialité
                 </Link>
               </label>
             </div>
@@ -218,11 +217,11 @@ export default function SignupPage() {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Creating account...
+                  Création du compte...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Create account
+                  Créer un compte
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -231,9 +230,9 @@ export default function SignupPage() {
 
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Vous avez déjà un compte ?{" "}
             <Link href="/login" className="text-primary font-medium hover:underline">
-              Sign in
+              Se connecter
             </Link>
           </p>
         </div>

@@ -23,26 +23,26 @@ export function LandingNav() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              Fonctionnalités
             </Link>
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              How it Works
+              Comment ça marche
             </Link>
             <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Testimonials
+              Témoignages
             </Link>
-            <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
+            <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Tarifs
             </Link>
           </div>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" asChild>
-              <Link href="/login">Log in</Link>
+              <Link href="/login">Connexion</Link>
             </Button>
             <Button asChild>
-              <Link href="/signup">Get Started</Link>
+              <Link href="/signup">Commencer</Link>
             </Button>
           </div>
 
@@ -50,7 +50,7 @@ export function LandingNav() {
           <button
             className="md:hidden p-2 -mr-2 text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -61,23 +61,23 @@ export function LandingNav() {
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Features
+                Fonctionnalités
               </Link>
               <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                How it Works
+                Comment ça marche
               </Link>
               <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Testimonials
+                Témoignages
               </Link>
-              <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
+              <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Tarifs
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <Button variant="outline" asChild className="w-full">
-                  <Link href="/login">Log in</Link>
+                  <Link href="/login">Connexion</Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link href="/signup">Get Started</Link>
+                  <Link href="/signup">Commencer</Link>
                 </Button>
               </div>
             </div>

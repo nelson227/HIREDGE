@@ -4,27 +4,27 @@ import { Star, Quote } from "lucide-react"
 
 const testimonials = [
   {
-    name: "Sarah Chen",
-    role: "Product Designer",
-    company: "Now at Stripe",
-    avatar: "SC",
-    content: "HIREDGE completely transformed my job search. The AI-generated application dossiers saved me hours of research, and my squad kept me motivated during tough times. I landed my dream job in 6 weeks!",
+    name: "Marie L.",
+    role: "Designer Produit",
+    company: "Utilisatrice HIREDGE",
+    avatar: "ML",
+    content: "Les dossiers de candidature générés par l'IA m'ont fait gagner un temps précieux. Mon escouade m'a gardée motivée pendant les moments difficiles.",
     rating: 5,
   },
   {
-    name: "Marcus Rodriguez",
-    role: "Software Engineer",
-    company: "Now at Vercel",
-    avatar: "MR",
-    content: "The compatibility scores were incredibly accurate. EDGE helped me discover companies I never would have found on my own. The scout insights about interview processes were game-changing.",
+    name: "Thomas R.",
+    role: "Développeur",
+    company: "Utilisateur HIREDGE",
+    avatar: "TR",
+    content: "Les scores de compatibilité sont vraiment pertinents. EDGE m'a aidé à découvrir des entreprises que je n'aurais jamais trouvées seul. Les infos des éclaireurs sur les process d'entretien étaient un vrai plus.",
     rating: 5,
   },
   {
-    name: "Emma Thompson",
-    role: "Marketing Manager",
-    company: "Now at Notion",
-    avatar: "ET",
-    content: "What I loved most was the squad system. Having 6 other people going through the same journey made the process so much less lonely. We still stay in touch even after we all got hired!",
+    name: "Camille D.",
+    role: "Responsable Marketing",
+    company: "Utilisatrice HIREDGE",
+    avatar: "CD",
+    content: "Ce que j'ai le plus aimé, c'est le système d'escouades. Avoir un groupe de personnes qui traversent le même parcours rend la recherche d'emploi bien moins solitaire.",
     rating: 5,
   },
 ]
@@ -36,10 +36,10 @@ export function LandingTestimonials() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-            Loved by thousands of job seekers
+            Ce que nos utilisateurs en pensent
           </h2>
           <p className="text-lg text-muted-foreground text-pretty">
-            Join the community of candidates who found their dream jobs with HIREDGE.
+            Découvrez comment HIREDGE accompagne les candidats dans leur recherche d'emploi.
           </p>
         </div>
 

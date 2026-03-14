@@ -6,17 +6,7 @@ const api = axios.create({
   baseURL: API_URL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
-});
-
-// Request interceptor — attach access token
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
+  withCredentials: true, // Send httpOnly cookies automatically
 });
 
 // Extend axios config type for retry logic
@@ -24,7 +14,7 @@ interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-// Response interceptor — handle token refresh
+// Response interceptor — handle token refresh via httpOnly cookies
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
@@ -34,26 +24,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          // No refresh token - user needs to login
-          // Don't redirect automatically, let the component handle it
-          return Promise.reject(error);
-        }
-
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        // Refresh token is sent automatically via httpOnly cookie
+        const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
 
         if (data.success) {
-          localStorage.setItem('accessToken', data.data.accessToken);
-          localStorage.setItem('refreshToken', data.data.refreshToken);
-          originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+          // New cookies are set by the server — just retry
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — clear tokens but don't redirect
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        // Return the original error so the component can handle it
+        // Refresh failed — redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
         return Promise.reject(error);
       }
     }
