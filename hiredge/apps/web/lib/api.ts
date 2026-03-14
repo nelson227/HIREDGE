@@ -32,10 +32,8 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        // Refresh failed — let the error propagate
+        // The dashboard layout auth guard handles redirect to /login
         return Promise.reject(error);
       }
     }

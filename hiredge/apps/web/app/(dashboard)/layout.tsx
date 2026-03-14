@@ -55,6 +55,7 @@ export default function DashboardLayout({
   const [searchQuery, setSearchQuery] = useState("")
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
     // Fetch user profile (auth is via httpOnly cookies)
@@ -66,6 +67,7 @@ export default function DashboardLayout({
             lastName: data.data.lastName || '',
             email: data.data.user?.email || '',
           })
+          setAuthChecked(true)
         }
       })
       .catch(() => {
@@ -77,8 +79,12 @@ export default function DashboardLayout({
               lastName: data.data.candidateProfile?.lastName || '',
               email: data.data.email || '',
             })
+            setAuthChecked(true)
           }
-        }).catch(() => {})
+        }).catch(() => {
+          // Both failed — user is not authenticated, redirect to login
+          router.replace('/login')
+        })
       })
 
     // Fetch unread notifications count
@@ -110,6 +116,18 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* logout failure is non-blocking */ }
     window.location.href = '/login'
+  }
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
