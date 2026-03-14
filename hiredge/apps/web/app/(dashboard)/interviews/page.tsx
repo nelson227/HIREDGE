@@ -62,8 +62,8 @@ export default function InterviewsPage() {
       if (upcomingRes.data) {
         setUpcomingInterviews(upcomingRes.data)
       }
-    } catch (error) {
-      console.error("Erreur chargement interviews:", error)
+    } catch {
+      // silently fail — empty state will show
     } finally {
       setLoading(false)
     }

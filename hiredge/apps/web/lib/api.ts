@@ -117,7 +117,7 @@ export const profileApi = {
 
 // ─── Interviews ──────────────────────────────────────────────────
 export const interviewsApi = {
-  list: () => api.get('/interviews'),
+  list: (params?: Record<string, string>) => api.get('/interviews', { params }),
   start: (data: { type: string; applicationId?: string; jobId?: string }) =>
     api.post('/interviews/start', data),
   getById: (id: string) => api.get(`/interviews/${id}`),
