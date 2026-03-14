@@ -185,7 +185,7 @@ export default function AssistantPage() {
         setMessages(data.data.reverse())
       }
     } catch (error) {
-      // Silent fail — messages will be empty
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Impossible de charger les messages. Réessaie.", createdAt: new Date().toISOString() }])
     }
   }
 
@@ -198,7 +198,7 @@ export default function AssistantPage() {
         setMessages([])
       }
     } catch (error) {
-      // Silent fail
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Impossible de créer une nouvelle conversation.", createdAt: new Date().toISOString() }])
     }
   }
 
@@ -211,7 +211,7 @@ export default function AssistantPage() {
         setMessages([])
       }
     } catch (error) {
-      // Silent fail
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Impossible de supprimer la conversation.", createdAt: new Date().toISOString() }])
     }
   }
 
