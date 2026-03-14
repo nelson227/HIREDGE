@@ -3,7 +3,7 @@ import { AppError } from './auth.service';
 
 export class ProfileService {
   async getProfile(userId: string) {
-    const profile = await prisma.candidateProfile.findUnique({
+    let profile = await prisma.candidateProfile.findUnique({
       where: { userId },
       include: {
         skills: true,
@@ -13,7 +13,15 @@ export class ProfileService {
     });
 
     if (!profile) {
-      throw new AppError('PROFILE_NOT_FOUND', 'Profil introuvable', 404);
+      // Auto-create a blank profile for the user
+      profile = await prisma.candidateProfile.create({
+        data: { userId, firstName: '', lastName: '', title: '' },
+        include: {
+          skills: true,
+          experiences: { orderBy: { startDate: 'desc' } },
+          educations: { orderBy: { startDate: 'desc' } },
+        },
+      });
     }
 
     return profile;

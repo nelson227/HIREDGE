@@ -14,16 +14,18 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
 
+    const role = input.role === 'CANDIDATE' ? 'CANDIDATE' : input.role === 'SCOUT' ? 'SCOUT' : 'RECRUITER';
+
     const user = await prisma.user.create({
       data: {
         email: input.email,
         passwordHash,
-        role: input.role === 'CANDIDATE' ? 'CANDIDATE' : input.role === 'SCOUT' ? 'SCOUT' : 'RECRUITER',
+        role,
         locale: input.locale,
-        candidateProfile: input.role === 'candidate' ? {
+        candidateProfile: role === 'CANDIDATE' ? {
           create: {
-            firstName: '',
-            lastName: '',
+            firstName: (input as any).firstName || '',
+            lastName: (input as any).lastName || '',
             title: '',
           },
         } : undefined,

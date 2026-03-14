@@ -8,6 +8,8 @@ export const registerSchema = z.object({
     .min(8, 'Minimum 8 caractères')
     .regex(/[A-Z]/, 'Au moins une majuscule')
     .regex(/[0-9]/, 'Au moins un chiffre'),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   role: z.enum(['CANDIDATE', 'SCOUT', 'RECRUITER']).default('CANDIDATE'),
   locale: z.enum(['fr', 'en', 'es']).default('fr'),
 });

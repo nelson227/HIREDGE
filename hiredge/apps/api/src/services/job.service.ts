@@ -147,7 +147,7 @@ export class JobService {
       include: { skills: true, experiences: true },
     });
 
-    if (!profile) throw new AppError('PROFILE_NOT_FOUND', 'Complétez votre profil pour recevoir des recommandations', 404);
+    if (!profile) return [];
 
     // Step 1: Pre-filter — SQL-based fast filtering
     const userSkillNames = profile.skills.map((s: any) => s.name.toLowerCase());
