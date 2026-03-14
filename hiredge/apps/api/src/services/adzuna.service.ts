@@ -291,13 +291,13 @@ export class AdzunaService {
 
     // Direct year mentions: "3-5 years", "5+ years", "minimum 3 ans"
     const rangeMatch = text.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(?:years?|ans?|yr)/i);
-    if (rangeMatch) return { min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]) };
+    if (rangeMatch) return { min: parseInt(rangeMatch[1]!), max: parseInt(rangeMatch[2]!) };
 
     const plusMatch = text.match(/(\d{1,2})\+?\s*(?:years?|ans?|yr)\s*(?:of\s+)?(?:experience|expérience)/i);
-    if (plusMatch) return { min: parseInt(plusMatch[1]), max: null };
+    if (plusMatch) return { min: parseInt(plusMatch[1]!), max: null };
 
     const minMatch = text.match(/(?:minimum|min\.?|at least|au moins)\s*(\d{1,2})\s*(?:years?|ans?|yr)/i);
-    if (minMatch) return { min: parseInt(minMatch[1]), max: null };
+    if (minMatch) return { min: parseInt(minMatch[1]!), max: null };
 
     // Infer from level keywords in title
     const lower = title.toLowerCase();
