@@ -1,13 +1,13 @@
 import { Queue, Worker, Job, ConnectionOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import { prisma } from '../db/prisma';
+import { contentQueue } from './index';
 
 const redisInstance = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
 const connection = redisInstance as unknown as ConnectionOptions;
 
 // ─── Queues ──────────────────────────────────────────────
 export const scrapingQueue = new Queue('scraping', { connection });
-export const contentQueue = new Queue('content-generation', { connection });
 
 // ─── Sources de scraping ─────────────────────────────────
 const SCRAPING_SOURCES = [
@@ -51,7 +51,7 @@ const scrapingWorker = new Worker('scraping', async (job: Job) => {
     return { source, fetched: rawJobs.length, stored: created };
 
   } catch (error: any) {
-    console.error(`[Scraping] Erreur pour ${source}:`, error.message);
+    console.error(JSON.stringify({ level: 'error', worker: 'scraping', source, error: error.message }));
     throw error;
   }
 }, {
@@ -86,7 +86,7 @@ const contentWorker = new Worker('content-generation', async (job: Job) => {
         throw new Error(`Type de contenu inconnu: ${type}`);
     }
   } catch (error: any) {
-    console.error(`[Content] Erreur génération ${type}:`, error.message);
+    console.error(JSON.stringify({ level: 'error', worker: 'content-generation', type, error: error.message }));
     throw error;
   }
 }, {
@@ -272,7 +272,7 @@ function buildCoverLetterPrompt(user: any, job: any, data: any): string {
 Tu es un expert en rédaction de lettres de motivation en français.
 
 CANDIDAT:
-- Nom: ${user.firstName} ${user.lastName}
+- Nom: ${profile?.firstName ?? ''} ${profile?.lastName ?? ''}
 - Titre: ${profile?.title ?? 'N/A'}
 - Compétences: ${skills}
 - Expériences: ${experiences}
@@ -316,11 +316,11 @@ export async function scheduleScrapingJobs() {
 // ─── Event handlers ──────────────────────────────────────
 
 scrapingWorker.on('failed', (job, err) => {
-  console.error(`[Scraping] Job ${job?.id} échoué:`, err.message);
+  console.error(JSON.stringify({ level: 'error', worker: 'scraping', jobId: job?.id, error: err.message }));
 });
 
 contentWorker.on('failed', (job, err) => {
-  console.error(`[Content] Job ${job?.id} échoué:`, err.message);
+  console.error(JSON.stringify({ level: 'error', worker: 'content-generation', jobId: job?.id, error: err.message }));
 });
 
 export { scrapingWorker, contentWorker };

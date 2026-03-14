@@ -8,7 +8,7 @@ export const registerSchema = z.object({
     .min(8, 'Minimum 8 caractères')
     .regex(/[A-Z]/, 'Au moins une majuscule')
     .regex(/[0-9]/, 'Au moins un chiffre'),
-  role: z.enum(['candidate', 'scout', 'recruiter']).default('candidate'),
+  role: z.enum(['CANDIDATE', 'SCOUT', 'RECRUITER']).default('CANDIDATE'),
   locale: z.enum(['fr', 'en', 'es']).default('fr'),
 });
 
@@ -42,7 +42,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(2000).optional(),
   city: z.string().max(100).optional(),
   country: z.string().length(2).optional(),
-  remotePreference: z.enum(['remote', 'hybrid', 'onsite']).optional(),
+  remotePreference: z.enum(['REMOTE', 'HYBRID', 'ONSITE']).optional(),
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
   salaryCurrency: z.string().length(3).default('EUR').optional(),
@@ -51,7 +51,7 @@ export const updateProfileSchema = z.object({
 
 export const addSkillSchema = z.object({
   name: z.string().min(1).max(100),
-  level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']),
   yearsOfExperience: z.number().min(0).max(50).optional(),
 });
 
@@ -80,7 +80,7 @@ export const searchJobsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
   minMatch: z.coerce.number().min(0).max(100).default(50),
   sort: z.enum(['match_desc', 'date_desc', 'salary_desc']).default('match_desc'),
-  remote: z.enum(['remote', 'hybrid', 'onsite']).optional(),
+  remote: z.enum(['REMOTE', 'HYBRID', 'ONSITE']).optional(),
   contract: z.enum(['CDI', 'CDD', 'freelance', 'stage', 'alternance']).optional(),
   location: z.string().optional(),
   q: z.string().optional(),
@@ -129,7 +129,7 @@ export const sendScoutMessageSchema = z.object({
 // --- Interview Simulation Schemas ---
 export const startSimulationSchema = z.object({
   jobId: z.string().uuid(),
-  type: z.enum(['hr', 'technical', 'case', 'culture', 'negotiation']),
+  type: z.enum(['RH', 'TECHNICAL', 'BEHAVIORAL', 'CASE_STUDY']),
 });
 
 export const simulationMessageSchema = z.object({

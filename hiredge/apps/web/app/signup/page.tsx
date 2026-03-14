@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkles, Eye, EyeOff, ArrowRight, Check } from "lucide-react"
@@ -15,6 +16,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const router = useRouter()
 
   const validatePassword = (pwd: string): string | null => {
     if (pwd.length < 8) return "Le mot de passe doit contenir au moins 8 caractères"
@@ -47,7 +49,7 @@ export default function SignupPage() {
           // Non-blocking — profile will be completed in onboarding
         }
         
-        window.location.href = "/onboarding"
+        router.push("/onboarding")
       } else {
         setError(data.error?.message || "Erreur lors de la création du compte")
       }

@@ -72,7 +72,7 @@ export class EdgeService {
       const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false }, convId);
       const response = await this.analyzeImage(message, imageBase64, context);
       await this.saveMessages(userId, message, response.message, convId);
-      this.autoTitleConversation(convId, message).catch(() => {});
+      this.autoTitleConversation(convId, message).catch((err) => { request?.log?.error?.(err, 'autoTitle failed') ?? console.error('[EdgeService] autoTitle failed:', err); });
       return { ...response, conversationId: convId };
     }
 
@@ -89,7 +89,7 @@ export class EdgeService {
     await this.saveMessages(userId, message, response.message, convId);
 
     // 5. Auto-title new conversations
-    this.autoTitleConversation(convId, message).catch(() => {});
+    this.autoTitleConversation(convId, message).catch((err) => { request?.log?.error?.(err, 'autoTitle failed') ?? console.error('[EdgeService] autoTitle failed:', err); });
 
     return { ...response, conversationId: convId };
   }

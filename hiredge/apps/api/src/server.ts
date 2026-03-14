@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
 import { env } from './config/env';
 import prisma from './db/prisma';
 import { authenticate } from './middleware/auth';
@@ -42,6 +43,10 @@ async function buildServer() {
   });
 
   await app.register(cookie);
+
+  await app.register(helmet, {
+    contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false,
+  });
 
   await app.register(rateLimit, {
     global: false,

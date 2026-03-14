@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -291,7 +291,7 @@ model SquadMessage {
 }
 
 // ============================================================
-// Ã‰CLAIREURS
+// ÉCLAIREURS
 // ============================================================
 
 model Scout {
@@ -404,7 +404,7 @@ model CollectiveInsight {
 }
 
 // ============================================================
-// AGENT EDGE â€” Conversations
+// AGENT EDGE — Conversations
 // ============================================================
 
 model EdgeConversation {

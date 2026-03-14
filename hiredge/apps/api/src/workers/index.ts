@@ -144,11 +144,11 @@ const notificationWorker = new Worker(
 
 // ─── Error handling ───
 matchingWorker.on('failed', (job, err) => {
-  console.error(`[Matching Worker] Job ${job?.id} failed:`, err.message);
+  console.error(JSON.stringify({ level: 'error', worker: 'matching', jobId: job?.id, error: err.message }));
 });
 
 notificationWorker.on('failed', (job, err) => {
-  console.error(`[Notification Worker] Job ${job?.id} failed:`, err.message);
+  console.error(JSON.stringify({ level: 'error', worker: 'notifications', jobId: job?.id, error: err.message }));
 });
 
 export { matchingWorker, notificationWorker };

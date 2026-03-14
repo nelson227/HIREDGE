@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkles, Eye, EyeOff, ArrowRight } from "lucide-react"
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,7 +26,7 @@ export default function LoginPage() {
       
       if (data.success) {
         // Tokens are set as httpOnly cookies by the server
-        window.location.href = "/dashboard"
+        router.push("/dashboard")
       } else {
         setError(data.error?.message || "Erreur de connexion")
       }
@@ -84,9 +86,9 @@ export default function LoginPage() {
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
                   Mot de passe
                 </label>
-                <Link href="#" className="text-sm text-primary hover:underline">
+                <span className="text-sm text-muted-foreground cursor-not-allowed">
                   Mot de passe oublié ?
-                </Link>
+                </span>
               </div>
               <div className="relative">
                 <Input

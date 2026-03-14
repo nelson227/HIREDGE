@@ -64,13 +64,16 @@ interface Conversation {
 }
 
 // PDF.js loader (CDN)
+const PDFJS_VERSION = "3.11.174"
 let pdfJsLib: any = null
 async function loadPdfJs() {
   if (pdfJsLib) return pdfJsLib
   if (typeof window === "undefined") return null
   try {
     const script = document.createElement("script")
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+    script.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`
+    script.crossOrigin = "anonymous"
+    script.referrerPolicy = "no-referrer"
     await new Promise<void>((resolve, reject) => {
       script.onload = () => resolve()
       script.onerror = () => reject(new Error("Failed to load PDF.js"))
@@ -78,7 +81,7 @@ async function loadPdfJs() {
     })
     const w = window as any
     w.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`
     pdfJsLib = w.pdfjsLib
     return pdfJsLib
   } catch {
@@ -118,6 +121,14 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const skipNextLoadRef = useRef(false) // Skip loading when we just sent a message
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [])
 
   // Load conversations on mount
   useEffect(() => {
@@ -260,7 +271,7 @@ export default function AssistantPage() {
           setCurrentConversation(newConvId)
           
           // Refresh conversations list after a short delay to get the real title
-          setTimeout(() => loadConversations(), 1000)
+          refreshTimerRef.current = setTimeout(() => loadConversations(), 1000)
         }
 
         // Add assistant response
@@ -312,6 +323,7 @@ export default function AssistantPage() {
   }
 
   // Handle file upload (images, PDF, text files)
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -322,6 +334,10 @@ export default function AssistantPage() {
     const isDocx = file.name.toLowerCase().endsWith(".doc") || file.name.toLowerCase().endsWith(".docx")
 
     if (isImage) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "L'image est trop volumineuse (max 5 Mo).", createdAt: new Date().toISOString() }])
+        return
+      }
       const reader = new FileReader()
       reader.onload = (ev) => {
         setAttachment({ type: "image", name: file.name, uri: ev.target?.result as string })
@@ -332,18 +348,18 @@ export default function AssistantPage() {
       try {
         const text = await extractPdfText(file)
         if (!text.trim()) {
-          alert("Ce PDF ne contient pas de texte extractible (peut-être un scan/image).")
+          setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Ce PDF ne contient pas de texte extractible (peut-être un scan/image).", createdAt: new Date().toISOString() }])
           setIsProcessingFile(false)
           return
         }
         setAttachment({ type: "document", name: file.name, content: text.slice(0, 12000) })
       } catch {
-        alert("Impossible de lire ce PDF. Essaie un autre fichier.")
+        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Impossible de lire ce PDF. Essaie un autre fichier.", createdAt: new Date().toISOString() }])
       } finally {
         setIsProcessingFile(false)
       }
     } else if (isDocx) {
-      alert("Les fichiers .doc/.docx ne sont pas encore supportés en lecture. Convertis-le en PDF ou .txt.")
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Les fichiers .doc/.docx ne sont pas encore supportés en lecture. Convertis-le en PDF ou .txt.", createdAt: new Date().toISOString() }])
     } else {
       // Text-based files: .txt, .md, .json, .csv
       const reader = new FileReader()
@@ -375,7 +391,7 @@ export default function AssistantPage() {
       }
       downloadBlob(doc.output("blob"), "document-edge.pdf")
     } catch {
-      alert("Erreur lors de la génération du PDF.")
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Erreur lors de la génération du PDF.", createdAt: new Date().toISOString() }])
     } finally {
       setDownloadingFormat(null)
     }
@@ -395,7 +411,7 @@ export default function AssistantPage() {
       const blob = await Packer.toBlob(docFile)
       downloadBlob(blob, "document-edge.docx")
     } catch {
-      alert("Erreur lors de la génération du Word.")
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Erreur lors de la génération du Word.", createdAt: new Date().toISOString() }])
     } finally {
       setDownloadingFormat(null)
     }

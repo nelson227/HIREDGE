@@ -6,6 +6,15 @@ import { AppError } from '../services/auth.service';
 const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
 
+  const llmRateLimit = {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+      },
+    },
+  };
+
   // GET /interviews — List upcoming interviews (scheduled)
   fastify.get('/', async (request, reply) => {
     try {
@@ -18,7 +27,7 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /interviews/start — Start a new simulation
-  fastify.post('/start', async (request, reply) => {
+  fastify.post('/start', llmRateLimit, async (request, reply) => {
     const parsed = startSimulationSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -37,7 +46,7 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /interviews/:id/respond — Send a response during simulation
-  fastify.post('/:id/respond', async (request, reply) => {
+  fastify.post('/:id/respond', llmRateLimit, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { response } = request.body as { response: string };
 

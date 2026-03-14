@@ -5,6 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
 import { colors } from '../../lib/theme';
 
+function getMemberName(m: any): string {
+  const profile = m.user?.candidateProfile;
+  if (profile?.firstName || profile?.lastName) {
+    return `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim();
+  }
+  return m.user?.email?.split('@')[0] ?? 'Membre';
+}
+
 export default function SquadScreen() {
   const { data: mySquad, isLoading, refetch } = useQuery({
     queryKey: ['mySquad'],
@@ -254,11 +262,11 @@ function SquadDetailView({ squad }: { squad: any }) {
                     backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                   }}>
                     <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>
-                      {(item.user?.fullName ?? '?')[0].toUpperCase()}
+                      {getMemberName(item)[0].toUpperCase()}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 12, fontWeight: '700', color: colors.foreground }}>
-                    {item.user?.fullName ?? 'Membre'}
+                    {getMemberName(item)}
                   </Text>
                   <Text style={{ fontSize: 10, color: colors.border }}>
                     {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -327,13 +335,13 @@ function SquadDetailView({ squad }: { squad: any }) {
                   backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
                 }}>
                   <Text style={{ fontSize: 15, fontWeight: '600', color: colors.primary }}>
-                    {(m.user?.fullName ?? '?')[0].toUpperCase()}
+                    {getMemberName(m)[0].toUpperCase()}
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{m.user?.fullName ?? 'Membre'}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{getMemberName(m)}</Text>
                   <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>
-                    {m.role === 'LEADER' ? '👑 Leader' : 'Membre'}
+                    {m.role === 'CHAMPION' ? '👑 Champion' : 'Membre'}
                   </Text>
                 </View>
                 <View style={{

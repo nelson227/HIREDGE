@@ -188,6 +188,14 @@ export class ScoutService {
     const messages = await prisma.scoutMessage.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        conversationId: true,
+        senderType: true,
+        content: true,
+        isAnonymized: true,
+        createdAt: true,
+      },
     });
 
     return messages;

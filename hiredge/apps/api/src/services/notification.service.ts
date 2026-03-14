@@ -54,7 +54,7 @@ export class NotificationService {
         title: data.title,
         body: data.body,
         actionUrl: data.actionUrl,
-        metadata: data.metadata ?? {},
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
       },
     });
 

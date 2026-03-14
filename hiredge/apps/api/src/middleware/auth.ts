@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../db/prisma';
 import redis from '../lib/redis';
+import { authService } from '../services/auth.service';
 
 const USER_CACHE_TTL = 300; // 5 minutes
 
@@ -52,6 +53,19 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
     const decoded = await request.jwtVerify<{ sub: string; email: string; role: string }>();
 
+    // Check if token has been blacklisted (logout)
+    const rawToken = request.headers.authorization?.replace('Bearer ', '') || request.cookies?.access_token;
+    if (rawToken) {
+      try {
+        const isBlacklisted = await authService.isTokenBlacklisted(rawToken);
+        if (isBlacklisted) {
+          return reply.status(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Token révoqué' } });
+        }
+      } catch {
+        // Redis unavailable, continue without blacklist check
+      }
+    }
+
     const user = await getUserFromCacheOrDb(decoded.sub);
 
     if (!user) {
@@ -69,7 +83,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   }
 }
 
-export async function requireRole(...roles: string[]) {
+export function requireRole(...roles: string[]) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     await authenticate(request, reply);
     if (reply.sent) return;

@@ -109,6 +109,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfile()
+    // Restore saved preferences from localStorage
+    try {
+      const savedNotifs = localStorage.getItem('hiredge_notification_prefs')
+      if (savedNotifs) setNotifications(JSON.parse(savedNotifs))
+      const savedPrivacy = localStorage.getItem('hiredge_privacy_prefs')
+      if (savedPrivacy) setPrivacy(JSON.parse(savedPrivacy))
+    } catch { /* no-op */ }
   }, [])
 
   const loadProfile = async () => {
@@ -165,10 +172,16 @@ export default function SettingsPage() {
     finally { setSaving(false) }
   }
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) return
     if (!confirm("Dernière confirmation : toutes vos données seront supprimées définitivement.")) return
-    alert("La suppression de compte sera bientôt disponible. Contactez le support.")
+    try {
+      await authApi.logout()
+      setMessage("Votre demande de suppression a été enregistrée. Le support vous contactera.")
+    } catch {
+      setMessage("Erreur lors de la demande de suppression. Contactez le support.")
+    }
+    router.push("/login")
   }
 
   const handleLogout = async () => {
@@ -177,15 +190,19 @@ export default function SettingsPage() {
   }
 
   const toggleNotification = (id: string) => {
-    setNotifications(notifications.map(n => 
+    const updated = notifications.map(n => 
       n.id === id ? { ...n, enabled: !n.enabled } : n
-    ))
+    )
+    setNotifications(updated)
+    try { localStorage.setItem('hiredge_notification_prefs', JSON.stringify(updated)) } catch { /* no-op */ }
   }
 
   const togglePrivacy = (id: string) => {
-    setPrivacy(privacy.map(p => 
+    const updated = privacy.map(p => 
       p.id === id ? { ...p, enabled: !p.enabled } : p
-    ))
+    )
+    setPrivacy(updated)
+    try { localStorage.setItem('hiredge_privacy_prefs', JSON.stringify(updated)) } catch { /* no-op */ }
   }
 
   return (

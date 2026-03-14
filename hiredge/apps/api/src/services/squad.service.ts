@@ -179,6 +179,8 @@ export class SquadService {
     const member = await prisma.squadMember.findFirst({ where: { userId, squadId } });
     if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
 
+    const safeLimit = Math.min(limit, 100);
+
     const messages = await prisma.squadMessage.findMany({
       where: { squadId, ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}) },
       include: {
@@ -190,7 +192,7 @@ export class SquadService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: limit,
+      take: safeLimit,
     });
 
     return messages.reverse();

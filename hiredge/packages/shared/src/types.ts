@@ -3,35 +3,35 @@
 // ============================================================
 
 // --- Rôles & Auth ---
-export type UserRole = 'candidate' | 'scout' | 'recruiter' | 'admin';
-export type SubscriptionTier = 'free' | 'premium';
+export type UserRole = 'CANDIDATE' | 'SCOUT' | 'RECRUITER' | 'ADMIN';
+export type SubscriptionTier = 'FREE' | 'PREMIUM';
 export type AuthProvider = 'email' | 'google' | 'apple';
 
 // --- Profil ---
-export type RemotePreference = 'remote' | 'hybrid' | 'onsite';
-export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+export type RemotePreference = 'REMOTE' | 'HYBRID' | 'ONSITE';
+export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
 export type ContractType = 'CDI' | 'CDD' | 'freelance' | 'stage' | 'alternance';
 
 // --- Candidatures ---
 export type ApplicationStatus =
-  | 'draft'
-  | 'sent'
-  | 'viewed'
-  | 'interview'
-  | 'offer'
-  | 'accepted'
-  | 'rejected';
+  | 'DRAFT'
+  | 'SENT'
+  | 'VIEWED'
+  | 'INTERVIEW_SCHEDULED'
+  | 'OFFER_RECEIVED'
+  | 'ACCEPTED'
+  | 'REJECTED';
 
 // --- Escouades ---
-export type SquadStatus = 'active' | 'dissolved';
-export type SquadMemberRole = 'member' | 'champion';
+export type SquadStatus = 'FORMING' | 'ACTIVE' | 'DISSOLVED';
+export type SquadMemberRole = 'MEMBER' | 'CHAMPION';
 export type SquadMessageType = 'text' | 'voice' | 'system' | 'celebration';
 
 // --- Éclaireurs ---
-export type ScoutStatus = 'active' | 'probation' | 'suspended';
+export type ScoutStatus = 'PENDING' | 'ACTIVE' | 'PROBATION' | 'SUSPENDED';
 
 // --- Simulations d'entretien ---
-export type InterviewType = 'hr' | 'technical' | 'case' | 'culture' | 'negotiation';
+export type InterviewType = 'RH' | 'TECHNICAL' | 'BEHAVIORAL' | 'CASE_STUDY';
 
 // --- Notifications ---
 export type NotificationPriority = 'critical' | 'high' | 'medium' | 'low' | 'lowest';

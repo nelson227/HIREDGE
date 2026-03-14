@@ -24,8 +24,8 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
     if (!token) return next(new Error('Authentication required'));
 
     try {
-      const payload = jwt.verify(token, config.jwt.secret) as { userId: string };
-      const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+      const payload = jwt.verify(token, config.jwt.secret) as { sub: string };
+      const user = await prisma.user.findUnique({ where: { id: payload.sub } });
       if (!user) return next(new Error('User not found'));
       (socket as any).userId = user.id;
       (socket as any).user = user;
@@ -62,6 +62,8 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
     socket.on('squad:message', async (data: { squadId: string; content: string }) => {
       const { squadId, content } = data;
       if (!content?.trim()) return;
+      // Limit message length to 5000 characters
+      if (content.length > 5000) return;
 
       const member = await prisma.squadMember.findFirst({
         where: { squadId, userId, isActive: true },
@@ -83,13 +85,17 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
       io.to(`squad:${squadId}`).emit('squad:new_message', message);
     });
 
-    // Typing indicators
+    // Typing indicators (verify membership via room)
     socket.on('squad:typing', (squadId: string) => {
-      socket.to(`squad:${squadId}`).emit('squad:user_typing', { userId });
+      if (socket.rooms.has(`squad:${squadId}`)) {
+        socket.to(`squad:${squadId}`).emit('squad:user_typing', { userId });
+      }
     });
 
     socket.on('squad:stop_typing', (squadId: string) => {
-      socket.to(`squad:${squadId}`).emit('squad:user_stop_typing', { userId });
+      if (socket.rooms.has(`squad:${squadId}`)) {
+        socket.to(`squad:${squadId}`).emit('squad:user_stop_typing', { userId });
+      }
     });
 
     socket.on('disconnect', () => {

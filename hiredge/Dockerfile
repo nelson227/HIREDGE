@@ -13,7 +13,7 @@ FROM base AS shared-build
 COPY package.json package-lock.json* ./
 COPY packages/shared/ ./packages/shared/
 RUN npm ci
-RUN cd packages/shared && npm run build 2>/dev/null || true
+RUN cd packages/shared && npm run build
 
 # Build API
 FROM base AS api-build
@@ -23,7 +23,7 @@ COPY packages/shared/ ./packages/shared/
 COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
 RUN npm ci
 RUN cd apps/api && npx prisma generate
-RUN cd apps/api && npx tsc --outDir dist || true
+RUN cd apps/api && npm run build
 
 # Production image
 FROM node:20-alpine AS runner

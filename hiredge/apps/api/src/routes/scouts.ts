@@ -1,24 +1,30 @@
 import { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import { scoutService } from '../services/scout.service';
 import { AppError } from '../services/auth.service';
+
+const scoutRegisterSchema = z.object({
+  companyId: z.string().uuid('companyId invalide'),
+  department: z.string().max(200).optional(),
+  position: z.string().max(200).optional(),
+  yearsAtCompany: z.number().int().min(0).max(50).optional(),
+  isAnonymous: z.boolean().optional(),
+});
 
 const scoutRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
 
   // POST /scouts/register — Register as scout
   fastify.post('/register', async (request, reply) => {
-    const body = request.body as {
-      companyId: string; department?: string; position?: string;
-      yearsAtCompany?: number; isAnonymous?: boolean;
-    };
-    if (!body.companyId) {
+    const parsed = scoutRegisterSchema.safeParse(request.body);
+    if (!parsed.success) {
       return reply.status(400).send({
-        success: false, error: { code: 'VALIDATION_ERROR', message: 'companyId requis' },
+        success: false, error: { code: 'VALIDATION_ERROR', message: parsed.error?.issues[0]?.message ?? 'Erreur de validation' },
       });
     }
 
     try {
-      const scout = await scoutService.registerAsScout(request.user.id, body);
+      const scout = await scoutService.registerAsScout(request.user.id, parsed.data);
       return reply.status(201).send({ success: true, data: scout });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

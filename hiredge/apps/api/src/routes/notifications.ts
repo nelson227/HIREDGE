@@ -9,10 +9,12 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (request, reply) => {
     const { unreadOnly, limit } = request.query as { unreadOnly?: string; limit?: string };
     try {
+      const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+      const safeLimit = parsedLimit && !isNaN(parsedLimit) ? Math.min(parsedLimit, 100) : undefined;
       const notifications = await notificationService.getUserNotifications(
         request.user.id,
         unreadOnly === 'true',
-        limit ? parseInt(limit) : undefined,
+        safeLimit,
       );
       return reply.send({ success: true, data: notifications });
     } catch (err) {

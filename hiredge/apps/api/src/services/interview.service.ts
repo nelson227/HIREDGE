@@ -3,7 +3,10 @@ import prisma from '../db/prisma';
 import { env } from '../config/env';
 import { AppError } from './auth.service';
 
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+const groq = new OpenAI({
+  apiKey: env.OPENAI_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
 
 type InterviewType = 'RH' | 'TECHNICAL' | 'BEHAVIORAL' | 'CASE_STUDY';
 type SimPhase = 'WARMUP' | 'CORE' | 'WRAP_UP' | 'DEBRIEF';
@@ -235,7 +238,7 @@ export class InterviewSimService {
     const applications = await prisma.application.findMany({
       where: {
         userId,
-        interviewDate: { not: null },
+        interviewDate: { gte: new Date() },
       },
       include: {
         job: {
@@ -314,8 +317,8 @@ RESTE EN PERSONNAGE. Parle naturellement comme dans un vrai entretien. 1-3 phras
       content: m.content,
     }));
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.8,
       max_tokens: 300,
       messages: [
@@ -332,8 +335,8 @@ RESTE EN PERSONNAGE. Parle naturellement comme dans un vrai entretien. 1-3 phras
     history: any[],
     character: InterviewCharacter,
   ): Promise<QuestionEvaluation> {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
       temperature: 0,
       max_tokens: 300,
       messages: [
@@ -369,8 +372,8 @@ Réponse du candidat: ${response}`,
   }
 
   private async generateDebrief(messages: any[], character: InterviewCharacter, config: any) {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.5,
       max_tokens: 600,
       messages: [

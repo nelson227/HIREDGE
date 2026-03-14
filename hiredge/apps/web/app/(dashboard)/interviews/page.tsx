@@ -70,7 +70,7 @@ export default function InterviewsPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-CA", {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -81,13 +81,12 @@ export default function InterviewsPage() {
 
   const getInterviewTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      hr: "Entretien RH",
-      technical: "Technique",
-      case: "Étude de cas",
-      culture: "Culture fit",
-      negotiation: "Négociation",
+      RH: "Entretien RH",
+      TECHNICAL: "Technique",
+      BEHAVIORAL: "Comportemental",
+      CASE_STUDY: "Étude de cas",
     }
-    return labels[type.toLowerCase()] || type
+    return labels[type] || labels[type.toUpperCase()] || type
   }
 
   if (loading) {
@@ -102,8 +101,9 @@ export default function InterviewsPage() {
   }
 
   const totalInterviews = interviews.length
-  const averageScore = totalInterviews > 0
-    ? Math.round(interviews.filter(i => i.score).reduce((acc, i) => acc + (i.score || 0), 0) / interviews.filter(i => i.score).length)
+  const scoredInterviews = interviews.filter(i => i.score)
+  const averageScore = scoredInterviews.length > 0
+    ? Math.round(scoredInterviews.reduce((acc, i) => acc + (i.score || 0), 0) / scoredInterviews.length)
     : 0
 
   return (

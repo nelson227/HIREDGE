@@ -31,9 +31,10 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
         message: `${result.imported} offres importées sur ${result.fetched} récupérées`,
       });
     } catch (err: any) {
+      request.log.error(err, 'Import error');
       return reply.status(500).send({
         success: false,
-        error: { code: 'IMPORT_ERROR', message: err.message },
+        error: { code: 'IMPORT_ERROR', message: 'Erreur lors de l\'importation des offres' },
       });
     }
   });
@@ -76,9 +77,10 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /jobs/recommended — auth required
   fastify.get('/recommended', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { limit } = request.query as { limit?: string };
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
 
     try {
-      const jobs = await jobService.getMatchedJobs(request.user.id, limit ? parseInt(limit) : 20);
+      const jobs = await jobService.getMatchedJobs(request.user.id, Number.isNaN(parsedLimit) ? 20 : Math.min(parsedLimit, 100));
       return reply.send({ success: true, data: jobs });
     } catch (err) {
       if (err instanceof AppError) {

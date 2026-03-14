@@ -63,7 +63,7 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
   // ─── Chat (per-conversation) ──────────────────────────────
 
   // POST /edge/chat — Send a message to EDGE
-  fastify.post('/chat', async (request, reply) => {
+  fastify.post('/chat', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
     const parsed = edgeChatSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -91,6 +91,14 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/history', async (request, reply) => {
     const { cursor, limit, conversationId } = request.query as { cursor?: string; limit?: string; conversationId?: string };
 
+    // Validate cursor as ISO date
+    if (cursor && isNaN(new Date(cursor).getTime())) {
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Curseur invalide' } });
+    }
+
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const safeLimit = isNaN(parsedLimit) ? 50 : Math.min(parsedLimit, 100);
+
     const messages = await fastify.prisma.edgeChatMessage.findMany({
       where: {
         userId: request.user.id,
@@ -98,7 +106,7 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
         ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
       },
       orderBy: { createdAt: 'desc' },
-      take: limit ? parseInt(limit) : 50,
+      take: safeLimit,
     });
 
     return reply.send({ success: true, data: messages.reverse() });

@@ -31,6 +31,19 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Token refresh deduplication
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
 // Response interceptor — handle token refresh
 api.interceptors.response.use(
   (response) => response,
@@ -39,6 +52,18 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // Wait for the in-flight refresh to complete
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
 
       try {
         const refreshToken = await storage.getItem('refreshToken');
@@ -49,10 +74,14 @@ api.interceptors.response.use(
         if (data.success) {
           await storage.setItem('accessToken', data.data.accessToken);
           await storage.setItem('refreshToken', data.data.refreshToken);
+          isRefreshing = false;
+          onRefreshed(data.data.accessToken);
           originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
           return api(originalRequest);
         }
       } catch {
+        isRefreshing = false;
+        refreshSubscribers = [];
         // Refresh failed — logout and redirect to login
         await storage.deleteItem('accessToken');
         await storage.deleteItem('refreshToken');

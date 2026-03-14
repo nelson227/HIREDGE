@@ -131,7 +131,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /auth/refresh
-  fastify.post('/refresh', async (request, reply) => {
+  fastify.post('/refresh', authRateLimit, async (request, reply) => {
     const body = request.body as { refreshToken?: string };
     const refreshToken = body?.refreshToken || request.cookies?.refresh_token;
     if (!refreshToken) {

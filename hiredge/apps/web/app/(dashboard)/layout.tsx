@@ -108,7 +108,7 @@ export default function DashboardLayout({
   }
 
   const handleLogout = async () => {
-    try { await authApi.logout() } catch {}
+    try { await authApi.logout() } catch { /* logout failure is non-blocking */ }
     window.location.href = '/login'
   }
 
