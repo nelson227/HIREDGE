@@ -152,3 +152,15 @@ notificationWorker.on('failed', (job, err) => {
 });
 
 export { matchingWorker, notificationWorker };
+
+// ─── Graceful shutdown ───
+const shutdown = async () => {
+  await Promise.allSettled([
+    matchingWorker.close(),
+    notificationWorker.close(),
+  ]);
+  process.exit(0);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

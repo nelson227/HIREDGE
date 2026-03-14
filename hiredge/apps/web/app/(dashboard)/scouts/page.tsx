@@ -67,8 +67,8 @@ export default function ScoutsPage() {
           setCompanies(uniqueCompanies)
         }
       }
-    } catch (error) {
-      console.error("Erreur chargement scouts:", error)
+    } catch {
+      // handled by UI state
     } finally {
       setLoading(false)
     }

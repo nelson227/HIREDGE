@@ -72,8 +72,8 @@ export default function AnalyticsPage() {
         interviews: interviewsRes.data?.data?.length || 0,
         jobs: jobsRes.data?.data?.pagination?.total || 0,
       })
-    } catch (error) {
-      console.error("Erreur chargement stats:", error)
+    } catch {
+      // handled by UI state
     } finally {
       setLoading(false)
     }

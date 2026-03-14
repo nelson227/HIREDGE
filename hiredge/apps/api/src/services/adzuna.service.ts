@@ -173,7 +173,7 @@ export class AdzunaService {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    console.log(`[Adzuna] Import terminé: ${totalImported}/${totalFetched} offres importées`);
+
     return { fetched: totalFetched, imported: totalImported };
   }
 

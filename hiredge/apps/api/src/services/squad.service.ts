@@ -72,30 +72,32 @@ export class SquadService {
     });
     if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 404);
 
-    await prisma.squadMember.delete({ where: { id: member.id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.squadMember.delete({ where: { id: member.id } });
 
-    // If leader left, promote next member or dissolve
-    if (member.role === 'LEADER') {
-      const remainingMembers = await prisma.squadMember.findMany({
-        where: { squadId },
-        orderBy: { joinedAt: 'asc' },
-      });
-
-      if (remainingMembers.length === 0) {
-        await prisma.squad.update({ where: { id: squadId }, data: { status: 'DISSOLVED' } });
-      } else {
-        await prisma.squadMember.update({
-          where: { id: remainingMembers[0]!.id },
-          data: { role: 'LEADER' },
+      // If leader left, promote next member or dissolve
+      if (member.role === 'LEADER') {
+        const remainingMembers = await tx.squadMember.findMany({
+          where: { squadId },
+          orderBy: { joinedAt: 'asc' },
         });
-      }
-    }
 
-    // Check minimum members
-    const count = await prisma.squadMember.count({ where: { squadId } });
-    if (count < SQUAD_LIMITS.MIN_MEMBERS) {
-      await prisma.squad.update({ where: { id: squadId }, data: { status: 'FORMING' } });
-    }
+        if (remainingMembers.length === 0) {
+          await tx.squad.update({ where: { id: squadId }, data: { status: 'DISSOLVED' } });
+        } else {
+          await tx.squadMember.update({
+            where: { id: remainingMembers[0]!.id },
+            data: { role: 'LEADER' },
+          });
+        }
+      }
+
+      // Check minimum members
+      const count = await tx.squadMember.count({ where: { squadId } });
+      if (count < SQUAD_LIMITS.MIN_MEMBERS) {
+        await tx.squad.update({ where: { id: squadId }, data: { status: 'FORMING' } });
+      }
+    });
   }
 
   async getSquadDetails(userId: string, squadId: string) {

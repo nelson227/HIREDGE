@@ -6,7 +6,6 @@ const createRedis = () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const RedisMock = require('ioredis-mock');
-      console.log('[Redis] Using in-memory mock (dev mode)');
       return new RedisMock();
     } catch {
       // ioredis-mock non disponible, on tente la connexion réelle
@@ -29,7 +28,7 @@ redis.on('error', (err: Error) => {
 });
 
 redis.on('connect', () => {
-  console.log('[Redis] Connected');
+  // connected
 });
 
 export { redis };

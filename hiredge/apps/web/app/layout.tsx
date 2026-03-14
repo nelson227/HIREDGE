@@ -15,6 +15,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'HIREDGE - Recherche d\'emploi augmentée par l\'IA',
   description: 'Trouvez votre emploi idéal plus vite grâce au matching IA, aux candidatures personnalisées et au soutien communautaire. Ne cherchez plus jamais seul.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://hiredge.app'),
+  openGraph: {
+    title: 'HIREDGE - Recherche d\'emploi augmentée par l\'IA',
+    description: 'Trouvez votre emploi idéal plus vite grâce au matching IA, aux candidatures personnalisées et au soutien communautaire.',
+    type: 'website',
+    siteName: 'HIREDGE',
+    locale: 'fr_FR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HIREDGE - Recherche d\'emploi augmentée par l\'IA',
+    description: 'Trouvez votre emploi idéal plus vite grâce au matching IA.',
+  },
   icons: {
     icon: [
       {

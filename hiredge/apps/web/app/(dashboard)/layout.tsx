@@ -25,6 +25,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { profileApi, authApi, notificationsApi } from "@/lib/api"
 
 const sidebarItems = [
@@ -262,7 +263,9 @@ export default function DashboardLayout({
 
         {/* Page Content */}
         <main className="min-h-[calc(100vh-4rem)]">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

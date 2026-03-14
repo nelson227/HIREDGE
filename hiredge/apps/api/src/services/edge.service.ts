@@ -169,7 +169,7 @@ Si c'est un screenshot, décris ce que tu vois.
 Réponds toujours en français de manière amicale et professionnelle.
 Tu peux aussi générer des PDF et Word — si l'utilisateur veut exporter ton analyse, dis-lui de demander "mets ça en pdf" ou "envoie en word".
 
-PROFIL UTILISATEUR : ${context.userProfile?.firstName ?? ''} ${context.userProfile?.lastName ?? ''}`,
+L'utilisateur a un profil renseigné : ${context.userProfile ? 'oui' : 'non'}.`,
           },
           {
             role: 'user',
@@ -558,7 +558,9 @@ TES CAPACITÉS (tu PEUX faire tout cela) :
 Si l'utilisateur demande un document PDF ou Word, dis-lui de formuler sa demande avec "génère mon CV" ou "en pdf" ou "en word".
 
 PROFIL UTILISATEUR :
-${context.userProfile ? JSON.stringify(context.userProfile, null, 2) : 'Profil non encore renseigné.'}
+${context.userProfile ? `Titre: ${context.userProfile.title ?? 'Non renseigné'}
+Compétences: ${(context.userProfile.skills ?? []).join(', ') || 'Non renseignées'}
+Expériences: ${(context.userProfile.experience ?? []).join(', ') || 'Non renseignées'}` : 'Profil non encore renseigné.'}
 `;
 
     if (context.intentData) {

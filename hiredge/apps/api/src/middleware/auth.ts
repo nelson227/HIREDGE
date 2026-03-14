@@ -1,5 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../db/prisma';
+import redis from '../lib/redis';
+
+const USER_CACHE_TTL = 300; // 5 minutes
 
 export interface AuthUser {
   id: string;
@@ -15,6 +18,31 @@ declare module '@fastify/jwt' {
   }
 }
 
+async function getUserFromCacheOrDb(userId: string): Promise<AuthUser | null> {
+  const cacheKey = `auth:user:${userId}`;
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch {
+    // Redis unavailable, fall through to DB
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, role: true, subscriptionTier: true },
+  });
+
+  if (user) {
+    try {
+      await redis.set(cacheKey, JSON.stringify(user), 'EX', USER_CACHE_TTL);
+    } catch {
+      // Redis unavailable, continue without cache
+    }
+  }
+
+  return user;
+}
+
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
     // Try Authorization header first, then fall back to httpOnly cookie
@@ -24,10 +52,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
     const decoded = await request.jwtVerify<{ sub: string; email: string; role: string }>();
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.sub },
-      select: { id: true, email: true, role: true, subscriptionTier: true },
-    });
+    const user = await getUserFromCacheOrDb(decoded.sub);
 
     if (!user) {
       return reply.status(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Utilisateur introuvable' } });

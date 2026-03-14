@@ -117,8 +117,8 @@ export default function ApplicationsPage() {
       }
 
       setApplications(grouped)
-    } catch (error) {
-      console.error("Erreur chargement candidatures:", error)
+    } catch {
+      // handled by UI state
     } finally {
       setLoading(false)
     }
@@ -153,8 +153,7 @@ export default function ApplicationsPage() {
     // Mise à jour via l'API
     try {
       await applicationsApi.updateStatus(draggedItem.id, reverseStatusMapping[status])
-    } catch (error) {
-      console.error("Erreur mise à jour statut:", error)
+    } catch {
       // Annuler le changement en cas d'erreur
       loadApplications()
     }

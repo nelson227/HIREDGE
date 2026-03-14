@@ -9,8 +9,11 @@ let io: Server;
 export function initializeWebSocket(httpServer: HTTPServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: '*',
+      origin: process.env.NODE_ENV === 'production'
+        ? ['https://hiredge.app', 'https://www.hiredge.app']
+        : true,
       methods: ['GET', 'POST'],
+      credentials: true,
     },
     transports: ['websocket', 'polling'],
   });

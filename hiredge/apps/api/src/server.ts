@@ -79,11 +79,15 @@ async function buildServer() {
     app.log.error(error);
 
     const statusCode = error.statusCode ?? 500;
+    // In production, only expose messages for client errors (4xx), never for server errors
+    const safeMessage = statusCode >= 500
+      ? 'Erreur interne du serveur'
+      : (error.statusCode ? error.message : 'Requête invalide');
     reply.status(statusCode).send({
       success: false,
       error: {
         code: error.code ?? 'INTERNAL_ERROR',
-        message: statusCode === 500 ? 'Erreur interne du serveur' : error.message,
+        message: safeMessage,
       },
     });
   });

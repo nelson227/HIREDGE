@@ -23,19 +23,15 @@ const SCRAPING_SOURCES = [
 const scrapingWorker = new Worker('scraping', async (job: Job) => {
   const { source, keywords, location } = job.data;
 
-  console.log(`[Scraping] Lancement pour ${source} — keywords: ${keywords}, location: ${location}`);
-
   try {
     // Step 1: Fetch raw data
     const rawJobs = await fetchJobsFromSource(source, keywords, location);
-    console.log(`[Scraping] ${rawJobs.length} offres brutes récupérées de ${source}`);
 
     // Step 2: Normalize
     const normalized = rawJobs.map(normalizeJob);
 
     // Step 3: Deduplicate
     const deduped = await deduplicateJobs(normalized);
-    console.log(`[Scraping] ${deduped.length} offres après déduplication`);
 
     // Step 4: Enrich + Scam detection
     const enriched = deduped.map(enrichJob).filter(j => j.scamScore < 0.6);
@@ -52,7 +48,6 @@ const scrapingWorker = new Worker('scraping', async (job: Job) => {
       }
     }
 
-    console.log(`[Scraping] ${created} nouvelles offres indexées depuis ${source}`);
     return { source, fetched: rawJobs.length, stored: created };
 
   } catch (error: any) {
@@ -68,8 +63,6 @@ const scrapingWorker = new Worker('scraping', async (job: Job) => {
 // ─── Content Generation Worker ───────────────────────────
 const contentWorker = new Worker('content-generation', async (job: Job) => {
   const { type, userId, jobId, data } = job.data;
-
-  console.log(`[Content] Génération ${type} pour user ${userId}`);
 
   try {
     switch (type) {
@@ -120,10 +113,7 @@ async function fetchJobsFromSource(source: string, keywords: string, location: s
   // Ici placeholder pour la structure. Chaque scraper sera un module séparé.
   const jobs: RawJob[] = [];
 
-  // Simulated scraping structure
-  // En vrai: await scrapers[source].scrape({ keywords, location });
-  console.log(`[Scraper:${source}] Scraping pour "${keywords}" à "${location}"`);
-
+  // NOTE: En vrai chaque source a son scraper via scrapers[source].scrape()
   return jobs;
 }
 
@@ -321,21 +311,12 @@ export async function scheduleScrapingJobs() {
       }
     }
   }
-  console.log('[Scheduler] Jobs de scraping planifiés');
 }
 
 // ─── Event handlers ──────────────────────────────────────
 
-scrapingWorker.on('completed', (job) => {
-  console.log(`[Scraping] Job ${job.id} terminé avec succès`);
-});
-
 scrapingWorker.on('failed', (job, err) => {
   console.error(`[Scraping] Job ${job?.id} échoué:`, err.message);
-});
-
-contentWorker.on('completed', (job) => {
-  console.log(`[Content] Job ${job.id} terminé avec succès`);
 });
 
 contentWorker.on('failed', (job, err) => {
@@ -343,3 +324,15 @@ contentWorker.on('failed', (job, err) => {
 });
 
 export { scrapingWorker, contentWorker };
+
+// ─── Graceful shutdown ───
+const shutdown = async () => {
+  await Promise.allSettled([
+    scrapingWorker.close(),
+    contentWorker.close(),
+  ]);
+  process.exit(0);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

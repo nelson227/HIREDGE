@@ -95,7 +95,7 @@ export default function SquadPage() {
     } catch (error: any) {
       // 404 = pas de squad, c'est normal
       if (error.response?.status !== 404) {
-        console.error("Erreur chargement squad:", error)
+        // erreur inattendue
       }
     } finally {
       setLoading(false)
@@ -111,8 +111,8 @@ export default function SquadPage() {
         const me = data.data.find((m: SquadMember) => m.role === 'champion') || data.data[0]
         if (me) setCurrentUserId(me.userId)
       }
-    } catch (error) {
-      console.error("Erreur chargement membres:", error)
+    } catch {
+      // handled by UI state
     }
   }
 
@@ -123,8 +123,8 @@ export default function SquadPage() {
         // Inverser pour avoir les plus anciens en premier
         setMessages(data.data.reverse())
       }
-    } catch (error) {
-      console.error("Erreur chargement messages:", error)
+    } catch {
+      // handled by UI state
     }
   }
 
@@ -140,8 +140,7 @@ export default function SquadPage() {
       if (data.success) {
         setMessages(prev => [...prev, data.data])
       }
-    } catch (error) {
-      console.error("Erreur envoi message:", error)
+    } catch {
       setNewMessage(messageContent) // Restaurer le message
     } finally {
       setSending(false)
@@ -159,8 +158,8 @@ export default function SquadPage() {
         setNewSquadName("")
         await loadMembers(data.data.id)
       }
-    } catch (error) {
-      console.error("Erreur création squad:", error)
+    } catch {
+      // handled by UI state
     } finally {
       setCreating(false)
     }
@@ -176,7 +175,6 @@ export default function SquadPage() {
         setJoinCode("")
       }
     } catch (error: any) {
-      console.error("Erreur rejoindre squad:", error)
       alert(error.response?.data?.message || "Code invalide")
     } finally {
       setJoining(false)
@@ -190,8 +188,8 @@ export default function SquadPage() {
       setSquad(null)
       setMembers([])
       setMessages([])
-    } catch (error) {
-      console.error("Erreur quitter squad:", error)
+    } catch {
+      // handled by UI state
     }
   }
 
