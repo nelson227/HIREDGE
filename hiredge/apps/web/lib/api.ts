@@ -113,6 +113,8 @@ export const jobsApi = {
   getRecommended: (limit?: number) =>
     api.get('/jobs/recommended', { params: { limit } }),
   getById: (id: string) => api.get(`/jobs/${id}`),
+  getCoverLetter: (id: string) => api.get(`/jobs/${id}/cover-letter`),
+  getCompanyAnalysis: (id: string) => api.get(`/jobs/${id}/company-analysis`),
 };
 
 // ─── Applications ────────────────────────────────────────────────

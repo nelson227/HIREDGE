@@ -710,7 +710,7 @@ Règles:
       const parsed = JSON.parse(jsonMatch[0]);
 
       const adjusted: MatchResult = {
-        matchScore: Math.max(0, Math.min(100, Math.round(parsed.adjustedScore ?? baseResult.matchScore))),
+        matchScore: baseResult.matchScore, // Keep base score for consistency with list view
         matchDetails: baseResult.matchDetails,
         matchAnalysis: parsed.analysis,
         sellingPoints: parsed.sellingPoints,
