@@ -46,9 +46,12 @@ export class CVService {
   private getOpenAI(): OpenAI {
     if (!this.openai) {
       if (!config.openai.apiKey) {
-        throw new AppError('OPENAI_NOT_CONFIGURED', 'La clé OpenAI n\'est pas configurée', 500);
+        throw new AppError('OPENAI_NOT_CONFIGURED', 'La clé API IA n\'est pas configurée', 500);
       }
-      this.openai = new OpenAI({ apiKey: config.openai.apiKey });
+      this.openai = new OpenAI({
+        apiKey: config.openai.apiKey,
+        baseURL: 'https://api.groq.com/openai/v1',
+      });
     }
     return this.openai;
   }
@@ -82,7 +85,7 @@ export class CVService {
     const trimmedText = text.slice(0, 15000); // safety limit
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
