@@ -218,9 +218,15 @@ export default function JobDetailPage() {
   }
 
   const formatDescription = (text: string): string => {
+    // Clean up common noise patterns from scraped descriptions
+    let cleaned = text
+      .replace(/^(Job Description\s*){1,3}/i, "")
+      .replace(/^(Description du poste\s*){1,2}/i, "")
+      .replace(/^(Intitul[ée] du poste\s*:?\s*)/i, "")
+      .trim()
     // Escape HTML to prevent XSS
     const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-    const escaped = escape(text)
+    const escaped = escape(cleaned)
     const lines = escaped.split(/\n/)
     const result: string[] = []
     let inList = false
@@ -470,22 +476,13 @@ export default function JobDetailPage() {
                   <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: formatDescription(job.description) }}
                   />
-                  {job.description.length < 600 && job.sourceUrl && (
-                    <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <p className="text-sm text-muted-foreground mb-3">La description affichée est un résumé. Consulte l&apos;offre originale pour tous les détails.</p>
+                  {job.sourceUrl && (
+                    <div className="mt-6 pt-4 border-t">
                       <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm">
                           <ExternalLink className="w-4 h-4 mr-2" />
-                          Voir l&apos;offre complète
+                          Voir l&apos;offre originale
                         </Button>
-                      </a>
-                    </div>
-                  )}
-                  {job.sourceUrl && job.description.length >= 600 && (
-                    <div className="mt-4 pt-4 border-t">
-                      <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline text-sm">
-                        <ExternalLink className="w-4 h-4" />
-                        Voir l&apos;offre originale
                       </a>
                     </div>
                   )}
