@@ -9,7 +9,7 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { env } from './config/env';
 import prisma from './db/prisma';
-import { authenticate } from './middleware/auth';
+import { authenticate, optionalAuthenticate } from './middleware/auth';
 import { initializeWebSocket } from './lib/websocket';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
@@ -24,6 +24,7 @@ import notificationRoutes from './routes/notifications';
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: typeof authenticate;
+    optionalAuthenticate: typeof optionalAuthenticate;
     prisma: typeof prisma;
   }
 }
@@ -75,6 +76,7 @@ async function buildServer() {
 
   // Decorators
   app.decorate('authenticate', authenticate);
+  app.decorate('optionalAuthenticate', optionalAuthenticate);
   app.decorate('prisma', prisma);
 
   // Root

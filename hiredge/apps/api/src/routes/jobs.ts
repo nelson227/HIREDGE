@@ -4,19 +4,6 @@ import { jobService } from '../services/job.service';
 import { adzunaService } from '../services/adzuna.service';
 import { AppError } from '../services/auth.service';
 
-// Try to extract userId from JWT without requiring auth
-async function tryExtractUserId(request: any): Promise<string> {
-  try {
-    if (!request.headers.authorization && request.cookies?.access_token) {
-      request.headers.authorization = `Bearer ${request.cookies.access_token}`;
-    }
-    const decoded = await request.jwtVerify<{ sub: string }>() as any;
-    return decoded?.sub ?? '';
-  } catch {
-    return '';
-  }
-}
-
 const jobRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /jobs/import — import jobs from Adzuna (auth required)
   fastify.post('/import', { preHandler: [fastify.authenticate] }, async (request, reply) => {
@@ -52,8 +39,8 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /jobs/search — public (no auth needed to browse jobs)
-  fastify.get('/search', async (request, reply) => {
+  // GET /jobs/search — public, optionalAuthenticate enriches with match scores
+  fastify.get('/search', { preHandler: [fastify.optionalAuthenticate] }, async (request, reply) => {
     const parsed = searchJobsSchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -63,7 +50,7 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const userId = await tryExtractUserId(request);
+      const userId = request.user?.id ?? '';
       const result = await jobService.searchJobs(userId, {
         query: parsed.data.q,
         location: parsed.data.location,
@@ -106,10 +93,10 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /jobs/:id
-  fastify.get('/:id', async (request, reply) => {
+  // GET /jobs/:id — public, optionalAuthenticate enriches with match details
+  fastify.get('/:id', { preHandler: [fastify.optionalAuthenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const userId = await tryExtractUserId(request);
+    const userId = request.user?.id || undefined;
 
     try {
       const job = await jobService.getJobById(id, userId || undefined);

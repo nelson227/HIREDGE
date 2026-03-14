@@ -83,6 +83,30 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   }
 }
 
+export async function optionalAuthenticate(request: FastifyRequest, _reply: FastifyReply) {
+  try {
+    if (!request.headers.authorization && request.cookies?.access_token) {
+      request.headers.authorization = `Bearer ${request.cookies.access_token}`;
+    }
+
+    if (!request.headers.authorization) return;
+
+    const decoded = await request.jwtVerify<{ sub: string; email: string; role: string }>();
+
+    const user = await getUserFromCacheOrDb(decoded.sub);
+    if (user) {
+      request.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        subscriptionTier: user.subscriptionTier,
+      };
+    }
+  } catch {
+    // Silently continue — user is just unauthenticated
+  }
+}
+
 export function requireRole(...roles: string[]) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     await authenticate(request, reply);
