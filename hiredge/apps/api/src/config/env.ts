@@ -50,6 +50,10 @@ export const config = {
     appId: process.env.ADZUNA_APP_ID || '',
     appKey: process.env.ADZUNA_APP_KEY || '',
   },
+
+  jsearch: {
+    apiKey: process.env.JSEARCH_API_KEY || '',
+  },
 } as const;
 
 // Flat alias for backward compatibility
