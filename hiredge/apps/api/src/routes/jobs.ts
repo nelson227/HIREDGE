@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { searchJobsSchema } from '@hiredge/shared';
 import { jobService } from '../services/job.service';
 import { adzunaService } from '../services/adzuna.service';
+import { descriptionScraper } from '../services/description-scraper.service';
 import { AppError } from '../services/auth.service';
 import OpenAI from 'openai';
 import { env } from '../config/env';
@@ -37,10 +38,17 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
         maxPages: safeMaxPages,
       });
 
+      // Lancer le scraping des descriptions en arrière-plan
+      if (result.imported > 0) {
+        descriptionScraper.scrapeAllPending({ limit: result.imported }).catch(err => {
+          request.log.error(err, 'Background scraping error');
+        });
+      }
+
       return reply.send({
         success: true,
         data: result,
-        message: `${result.imported} offres importées sur ${result.fetched} récupérées`,
+        message: `${result.imported} offres importées sur ${result.fetched} récupérées. Scraping des descriptions complètes en cours...`,
       });
     } catch (err: any) {
       request.log.error(err, 'Import error');
@@ -294,6 +302,63 @@ Analyse cette entreprise pour un candidat.`,
 
     await redis.setex(cacheKey, 3600, JSON.stringify(result));
     return reply.send({ success: true, data: result });
+  });
+
+  // POST /jobs/scrape-descriptions — scrape full descriptions for all pending jobs
+  fastify.post('/scrape-descriptions', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { limit } = (request.body as { limit?: number }) || {};
+    const safeLimit = Math.min(Math.max(1, limit || 30), 100);
+
+    try {
+      const result = await descriptionScraper.scrapeAllPending({ limit: safeLimit });
+
+      return reply.send({
+        success: true,
+        data: {
+          total: result.total,
+          success: result.success,
+          failed: result.failed,
+        },
+        message: `${result.success}/${result.total} descriptions scrapées avec succès`,
+      });
+    } catch (err: any) {
+      request.log.error(err, 'Scraping descriptions error');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'SCRAPE_ERROR', message: 'Erreur lors du scraping des descriptions' },
+      });
+    }
+  });
+
+  // POST /jobs/:id/scrape-description — scrape full description for a single job
+  fastify.post('/:id/scrape-description', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    try {
+      const result = await descriptionScraper.scrapeJobDescription(id);
+
+      if (!result.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'SCRAPE_FAILED', message: result.error || 'Impossible de scraper la description' },
+        });
+      }
+
+      return reply.send({
+        success: true,
+        data: {
+          descriptionLength: result.description?.length || 0,
+          finalUrl: result.finalUrl,
+        },
+        message: 'Description complète récupérée et mise à jour',
+      });
+    } catch (err: any) {
+      request.log.error(err, 'Scraping single job error');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'SCRAPE_ERROR', message: 'Erreur lors du scraping' },
+      });
+    }
   });
 };
 
