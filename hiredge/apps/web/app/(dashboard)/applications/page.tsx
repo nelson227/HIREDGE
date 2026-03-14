@@ -72,6 +72,7 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true)
   const [draggedItem, setDraggedItem] = useState<Application | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<KanbanStatus | null>(null)
+  const [feedbackMsg, setFeedbackMsg] = useState("")
 
   // Charger les candidatures depuis l'API
   useEffect(() => {
@@ -102,13 +103,13 @@ export default function ApplicationsPage() {
             company: app.job?.company?.name || "Entreprise",
             companyLogo: app.job?.company?.logo,
             role: app.job?.title || "Poste",
-            date: new Date(app.createdAt).toLocaleDateString("fr-CA", {
+            date: new Date(app.createdAt).toLocaleDateString("fr-FR", {
               year: "numeric",
               month: "short",
               day: "numeric",
             }),
             nextStep: app.interviewDate 
-              ? `Entretien ${new Date(app.interviewDate).toLocaleDateString("fr-CA")}`
+              ? `Entretien ${new Date(app.interviewDate).toLocaleDateString("fr-FR")}`
               : undefined,
             status: kanbanStatus,
             jobId: app.jobId,
@@ -182,6 +183,9 @@ export default function ApplicationsPage() {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 h-[calc(100vh-4rem)] flex flex-col">
+      {feedbackMsg && (
+        <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg shrink-0">{feedbackMsg}</div>
+      )}
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0">
         <div>
@@ -294,7 +298,7 @@ export default function ApplicationsPage() {
                                         try {
                                           await applicationsApi.withdraw(app.id)
                                           loadApplications()
-                                        } catch { alert('Erreur lors du retrait') }
+                                        } catch { setFeedbackMsg('Erreur lors du retrait'); setTimeout(() => setFeedbackMsg(''), 3000) }
                                       }
                                     }}
                                     className="block w-full text-left px-3 py-2 text-sm text-destructive hover:bg-muted rounded-b-lg"

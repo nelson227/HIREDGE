@@ -86,6 +86,8 @@ export default function ProfilePage() {
   const [newExp, setNewExp] = useState({ company: "", title: "", description: "", startDate: "", endDate: "", current: false })
   const [showNewEdu, setShowNewEdu] = useState(false)
   const [newEdu, setNewEdu] = useState({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
+  const [feedbackMsg, setFeedbackMsg] = useState("")
+  const showFeedback = (msg: string) => { setFeedbackMsg(msg); setTimeout(() => setFeedbackMsg(""), 3000) }
 
   useEffect(() => { loadProfile() }, [])
 
@@ -110,14 +112,14 @@ export default function ProfilePage() {
   const saveBasicInfo = async () => {
     setSaving(true)
     try { await profileApi.update(editForm); await loadProfile(); setIsEditingBasic(false) }
-    catch { alert("Erreur lors de la sauvegarde") }
+    catch { showFeedback("Erreur lors de la sauvegarde") }
     finally { setSaving(false) }
   }
 
   const saveBio = async () => {
     setSaving(true)
     try { await profileApi.update({ bio: editedBio }); await loadProfile(); setIsEditingBio(false) }
-    catch { alert("Erreur lors de la sauvegarde") }
+    catch { showFeedback("Erreur lors de la sauvegarde") }
     finally { setSaving(false) }
   }
 
@@ -125,13 +127,13 @@ export default function ProfilePage() {
     if (!newSkill.trim()) return
     setAddingSkill(true)
     try { await profileApi.addSkill({ name: newSkill.trim(), level: "intermediate" }); setNewSkill(""); await loadProfile() }
-    catch { alert("Erreur lors de l'ajout") }
+    catch { showFeedback("Erreur lors de l'ajout") }
     finally { setAddingSkill(false) }
   }
 
   const handleRemoveSkill = async (skillId: string) => {
     try { await profileApi.removeSkill(skillId); await loadProfile() }
-    catch { alert("Erreur lors de la suppression") }
+    catch { showFeedback("Erreur lors de la suppression") }
   }
 
   const handleAddExperience = async () => {
@@ -141,13 +143,13 @@ export default function ProfilePage() {
       setShowNewExp(false)
       setNewExp({ company: "", title: "", description: "", startDate: "", endDate: "", current: false })
       await loadProfile()
-    } catch { alert("Erreur lors de l'ajout") }
+    } catch { showFeedback("Erreur lors de l'ajout") }
   }
 
   const handleRemoveExperience = async (expId: string) => {
     if (!confirm("Supprimer cette expérience ?")) return
     try { await profileApi.removeExperience(expId); await loadProfile() }
-    catch { alert("Erreur lors de la suppression") }
+    catch { showFeedback("Erreur lors de la suppression") }
   }
 
   const handleAddEducation = async () => {
@@ -157,16 +159,16 @@ export default function ProfilePage() {
       setShowNewEdu(false)
       setNewEdu({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
       await loadProfile()
-    } catch { alert("Erreur lors de l'ajout") }
+    } catch { showFeedback("Erreur lors de l'ajout") }
   }
 
   const handleRemoveEducation = async (eduId: string) => {
     if (!confirm("Supprimer cette formation ?")) return
     try { await profileApi.removeEducation(eduId); await loadProfile() }
-    catch { alert("Erreur lors de la suppression") }
+    catch { showFeedback("Erreur lors de la suppression") }
   }
 
-  const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("fr-CA", { year: "numeric", month: "short" }) : ""
+  const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("fr-FR", { year: "numeric", month: "short" }) : ""
 
   if (loading) return (
     <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -185,6 +187,9 @@ export default function ProfilePage() {
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
+      {feedbackMsg && (
+        <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg">{feedbackMsg}</div>
+      )}
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>

@@ -18,7 +18,7 @@ export class AuthService {
       data: {
         email: input.email,
         passwordHash,
-        role: input.role === 'candidate' ? 'CANDIDATE' : input.role === 'scout' ? 'SCOUT' : 'RECRUITER',
+        role: input.role === 'CANDIDATE' ? 'CANDIDATE' : input.role === 'SCOUT' ? 'SCOUT' : 'RECRUITER',
         locale: input.locale,
         candidateProfile: input.role === 'candidate' ? {
           create: {

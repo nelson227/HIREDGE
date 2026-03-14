@@ -70,6 +70,7 @@ export default function SquadPage() {
   const [joining, setJoining] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [feedbackMsg, setFeedbackMsg] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -175,7 +176,8 @@ export default function SquadPage() {
         setJoinCode("")
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Code invalide")
+      setFeedbackMsg(error.response?.data?.message || "Code invalide")
+      setTimeout(() => setFeedbackMsg(""), 3000)
     } finally {
       setJoining(false)
     }
@@ -296,7 +298,11 @@ export default function SquadPage() {
 
   // Afficher la squad
   return (
-    <div className="h-[calc(100vh-4rem)] flex">
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
+      {feedbackMsg && (
+        <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg shrink-0">{feedbackMsg}</div>
+      )}
+      <div className="flex-1 flex">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Chat Header */}
@@ -470,6 +476,7 @@ export default function SquadPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   )
