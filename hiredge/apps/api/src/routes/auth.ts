@@ -223,6 +223,21 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.send({ success: true, data: { message: 'Toutes les sessions révoquées' } });
   });
+
+  // GET /auth/me — Get current authenticated user
+  fastify.get('/me', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const user = await prisma.user.findUnique({
+      where: { id: request.user.id },
+      select: { id: true, email: true, role: true, subscriptionTier: true, createdAt: true },
+    });
+    if (!user) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'USER_NOT_FOUND', message: 'Utilisateur introuvable' },
+      });
+    }
+    return reply.send({ success: true, data: user });
+  });
 };
 
 export default authRoutes;

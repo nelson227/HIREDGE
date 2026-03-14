@@ -48,9 +48,10 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /interviews/:id/respond — Send a response during simulation
   fastify.post('/:id/respond', llmRateLimit, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { response } = request.body as { response: string };
+    const { response, message } = request.body as { response?: string; message?: string };
+    const text = response || message || '';
 
-    if (!response || response.trim().length === 0) {
+    if (!text || text.trim().length === 0) {
       return reply.status(400).send({
         success: false,
         error: { code: 'VALIDATION_ERROR', message: 'Réponse requise' },
@@ -58,8 +59,42 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const result = await interviewSimService.respondToSimulation(request.user.id, id, response);
+      const result = await interviewSimService.respondToSimulation(request.user.id, id, text);
       return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /interviews/:id/message — Alias for /respond (frontend compatibility)
+  fastify.post('/:id/message', llmRateLimit, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { message, response } = request.body as { message?: string; response?: string };
+    const text = message || response || '';
+
+    if (!text || text.trim().length === 0) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Message requis' },
+      });
+    }
+
+    try {
+      const result = await interviewSimService.respondToSimulation(request.user.id, id, text);
+      return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /interviews/:id/end — End a simulation early
+  fastify.post('/:id/end', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const simulation = await interviewSimService.getSimulationDetails(request.user.id, id);
+      return reply.send({ success: true, data: simulation });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;

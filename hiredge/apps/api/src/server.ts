@@ -40,6 +40,7 @@ async function buildServer() {
       ? ['https://hiredge.app', 'https://www.hiredge.app']
       : true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
   await app.register(cookie);
@@ -60,6 +61,14 @@ async function buildServer() {
   // Decorators
   app.decorate('authenticate', authenticate);
   app.decorate('prisma', prisma);
+
+  // Root
+  app.get('/', async () => ({
+    name: 'HIREDGE API',
+    version: '0.1.0',
+    docs: '/api/v1',
+    health: '/health',
+  }));
 
   // Health check
   app.get('/health', async () => ({
