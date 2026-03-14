@@ -324,20 +324,22 @@ export default function JobDetailPage() {
 
       {/* Tabs + Sidebar layout */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-0">
-          <TabsTrigger value="offer" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 gap-2">
-            <FileText className="w-4 h-4" />
-            Offre d&apos;emploi
-          </TabsTrigger>
-          <TabsTrigger value="letter" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 gap-2">
-            <Mail className="w-4 h-4" />
-            Lettre de Motivation
-          </TabsTrigger>
-          <TabsTrigger value="company" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 gap-2">
-            <Building2 className="w-4 h-4" />
-            Analyse Entreprise
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b">
+          <TabsList className="w-full justify-start bg-transparent rounded-none h-auto p-0 gap-6">
+            <TabsTrigger value="offer" className="relative rounded-none border-0 bg-transparent! shadow-none! px-1 py-3 gap-2 text-muted-foreground data-[state=active]:text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-primary after:transition-all">
+              <FileText className="w-4 h-4" />
+              Offre d&apos;emploi
+            </TabsTrigger>
+            <TabsTrigger value="letter" className="relative rounded-none border-0 bg-transparent! shadow-none! px-1 py-3 gap-2 text-muted-foreground data-[state=active]:text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-primary after:transition-all">
+              <Mail className="w-4 h-4" />
+              Lettre de Motivation
+            </TabsTrigger>
+            <TabsTrigger value="company" className="relative rounded-none border-0 bg-transparent! shadow-none! px-1 py-3 gap-2 text-muted-foreground data-[state=active]:text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-primary after:transition-all">
+              <Building2 className="w-4 h-4" />
+              Analyse Entreprise
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           {/* LEFT: Tab Content */}
