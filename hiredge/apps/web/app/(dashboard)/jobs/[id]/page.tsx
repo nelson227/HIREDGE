@@ -217,6 +217,53 @@ export default function JobDetailPage() {
     try { return JSON.parse(skills) } catch { return [] }
   }
 
+  const formatDescription = (text: string): string => {
+    // Escape HTML to prevent XSS
+    const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    const escaped = escape(text)
+    const lines = escaped.split(/\n/)
+    const result: string[] = []
+    let inList = false
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) {
+        if (inList) { result.push("</ul>"); inList = false }
+        result.push("<br/>")
+        continue
+      }
+      // Bullet points: •, -, *, ·, o (at start of line)
+      if (/^[•\-\*·∙◦▪▸►]/.test(trimmed) || /^o\s/.test(trimmed)) {
+        if (!inList) { result.push('<ul class="list-disc pl-5 space-y-1 my-2">'); inList = true }
+        result.push(`<li>${trimmed.replace(/^[•\-\*·∙◦▪▸►o]\s*/, "")}</li>`)
+        continue
+      }
+      if (inList) { result.push("</ul>"); inList = false }
+      // Bold-like headers: lines that are short, title-case, and followed by content
+      // Detect patterns like "About the team", "Our Purpose", "What will your typical day look like?"
+      if (trimmed.length < 80 && /^[A-Z]/.test(trimmed) && !trimmed.endsWith(".") && !trimmed.endsWith(",")) {
+        // Check if it looks like a section header (no sentence continuation)
+        const looksLikeHeader = /^[A-Z][^.]*[a-z?!:]$/.test(trimmed) || /^[A-Z][^.]*$/.test(trimmed)
+        if (looksLikeHeader && trimmed.split(" ").length <= 12) {
+          result.push(`<h4 class="font-semibold text-foreground mt-4 mb-2">${trimmed}</h4>`)
+          continue
+        }
+      }
+      // Key:Value pairs like "Job Type: Permanent"
+      if (/^[A-Z][A-Za-z\s]+:/.test(trimmed) && trimmed.length < 120) {
+        const [key, ...rest] = trimmed.split(":")
+        const value = rest.join(":").trim()
+        if (value) {
+          result.push(`<p class="my-1"><strong class="text-foreground">${key}:</strong> ${value}</p>`)
+          continue
+        }
+      }
+      result.push(`<p class="my-1">${trimmed}</p>`)
+    }
+    if (inList) result.push("</ul>")
+    return result.join("")
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -346,13 +393,53 @@ export default function JobDetailPage() {
           <div className="lg:col-span-2">
             {/* Tab 1: Full Job Offer */}
             <TabsContent value="offer" className="mt-0 space-y-6">
+              {/* Quick Info Grid */}
               <Card>
-                <CardHeader><CardTitle>Description du poste</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap leading-relaxed">{job.description}</div>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <Briefcase className="w-5 h-5 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Contrat</p>
+                        <p className="text-sm font-semibold">{getContractLabel(job.contractType)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Lieu</p>
+                        <p className="text-sm font-semibold">{job.location}{job.remote ? " (Télétravail)" : ""}</p>
+                      </div>
+                    </div>
+                    {salary && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                        <DollarSign className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Salaire</p>
+                          <p className="text-sm font-semibold">{salary}</p>
+                        </div>
+                      </div>
+                    )}
+                    {(job.experienceMin != null || job.experienceMax != null) && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                        <Star className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Expérience</p>
+                          <p className="text-sm font-semibold">
+                            {job.experienceMin != null && job.experienceMax != null
+                              ? `${job.experienceMin}-${job.experienceMax} ans`
+                              : job.experienceMin != null
+                              ? `${job.experienceMin}+ ans`
+                              : `Jusqu'à ${job.experienceMax} ans`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
+              {/* Skills */}
               {skills.length > 0 && (
                 <Card>
                   <CardHeader><CardTitle>Compétences requises</CardTitle></CardHeader>
@@ -362,58 +449,40 @@ export default function JobDetailPage() {
                         <span key={skill} className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">{skill}</span>
                       ))}
                     </div>
+                    {niceToHave.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Compétences appréciées</p>
+                        <div className="flex flex-wrap gap-2">
+                          {niceToHave.map((skill) => (
+                            <span key={skill} className="px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm font-medium">{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
 
-              {niceToHave.length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle>Compétences appréciées</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {niceToHave.map((skill) => (
-                        <span key={skill} className="px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm font-medium">{skill}</span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
+              {/* Description */}
               <Card>
-                <CardHeader><CardTitle>Détails</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Briefcase className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Contrat :</span>
-                    <span className="text-sm font-medium">{getContractLabel(job.contractType)}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Lieu :</span>
-                    <span className="text-sm font-medium">{job.location}{job.remote ? " (Télétravail)" : ""}</span>
-                  </div>
-                  {salary && (
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Salaire :</span>
-                      <span className="text-sm font-medium">{salary}</span>
+                <CardHeader><CardTitle>Description du poste</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: formatDescription(job.description) }}
+                  />
+                  {job.description.length < 600 && job.sourceUrl && (
+                    <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/10">
+                      <p className="text-sm text-muted-foreground mb-3">La description affichée est un résumé. Consulte l&apos;offre originale pour tous les détails.</p>
+                      <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Voir l&apos;offre complète
+                        </Button>
+                      </a>
                     </div>
                   )}
-                  {(job.experienceMin != null || job.experienceMax != null) && (
-                    <div className="flex items-center gap-3">
-                      <Star className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Expérience :</span>
-                      <span className="text-sm font-medium">
-                        {job.experienceMin != null && job.experienceMax != null
-                          ? `${job.experienceMin}-${job.experienceMax} ans`
-                          : job.experienceMin != null
-                          ? `${job.experienceMin}+ ans`
-                          : `Jusqu'à ${job.experienceMax} ans`}
-                      </span>
-                    </div>
-                  )}
-                  {job.sourceUrl && (
-                    <div className="pt-2">
+                  {job.sourceUrl && job.description.length >= 600 && (
+                    <div className="mt-4 pt-4 border-t">
                       <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline text-sm">
                         <ExternalLink className="w-4 h-4" />
                         Voir l&apos;offre originale
