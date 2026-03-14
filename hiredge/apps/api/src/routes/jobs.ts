@@ -4,6 +4,19 @@ import { jobService } from '../services/job.service';
 import { adzunaService } from '../services/adzuna.service';
 import { AppError } from '../services/auth.service';
 
+// Try to extract userId from JWT without requiring auth
+async function tryExtractUserId(request: any): Promise<string> {
+  try {
+    if (!request.headers.authorization && request.cookies?.access_token) {
+      request.headers.authorization = `Bearer ${request.cookies.access_token}`;
+    }
+    const decoded = await request.jwtVerify<{ sub: string }>() as any;
+    return decoded?.sub ?? '';
+  } catch {
+    return '';
+  }
+}
+
 const jobRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /jobs/import — import jobs from Adzuna (auth required)
   fastify.post('/import', { preHandler: [fastify.authenticate] }, async (request, reply) => {
@@ -50,8 +63,8 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const userId = (request as any).user?.id;
-      const result = await jobService.searchJobs(userId ?? '', {
+      const userId = await tryExtractUserId(request);
+      const result = await jobService.searchJobs(userId, {
         query: parsed.data.q,
         location: parsed.data.location,
         contractType: parsed.data.contract,
@@ -96,9 +109,10 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /jobs/:id
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const userId = await tryExtractUserId(request);
 
     try {
-      const job = await jobService.getJobById(id);
+      const job = await jobService.getJobById(id, userId || undefined);
       return reply.send({ success: true, data: job });
     } catch (err) {
       if (err instanceof AppError) {

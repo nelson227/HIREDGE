@@ -1,7 +1,7 @@
 import prisma from '../db/prisma';
 import redis from '../lib/redis';
-import { MATCH_WEIGHTS } from '@hiredge/shared';
 import { AppError } from './auth.service';
+import { matchingService, MatchResult } from './matching.service';
 
 const CACHE_TTL = 300; // 5 minutes
 
@@ -105,6 +105,46 @@ export class JobService {
       benefits: typeof j.benefits === 'string' ? JSON.parse(j.benefits || '[]') : (j.benefits ?? []),
     }));
 
+    // Compute match scores if user is authenticated
+    if (userId) {
+      const jobDataList = parsed.map((j: any) => ({
+        id: j.id,
+        title: j.title,
+        description: j.description ?? '',
+        requiredSkills: j.requiredSkills,
+        niceToHave: j.niceToHave,
+        salaryMin: j.salaryMin,
+        salaryMax: j.salaryMax,
+        location: j.location,
+        locationCity: j.locationCity,
+        locationCountry: j.locationCountry,
+        remote: j.remote,
+        contractType: j.contractType,
+        experienceMin: j.experienceMin,
+        experienceMax: j.experienceMax,
+        postedAt: j.postedAt,
+      }));
+
+      const scores = await matchingService.scoreJobs(userId, jobDataList);
+
+      const enriched = parsed.map((j: any) => {
+        const score = scores.get(j.id);
+        return {
+          ...j,
+          matchScore: score?.matchScore ?? 0,
+          matchDetails: score?.matchDetails ?? null,
+        };
+      });
+
+      // Sort by matchScore descending
+      enriched.sort((a: any, b: any) => b.matchScore - a.matchScore);
+
+      return {
+        jobs: enriched,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
     return {
       jobs: parsed,
       pagination: {
@@ -116,12 +156,10 @@ export class JobService {
     };
   }
 
-  async getJobById(jobId: string) {
+  async getJobById(jobId: string, userId?: string) {
     const cacheKey = `job:${jobId}`;
     const cached = await redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
-    const job = await prisma.job.findUnique({
+    const job = cached ? JSON.parse(cached) : await prisma.job.findUnique({
       where: { id: jobId },
       include: {
         company: true,
@@ -130,14 +168,44 @@ export class JobService {
 
     if (!job) throw new AppError('JOB_NOT_FOUND', 'Offre introuvable', 404);
 
-    const enriched = {
+    const enriched: any = {
       ...job,
       requiredSkills: typeof job.requiredSkills === 'string' ? JSON.parse(job.requiredSkills || '[]') : (job.requiredSkills ?? []),
       niceToHave: typeof (job as any).niceToHave === 'string' ? JSON.parse((job as any).niceToHave || '[]') : ((job as any).niceToHave ?? []),
       benefits: typeof (job as any).benefits === 'string' ? JSON.parse((job as any).benefits || '[]') : ((job as any).benefits ?? []),
     };
 
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(enriched));
+    if (!cached) {
+      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(enriched));
+    }
+
+    // Compute match score with LLM refinement for detail page
+    if (userId) {
+      const matchResult = await matchingService.getCachedOrScore(userId, {
+        id: enriched.id,
+        title: enriched.title,
+        description: enriched.description ?? '',
+        requiredSkills: enriched.requiredSkills,
+        niceToHave: enriched.niceToHave,
+        salaryMin: enriched.salaryMin,
+        salaryMax: enriched.salaryMax,
+        location: enriched.location,
+        locationCity: enriched.locationCity,
+        locationCountry: enriched.locationCountry,
+        remote: enriched.remote,
+        contractType: enriched.contractType,
+        experienceMin: enriched.experienceMin,
+        experienceMax: enriched.experienceMax,
+        postedAt: new Date(enriched.postedAt),
+      }, true); // useLLM = true for detail pages
+
+      enriched.matchScore = matchResult.matchScore;
+      enriched.matchDetails = matchResult.matchDetails;
+      enriched.matchAnalysis = matchResult.matchAnalysis;
+      enriched.sellingPoints = matchResult.sellingPoints;
+      enriched.gaps = matchResult.gaps;
+    }
+
     return enriched;
   }
 
@@ -150,14 +218,10 @@ export class JobService {
     if (!profile) return [];
 
     // Step 1: Pre-filter — SQL-based fast filtering
-    const userSkillNames = profile.skills.map((s: any) => s.name.toLowerCase());
-    const totalExperienceYears = this.calculateTotalExperience(profile.experiences);
-
     const candidates = await prisma.job.findMany({
       where: {
         status: 'ACTIVE',
         postedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-        // Exclude already-applied jobs
         NOT: {
           applications: { some: { userId } },
         },
@@ -169,32 +233,36 @@ export class JobService {
       take: 200,
     });
 
-    // Step 2: Rule-based scoring
+    // Step 2: Score using the matching engine
+    const jobDataList = candidates.map((j: any) => ({
+      id: j.id,
+      title: j.title,
+      description: j.description ?? '',
+      requiredSkills: typeof j.requiredSkills === 'string' ? JSON.parse(j.requiredSkills || '[]') : (j.requiredSkills ?? []),
+      niceToHave: typeof j.niceToHave === 'string' ? JSON.parse(j.niceToHave || '[]') : (j.niceToHave ?? []),
+      salaryMin: j.salaryMin,
+      salaryMax: j.salaryMax,
+      location: j.location,
+      locationCity: j.locationCity,
+      locationCountry: j.locationCountry,
+      remote: j.remote,
+      contractType: j.contractType,
+      experienceMin: j.experienceMin,
+      experienceMax: j.experienceMax,
+      postedAt: j.postedAt,
+    }));
+
+    const scores = await matchingService.scoreJobs(userId, jobDataList);
+
     const scored = candidates.map((job: any) => {
-      const jobSkills: string[] = typeof job.requiredSkills === 'string' ? JSON.parse(job.requiredSkills || '[]') : [];
-      const skillScore = this.computeSkillOverlap(userSkillNames, jobSkills);
-      const experienceScore = this.computeExperienceMatch(totalExperienceYears, job.experienceMin, job.experienceMax);
-      const salaryScore = this.computeSalaryMatch(profile.salaryMin, profile.salaryMax, job.salaryMin, job.salaryMax);
-      const locationScore = this.computeLocationScore(profile.city, job.location, profile.remotePreference, job.remote);
-      const recencyScore = this.computeRecencyBonus(job.postedAt);
-
-      const totalScore =
-        skillScore * MATCH_WEIGHTS.skills +
-        experienceScore * MATCH_WEIGHTS.experience +
-        salaryScore * MATCH_WEIGHTS.salary +
-        locationScore * MATCH_WEIGHTS.location +
-        recencyScore * MATCH_WEIGHTS.recency;
-
+      const score = scores.get(job.id);
       return {
         ...job,
-        matchScore: Math.round(totalScore * 100),
-        matchDetails: {
-          skills: Math.round(skillScore * 100),
-          experience: Math.round(experienceScore * 100),
-          salary: Math.round(salaryScore * 100),
-          location: Math.round(locationScore * 100),
-          recency: Math.round(recencyScore * 100),
-        },
+        requiredSkills: typeof job.requiredSkills === 'string' ? JSON.parse(job.requiredSkills || '[]') : (job.requiredSkills ?? []),
+        niceToHave: typeof job.niceToHave === 'string' ? JSON.parse(job.niceToHave || '[]') : (job.niceToHave ?? []),
+        benefits: typeof job.benefits === 'string' ? JSON.parse(job.benefits || '[]') : (job.benefits ?? []),
+        matchScore: score?.matchScore ?? 0,
+        matchDetails: score?.matchDetails ?? null,
       };
     });
 
@@ -202,61 +270,6 @@ export class JobService {
     scored.sort((a: any, b: any) => b.matchScore - a.matchScore);
 
     return scored.slice(0, limit);
-  }
-
-  private computeSkillOverlap(userSkills: string[], jobSkills: string[]): number {
-    if (!jobSkills || jobSkills.length === 0) return 0.5;
-    const jobLower = jobSkills.map(s => s.toLowerCase());
-    const matches = userSkills.filter(s => jobLower.includes(s)).length;
-    return matches / jobLower.length;
-  }
-
-  private computeExperienceMatch(userYears: number, minRequired?: number | null, maxRequired?: number | null): number {
-    if (!minRequired && !maxRequired) return 0.7;
-    if (minRequired && userYears < minRequired) {
-      const gap = minRequired - userYears;
-      return Math.max(0, 1 - gap * 0.2);
-    }
-    if (maxRequired && userYears > maxRequired + 5) return 0.5;
-    return 1;
-  }
-
-  private computeSalaryMatch(
-    userMin?: number | null, userMax?: number | null,
-    jobMin?: number | null, jobMax?: number | null,
-  ): number {
-    if (!userMin || !jobMin) return 0.5;
-    if (jobMax && userMin > jobMax) return 0.1;
-    if (jobMin && userMax && userMax < jobMin) return 0.2;
-    return 0.8;
-  }
-
-  private computeLocationScore(
-    userCity?: string | null, jobLocation?: string | null,
-    remotePreference?: string | null, jobRemote?: boolean | null,
-  ): number {
-    if (jobRemote && (remotePreference === 'REMOTE' || remotePreference === 'HYBRID')) return 1;
-    if (!userCity || !jobLocation) return 0.5;
-    if (userCity.toLowerCase() === jobLocation.toLowerCase()) return 1;
-    return 0.3;
-  }
-
-  private computeRecencyBonus(postedAt: Date): number {
-    const daysSincePosted = (Date.now() - postedAt.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSincePosted <= 3) return 1;
-    if (daysSincePosted <= 7) return 0.8;
-    if (daysSincePosted <= 14) return 0.6;
-    return 0.3;
-  }
-
-  private calculateTotalExperience(experiences: { startDate: Date; endDate: Date | null; current: boolean }[]): number {
-    let totalMonths = 0;
-    for (const exp of experiences) {
-      const end = exp.current ? new Date() : (exp.endDate ?? new Date());
-      const months = (end.getTime() - exp.startDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      totalMonths += months;
-    }
-    return Math.round(totalMonths / 12);
   }
 }
 

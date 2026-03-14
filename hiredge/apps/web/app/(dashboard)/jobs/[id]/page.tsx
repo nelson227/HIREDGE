@@ -39,6 +39,17 @@ interface Job {
     location?: string
   }
   matchScore?: number
+  matchDetails?: {
+    semantic: number
+    skills: number
+    experience: number
+    salary: number
+    location: number
+    recency: number
+  }
+  matchAnalysis?: string
+  sellingPoints?: string[]
+  gaps?: string[]
 }
 
 export default function JobDetailPage() {
@@ -179,15 +190,43 @@ export default function JobDetailPage() {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
               <Bot className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="font-semibold text-foreground mb-2">Analyse EDGE</h3>
               <p className="text-muted-foreground">
-                {job.matchScore != null && job.matchScore >= 80
+                {job.matchAnalysis
+                  ? job.matchAnalysis
+                  : job.matchScore != null && job.matchScore >= 80
                   ? "Cette offre correspond bien a ton profil ! Tes competences s'alignent avec les exigences du poste."
                   : job.matchScore != null && job.matchScore >= 50
                   ? "Ce poste presente un potentiel interessant. Tu as certaines des competences recherchees."
                   : "Consulte les details de l'offre pour voir si elle correspond a tes attentes."}
               </p>
+              {job.sellingPoints && job.sellingPoints.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-success mb-1">Tes points forts :</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {job.sellingPoints.map((point, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-success mt-0.5">✓</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {job.gaps && job.gaps.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-amber-500 mb-1">Points a travailler :</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {job.gaps.map((gap, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-amber-500 mt-0.5">!</span>
+                        <span>{gap}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -241,13 +280,35 @@ export default function JobDetailPage() {
                   <div className="relative w-32 h-32">
                     <svg className="w-full h-full -rotate-90">
                       <circle cx="64" cy="64" r="56" strokeWidth="8" fill="none" className="stroke-muted" />
-                      <circle cx="64" cy="64" r="56" strokeWidth="8" fill="none" strokeDasharray={`${(job.matchScore / 100) * 352} 352`} className="stroke-success" strokeLinecap="round" />
+                      <circle cx="64" cy="64" r="56" strokeWidth="8" fill="none" strokeDasharray={`${(job.matchScore / 100) * 352} 352`} className={job.matchScore >= 80 ? "stroke-success" : job.matchScore >= 50 ? "stroke-primary" : "stroke-amber-500"} strokeLinecap="round" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-3xl font-bold text-foreground">{job.matchScore}%</span>
                     </div>
                   </div>
                 </div>
+                {job.matchDetails && (
+                  <div className="space-y-2 mt-4">
+                    {[
+                      { label: "Competences", value: job.matchDetails.skills },
+                      { label: "Pertinence", value: job.matchDetails.semantic },
+                      { label: "Experience", value: job.matchDetails.experience },
+                      { label: "Salaire", value: job.matchDetails.salary },
+                      { label: "Localisation", value: job.matchDetails.location },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-24">{label}</span>
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${value >= 80 ? "bg-success" : value >= 50 ? "bg-primary" : "bg-amber-500"}`}
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium w-8 text-right">{value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
