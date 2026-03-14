@@ -148,6 +148,10 @@ export class AdzunaService {
           const countryCode = COUNTRY_CODES[country.toLowerCase()] || 'ca';
           const salaryCurrency = countryCode === 'ca' ? 'CAD' : countryCode === 'us' ? 'USD' : 'EUR';
 
+          // Extract structured data from title + description
+          const extractedSkills = this.extractSkills(adzunaJob.title, adzunaJob.description || '');
+          const expRange = this.extractExperienceRange(adzunaJob.title, adzunaJob.description || '');
+
           // Créer l'offre
           await prisma.job.create({
             data: {
@@ -165,8 +169,10 @@ export class AdzunaService {
               salaryCurrency,
               contractType: this.mapContractType(adzunaJob.contract_type, adzunaJob.contract_time),
               remote: this.detectRemote(adzunaJob.title, adzunaJob.description || ''),
+              experienceMin: expRange.min,
+              experienceMax: expRange.max,
               status: 'ACTIVE',
-              requiredSkills: JSON.stringify(this.extractSkills(adzunaJob.title, adzunaJob.description || '')),
+              requiredSkills: JSON.stringify(extractedSkills),
               postedAt: new Date(adzunaJob.created),
             },
           });
@@ -205,17 +211,39 @@ export class AdzunaService {
     return 'MID';
   }
 
-  private extractSkills(title: string, description: string): string[] {
+  extractSkills(title: string, description: string): string[] {
     const text = `${title} ${description}`;
     const skills: string[] = [];
 
     const skillPatterns = [
-      /\b(JavaScript|TypeScript|Python|Java|C\+\+|C#|Ruby|Go|Rust|PHP|Swift|Kotlin)\b/gi,
-      /\b(React|Vue|Angular|Node\.?js|Django|Flask|Spring|Rails|Laravel|Express)\b/gi,
-      /\b(AWS|Azure|GCP|Docker|Kubernetes|Terraform|Jenkins|CI\/CD)\b/gi,
-      /\b(PostgreSQL|MySQL|MongoDB|Redis|Elasticsearch|GraphQL|REST API)\b/gi,
-      /\b(Machine Learning|ML|AI|Data Science|Deep Learning|NLP)\b/gi,
-      /\b(Agile|Scrum|DevOps|Git|Linux)\b/gi,
+      // Languages
+      /\b(JavaScript|TypeScript|Python|Java(?!Script)|C\+\+|C#|Ruby|Golang|Go(?=\s+(?:lang|developer|engineer))|Rust|PHP|Swift|Kotlin|Scala|Perl|R(?=\s+(?:programming|language))|Dart|Elixir|Clojure|Haskell|Lua|Objective-C|COBOL|Fortran|Assembly|SQL|NoSQL|PL\/SQL|T-SQL|Bash|Shell|PowerShell)\b/gi,
+      // Frontend frameworks
+      /\b(React(?:\.js|\s?Native)?|Vue(?:\.js)?|Angular(?:\.js)?|Next\.?js|Nuxt\.?js|Svelte|SvelteKit|Gatsby|Remix|Ember\.?js|Backbone\.?js|jQuery|Storybook|Webpack|Vite|Rollup|Babel|ESLint)\b/gi,
+      // CSS / Design
+      /\b(Tailwind(?:\s?CSS)?|Bootstrap|Material[- ]UI|MUI|Ant Design|Chakra UI|Styled[- ]Components|SASS|SCSS|LESS|Figma|Sketch|Adobe XD|CSS3|HTML5|Responsive Design|Accessibility|WCAG|a11y)\b/gi,
+      // Backend frameworks
+      /\b(Node\.?js|Express(?:\.js)?|Fastify|NestJS|Koa|Hapi|Django|Flask|FastAPI|Spring(?:\s?Boot)?|Quarkus|Micronaut|ASP\.?NET|\bRails\b|Laravel|Symfony|CodeIgniter|Gin|Fiber|Echo|Phoenix|Actix|Rocket)\b/gi,
+      // Cloud & DevOps
+      /\b(AWS|Amazon Web Services|Azure|GCP|Google Cloud|Docker|Kubernetes|K8s|Terraform|Ansible|Puppet|Chef|Jenkins|GitHub Actions|GitLab CI|CircleCI|ArgoCD|Helm|Istio|Prometheus|Grafana|Datadog|New Relic|Splunk|ELK|CloudFormation|Pulumi|Vagrant|Nomad)\b/gi,
+      // Databases
+      /\b(PostgreSQL|Postgres|MySQL|MariaDB|MongoDB|Redis|Elasticsearch|DynamoDB|Cassandra|CouchDB|Neo4j|InfluxDB|TimescaleDB|Supabase|Firebase|Firestore|SQLite|Oracle|SQL Server|MSSQL|Snowflake|BigQuery|Redshift|Clickhouse)\b/gi,
+      // API & Protocols
+      /\b(GraphQL|REST(?:\s?API)?|gRPC|WebSocket|SOAP|OpenAPI|Swagger|Postman|tRPC|Protocol Buffers|Protobuf|RabbitMQ|Kafka|NATS|MQTT|ZeroMQ|SQS|SNS|Pub\/Sub)\b/gi,
+      // Data & ML
+      /\b(Machine Learning|Deep Learning|Data Science|Data Engineering|TensorFlow|PyTorch|Keras|Scikit-learn|Pandas|NumPy|Jupyter|Spark|Hadoop|Airflow|dbt|ETL|NLP|Computer Vision|LLM|GPT|Transformers|Hugging Face|MLflow|Kubeflow|SageMaker|Databricks)\b/gi,
+      // Mobile
+      /\b(React Native|Flutter|SwiftUI|UIKit|Jetpack Compose|Android SDK|iOS SDK|Xcode|Expo|Ionic|Capacitor|Cordova)\b/gi,
+      // Testing
+      /\b(Jest|Mocha|Chai|Vitest|Cypress|Playwright|Selenium|Puppeteer|Testing Library|JUnit|pytest|RSpec|Postman|k6|Gatling|TDD|BDD|Unit Testing|E2E|Integration Testing)\b/gi,
+      // Methodology & tools
+      /\b(Agile|Scrum|Kanban|SAFe|DevOps|SRE|GitOps|Git|GitHub|GitLab|Bitbucket|Jira|Confluence|Notion|Linear|Trello|Asana|CI\/CD|CICD)\b/gi,
+      // Security
+      /\b(OAuth|JWT|SAML|SSO|OWASP|Penetration Testing|SOC2|HIPAA|PCI[- ]DSS|IAM|RBAC|Vault|KMS|Encryption|SSL|TLS|mTLS|Cybersecurity|InfoSec|SIEM|Zero Trust)\b/gi,
+      // Architecture & concepts
+      /\b(Microservices|Serverless|Event[- ]Driven|CQRS|Event Sourcing|Domain[- ]Driven Design|DDD|Clean Architecture|Hexagonal|SOA|Monorepo|API Gateway|Load Balancing|CDN|Edge Computing|WebAssembly|WASM)\b/gi,
+      // OS
+      /\b(Linux|Ubuntu|Debian|CentOS|RHEL|Windows Server|macOS|Unix|FreeBSD)\b/gi,
     ];
 
     for (const pattern of skillPatterns) {
@@ -223,8 +251,62 @@ export class AdzunaService {
       skills.push(...matches.map(s => s.trim()));
     }
 
-    // Dédupliquer et limiter à 10 skills
-    return [...new Set(skills)].slice(0, 10);
+    // Normalize common variants
+    const normalized = skills.map(s => {
+      const lower = s.toLowerCase();
+      if (lower === 'nodejs' || lower === 'node') return 'Node.js';
+      if (lower === 'reactjs') return 'React';
+      if (lower === 'vuejs') return 'Vue';
+      if (lower === 'nextjs') return 'Next.js';
+      if (lower === 'nuxtjs') return 'Nuxt.js';
+      if (lower === 'expressjs') return 'Express';
+      if (lower === 'golang') return 'Go';
+      if (lower === 'k8s') return 'Kubernetes';
+      if (lower === 'postgres') return 'PostgreSQL';
+      if (lower === 'amazon web services') return 'AWS';
+      if (lower === 'google cloud' || lower === 'google cloud platform') return 'GCP';
+      if (lower === 'microsoft azure') return 'Azure';
+      if (lower === 'tailwind css' || lower === 'tailwindcss') return 'Tailwind';
+      return s;
+    });
+
+    // Deduplicate case-insensitively, keep first occurrence, limit to 15
+    const seen = new Set<string>();
+    const unique: string[] = [];
+    for (const s of normalized) {
+      const key = s.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(s);
+      }
+    }
+    return unique.slice(0, 15);
+  }
+
+  /**
+   * Extract experience level from title/description
+   */
+  extractExperienceRange(title: string, description: string): { min: number | null; max: number | null } {
+    const text = `${title} ${description}`;
+
+    // Direct year mentions: "3-5 years", "5+ years", "minimum 3 ans"
+    const rangeMatch = text.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(?:years?|ans?|yr)/i);
+    if (rangeMatch) return { min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]) };
+
+    const plusMatch = text.match(/(\d{1,2})\+?\s*(?:years?|ans?|yr)\s*(?:of\s+)?(?:experience|expérience)/i);
+    if (plusMatch) return { min: parseInt(plusMatch[1]), max: null };
+
+    const minMatch = text.match(/(?:minimum|min\.?|at least|au moins)\s*(\d{1,2})\s*(?:years?|ans?|yr)/i);
+    if (minMatch) return { min: parseInt(minMatch[1]), max: null };
+
+    // Infer from level keywords in title
+    const lower = title.toLowerCase();
+    if (/\b(principal|staff|distinguished)\b/.test(lower)) return { min: 10, max: null };
+    if (/\b(senior|sr\.?|lead)\b/.test(lower)) return { min: 5, max: null };
+    if (/\b(junior|jr\.?|entry|débutant)\b/.test(lower)) return { min: 0, max: 2 };
+    if (/\b(intern|stage|stagiaire)\b/.test(lower)) return { min: 0, max: 1 };
+
+    return { min: null, max: null };
   }
 }
 
