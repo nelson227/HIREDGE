@@ -289,6 +289,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       const message = await squadService.sendMessage(request.user.id, id, {
         content: parsed.data.content,
         type: parsed.data.type,
+        replyToId: (parsed.data as any).replyToId,
       });
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
@@ -307,6 +308,58 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
         request.user.id, id, cursor, limit ? parseInt(limit) : undefined,
       );
       return reply.send({ success: true, data: messages });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /squads/:id/messages/:messageId/reaction
+  fastify.post('/:id/messages/:messageId/reaction', async (request, reply) => {
+    const { id, messageId } = request.params as { id: string; messageId: string };
+    const { emoji } = request.body as { emoji: string };
+    if (!emoji) return reply.status(400).send({ success: false, error: { code: 'MISSING_EMOJI', message: 'Emoji requis' } });
+    try {
+      const result = await squadService.toggleReaction(request.user.id, id, messageId, emoji);
+      return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /squads/:id/messages/:messageId/pin
+  fastify.post('/:id/messages/:messageId/pin', async (request, reply) => {
+    const { id, messageId } = request.params as { id: string; messageId: string };
+    try {
+      const result = await squadService.togglePin(request.user.id, id, messageId);
+      return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /squads/:id/messages/:messageId/important
+  fastify.post('/:id/messages/:messageId/important', async (request, reply) => {
+    const { id, messageId } = request.params as { id: string; messageId: string };
+    try {
+      const result = await squadService.toggleImportant(request.user.id, id, messageId);
+      return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // DELETE /squads/:id/messages/:messageId
+  fastify.delete('/:id/messages/:messageId', async (request, reply) => {
+    const { id, messageId } = request.params as { id: string; messageId: string };
+    const { mode } = request.query as { mode?: string };
+    const deleteMode = mode === 'FOR_ALL' ? 'FOR_ALL' : 'FOR_ME';
+    try {
+      const result = await squadService.deleteMessage(request.user.id, id, messageId, deleteMode as any);
+      return reply.send({ success: true, data: result });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;

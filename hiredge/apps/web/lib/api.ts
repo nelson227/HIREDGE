@@ -229,8 +229,8 @@ export const squadApi = {
     api.post('/squads', data),
   leave: (squadId: string) => api.post('/squads/leave', { squadId }),
   getMembers: (id: string) => api.get(`/squads/${id}/members`),
-  sendMessage: (id: string, message: string) =>
-    api.post(`/squads/${id}/messages`, { content: message }),
+  sendMessage: (id: string, message: string, replyToId?: string) =>
+    api.post(`/squads/${id}/messages`, { content: message, replyToId }),
   getMessages: (id: string, cursor?: string) =>
     api.get(`/squads/${id}/messages`, { params: { cursor } }),
   getSuggestions: (jobId: string) =>
@@ -250,6 +250,15 @@ export const squadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+  // Message actions
+  toggleReaction: (squadId: string, messageId: string, emoji: string) =>
+    api.post(`/squads/${squadId}/messages/${messageId}/reaction`, { emoji }),
+  togglePin: (squadId: string, messageId: string) =>
+    api.post(`/squads/${squadId}/messages/${messageId}/pin`),
+  toggleImportant: (squadId: string, messageId: string) =>
+    api.post(`/squads/${squadId}/messages/${messageId}/important`),
+  deleteMessage: (squadId: string, messageId: string, mode: 'FOR_ME' | 'FOR_ALL') =>
+    api.delete(`/squads/${squadId}/messages/${messageId}`, { params: { mode } }),
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────

@@ -287,19 +287,53 @@ model SquadMember {
 }
 
 model SquadMessage {
-  id        String           @id @default(uuid())
-  squadId   String
-  userId    String
-  content   String
-  audioUrl  String?
-  type      String           @default("TEXT")
-  createdAt DateTime         @default(now())
+  id          String           @id @default(uuid())
+  squadId     String
+  userId      String
+  content     String
+  audioUrl    String?
+  type        String           @default("TEXT")
+  replyToId   String?
+  isPinned    Boolean          @default(false)
+  isImportant Boolean          @default(false)
+  deletedForAll Boolean        @default(false)
+  createdAt   DateTime         @default(now())
 
-  squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id])
+  squad     Squad            @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id])
+  replyTo   SquadMessage?    @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   SquadMessage[]   @relation("MessageReply")
+  reactions SquadMessageReaction[]
+  hiddenFor SquadMessageHidden[]
 
   @@index([squadId, createdAt])
   @@map("squad_messages")
+}
+
+model SquadMessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message SquadMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("squad_message_reactions")
+}
+
+model SquadMessageHidden {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  message SquadMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("squad_message_hidden")
 }
 
 model SquadEvent {

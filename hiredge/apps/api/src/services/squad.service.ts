@@ -201,7 +201,7 @@ export class SquadService {
     return squads[0] || null;
   }
 
-  async sendMessage(userId: string, squadId: string, data: { content: string; type?: string }) {
+  async sendMessage(userId: string, squadId: string, data: { content: string; type?: string; replyToId?: string }) {
     const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
     if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
 
@@ -211,6 +211,7 @@ export class SquadService {
         userId,
         content: data.content,
         type: (data.type as any) ?? 'TEXT',
+        replyToId: data.replyToId || null,
       },
       include: {
         user: {
@@ -219,6 +220,13 @@ export class SquadService {
             candidateProfile: { select: { firstName: true, lastName: true, avatarUrl: true } },
           },
         },
+        replyTo: {
+          select: {
+            id: true, content: true, type: true,
+            user: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } },
+          },
+        },
+        reactions: { select: { id: true, emoji: true, userId: true } },
       },
     });
 
@@ -232,7 +240,12 @@ export class SquadService {
     const safeLimit = Math.min(limit, 100);
 
     const messages = await prisma.squadMessage.findMany({
-      where: { squadId, ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}) },
+      where: {
+        squadId,
+        deletedForAll: false,
+        hiddenFor: { none: { userId } },
+        ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+      },
       include: {
         user: {
           select: {
@@ -240,12 +253,90 @@ export class SquadService {
             candidateProfile: { select: { firstName: true, lastName: true, avatarUrl: true } },
           },
         },
+        replyTo: {
+          select: {
+            id: true, content: true, type: true,
+            user: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } },
+          },
+        },
+        reactions: { select: { id: true, emoji: true, userId: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: safeLimit,
     });
 
     return messages.reverse();
+  }
+
+  // ─── Message Actions ─────────────────────────────────────────────
+
+  async toggleReaction(userId: string, squadId: string, messageId: string, emoji: string) {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    const existing = await prisma.squadMessageReaction.findUnique({
+      where: { messageId_userId_emoji: { messageId, userId, emoji } },
+    });
+
+    if (existing) {
+      await prisma.squadMessageReaction.delete({ where: { id: existing.id } });
+      return { action: 'removed' as const, emoji };
+    }
+
+    await prisma.squadMessageReaction.create({ data: { messageId, userId, emoji } });
+    return { action: 'added' as const, emoji };
+  }
+
+  async togglePin(userId: string, squadId: string, messageId: string) {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    const msg = await prisma.squadMessage.findFirst({ where: { id: messageId, squadId } });
+    if (!msg) throw new AppError('NOT_FOUND', 'Message introuvable', 404);
+
+    const updated = await prisma.squadMessage.update({
+      where: { id: messageId },
+      data: { isPinned: !msg.isPinned },
+    });
+    return { isPinned: updated.isPinned };
+  }
+
+  async toggleImportant(userId: string, squadId: string, messageId: string) {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    const msg = await prisma.squadMessage.findFirst({ where: { id: messageId, squadId } });
+    if (!msg) throw new AppError('NOT_FOUND', 'Message introuvable', 404);
+
+    const updated = await prisma.squadMessage.update({
+      where: { id: messageId },
+      data: { isImportant: !msg.isImportant },
+    });
+    return { isImportant: updated.isImportant };
+  }
+
+  async deleteMessage(userId: string, squadId: string, messageId: string, mode: 'FOR_ME' | 'FOR_ALL') {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    const msg = await prisma.squadMessage.findFirst({ where: { id: messageId, squadId } });
+    if (!msg) throw new AppError('NOT_FOUND', 'Message introuvable', 404);
+
+    if (mode === 'FOR_ALL') {
+      if (msg.userId !== userId) throw new AppError('FORBIDDEN', 'Seul l\'auteur peut supprimer pour tous', 403);
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      if (msg.createdAt < oneHourAgo) throw new AppError('TOO_OLD', 'Ce message a plus d\'une heure, vous ne pouvez que le supprimer pour vous', 403);
+      await prisma.squadMessage.update({ where: { id: messageId }, data: { deletedForAll: true, content: '🚫 Ce message a été supprimé' } });
+      return { mode: 'FOR_ALL' as const };
+    }
+
+    // FOR_ME: hide for this user
+    await prisma.squadMessageHidden.upsert({
+      where: { messageId_userId: { messageId, userId } },
+      create: { messageId, userId },
+      update: {},
+    });
+    return { mode: 'FOR_ME' as const };
   }
 
   // ─── Events ──────────────────────────────────────────────────────

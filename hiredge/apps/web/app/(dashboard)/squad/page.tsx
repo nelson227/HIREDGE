@@ -25,6 +25,12 @@ import {
   Play,
   Pause,
   Square,
+  Reply,
+  Pin,
+  Star,
+  Trash2,
+  ChevronDown,
+  SmilePlus,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
 
@@ -55,6 +61,17 @@ interface SquadMessage {
   userId: string
   content: string
   type: string
+  isPinned?: boolean
+  isImportant?: boolean
+  deletedForAll?: boolean
+  replyToId?: string | null
+  replyTo?: {
+    id: string
+    content: string
+    type: string
+    user: { candidateProfile?: { firstName: string; lastName: string } }
+  } | null
+  reactions?: { id: string; emoji: string; userId: string }[]
   createdAt: string
   user: {
     id: string
@@ -185,6 +202,17 @@ export default function SquadPage() {
   const chunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Message interactions
+  const [hoveredMsgId, setHoveredMsgId] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [emojiPickerMsgId, setEmojiPickerMsgId] = useState<string | null>(null)
+  const [replyTo, setReplyTo] = useState<SquadMessage | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{ msgId: string; isOwn: boolean; canDeleteForAll: boolean } | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const emojiRef = useRef<HTMLDivElement>(null)
+
+  const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"]
+
   const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
 
   // ─── Data Loading ───────────────────────────────────────────────
@@ -254,10 +282,12 @@ export default function SquadPage() {
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedSquadId || sending) return
     const content = newMessage.trim()
+    const replyId = replyTo?.id
     setNewMessage("")
+    setReplyTo(null)
     setSending(true)
     try {
-      const { data } = await squadApi.sendMessage(selectedSquadId, content)
+      const { data } = await squadApi.sendMessage(selectedSquadId, content, replyId)
       if (data.success) setMessages(prev => [...prev, data.data])
     } catch {
       setNewMessage(content)
@@ -420,6 +450,89 @@ export default function SquadPage() {
   }
 
   const formatRecordingTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
+
+  // ─── Message Actions ────────────────────────────────────────────
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpenId(null)
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setEmojiPickerMsgId(null)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    if (!selectedSquadId) return
+    setEmojiPickerMsgId(null)
+    try {
+      const { data } = await squadApi.toggleReaction(selectedSquadId, messageId, emoji)
+      if (data.success) {
+        setMessages(prev => prev.map(m => {
+          if (m.id !== messageId) return m
+          const reactions = [...(m.reactions || [])]
+          if (data.data.action === 'removed') {
+            return { ...m, reactions: reactions.filter(r => !(r.emoji === emoji && r.userId === currentUserId)) }
+          }
+          return { ...m, reactions: [...reactions, { id: Date.now().toString(), emoji, userId: currentUserId! }] }
+        }))
+      }
+    } catch {}
+  }
+
+  const handlePin = async (messageId: string) => {
+    if (!selectedSquadId) return
+    setMenuOpenId(null)
+    try {
+      const { data } = await squadApi.togglePin(selectedSquadId, messageId)
+      if (data.success) {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isPinned: data.data.isPinned } : m))
+      }
+    } catch {}
+  }
+
+  const handleImportant = async (messageId: string) => {
+    if (!selectedSquadId) return
+    setMenuOpenId(null)
+    try {
+      const { data } = await squadApi.toggleImportant(selectedSquadId, messageId)
+      if (data.success) {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isImportant: data.data.isImportant } : m))
+      }
+    } catch {}
+  }
+
+  const handleCopyMessage = (content: string) => {
+    navigator.clipboard.writeText(content)
+    setMenuOpenId(null)
+  }
+
+  const handleReply = (msg: SquadMessage) => {
+    setReplyTo(msg)
+    setMenuOpenId(null)
+  }
+
+  const openDeleteDialog = (msg: SquadMessage) => {
+    const isOwn = msg.userId === currentUserId
+    const oneHourAgo = Date.now() - 60 * 60 * 1000
+    const canDeleteForAll = isOwn && new Date(msg.createdAt).getTime() > oneHourAgo
+    setDeleteDialog({ msgId: msg.id, isOwn, canDeleteForAll })
+    setMenuOpenId(null)
+  }
+
+  const confirmDelete = async (mode: 'FOR_ME' | 'FOR_ALL') => {
+    if (!selectedSquadId || !deleteDialog) return
+    try {
+      const { data } = await squadApi.deleteMessage(selectedSquadId, deleteDialog.msgId, mode)
+      if (data.success) {
+        if (mode === 'FOR_ALL') {
+          setMessages(prev => prev.map(m => m.id === deleteDialog.msgId ? { ...m, deletedForAll: true, content: '🚫 Ce message a été supprimé' } : m))
+        } else {
+          setMessages(prev => prev.filter(m => m.id !== deleteDialog.msgId))
+        }
+      }
+    } catch {}
+    setDeleteDialog(null)
+  }
 
   // ─── Calls (Jitsi — nouvel onglet) ─────────────────────────────
   const startCall = async () => {
@@ -750,24 +863,118 @@ export default function SquadPage() {
                     )
                   }
 
+                  if (msg.deletedForAll) {
+                    return (
+                      <div key={msg.id} className="flex justify-center">
+                        <div className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground/60 italic">
+                          🚫 Ce message a été supprimé
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const isOwn = msg.userId === currentUserId
                   const profile = msg.user?.candidateProfile
                   const initials = getInitials(profile)
-
-                  // Voice message
                   const isVoice = msg.type === "VOICE" || msg.type === "voice"
+                  const isHovered = hoveredMsgId === msg.id
+                  const groupedReactions = (msg.reactions || []).reduce<Record<string, string[]>>((acc, r) => {
+                    ;(acc[r.emoji] ??= []).push(r.userId)
+                    return acc
+                  }, {})
 
                   return (
-                    <div key={msg.id} className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}>
+                    <div
+                      key={msg.id}
+                      className={`group relative flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}
+                      onMouseEnter={() => setHoveredMsgId(msg.id)}
+                      onMouseLeave={() => { if (menuOpenId !== msg.id && emojiPickerMsgId !== msg.id) setHoveredMsgId(null) }}
+                    >
                       <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
                         isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}>
                         {initials}
                       </div>
-                      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
+                      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"} relative`}>
                         {!isOwn && profile && (
                           <p className="text-xs font-medium text-muted-foreground mb-1">{getFullName(profile)}</p>
                         )}
+
+                        {/* Hover actions: emoji (left) + menu arrow (right) */}
+                        {isHovered && (
+                          <div className={`absolute -top-3 ${isOwn ? "right-0" : "left-0"} flex items-center gap-0.5 z-10`}>
+                            <button
+                              onClick={() => { setEmojiPickerMsgId(msg.id); setMenuOpenId(null) }}
+                              className="p-1 rounded-full bg-background border border-border shadow-sm hover:bg-muted transition-colors"
+                              title="Réagir"
+                            >
+                              <SmilePlus className="w-3.5 h-3.5 text-muted-foreground" />
+                            </button>
+                            <button
+                              onClick={() => { setMenuOpenId(msg.id); setEmojiPickerMsgId(null) }}
+                              className="p-1 rounded-full bg-background border border-border shadow-sm hover:bg-muted transition-colors"
+                              title="Plus"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Emoji Picker */}
+                        {emojiPickerMsgId === msg.id && (
+                          <div
+                            ref={emojiRef}
+                            className={`absolute ${isOwn ? "right-0" : "left-0"} -top-12 z-20 bg-background border border-border rounded-xl shadow-lg p-1.5 flex gap-0.5`}
+                          >
+                            {QUICK_EMOJIS.map(e => (
+                              <button
+                                key={e}
+                                onClick={() => handleReaction(msg.id, e)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-base"
+                              >
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Context Menu */}
+                        {menuOpenId === msg.id && (
+                          <div
+                            ref={menuRef}
+                            className={`absolute ${isOwn ? "right-0" : "left-0"} top-0 z-20 bg-background border border-border rounded-xl shadow-lg py-1.5 min-w-[180px]`}
+                          >
+                            <button onClick={() => handleReply(msg)} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors">
+                              <Reply className="w-4 h-4 text-muted-foreground" /> Répondre
+                            </button>
+                            <button onClick={() => handleCopyMessage(msg.content)} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors">
+                              <Copy className="w-4 h-4 text-muted-foreground" /> Copier
+                            </button>
+                            <button onClick={() => { setEmojiPickerMsgId(msg.id); setMenuOpenId(null) }} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors">
+                              <SmilePlus className="w-4 h-4 text-muted-foreground" /> Réagir
+                            </button>
+                            <button onClick={() => handlePin(msg.id)} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors">
+                              <Pin className="w-4 h-4 text-muted-foreground" /> {msg.isPinned ? "Désépingler" : "Épingler"}
+                            </button>
+                            <button onClick={() => handleImportant(msg.id)} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors">
+                              <Star className="w-4 h-4 text-muted-foreground" /> {msg.isImportant ? "Retirer important" : "Marquer comme important"}
+                            </button>
+                            <div className="border-t border-border my-1" />
+                            <button onClick={() => openDeleteDialog(msg)} className="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-muted transition-colors text-destructive">
+                              <Trash2 className="w-4 h-4" /> Supprimer
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Reply preview (quoted message) */}
+                        {msg.replyTo && (
+                          <div className={`text-xs border-l-2 border-primary/40 pl-2 mb-1 py-0.5 rounded-r bg-muted/50 max-w-full ${isOwn ? "ml-auto" : ""}`}>
+                            <span className="font-medium text-primary/70">{getFullName(msg.replyTo.user?.candidateProfile)}</span>
+                            <p className="text-muted-foreground truncate">{msg.replyTo.type === "VOICE" ? "🎙️ Message vocal" : msg.replyTo.content}</p>
+                          </div>
+                        )}
+
+                        {/* Message bubble */}
                         <div className={`rounded-2xl px-4 py-2.5 ${
                           isVoice
                             ? (isOwn ? "bg-primary/15 text-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md")
@@ -788,6 +995,33 @@ export default function SquadPage() {
                             <p className="text-sm leading-relaxed">{msg.content}</p>
                           )}
                         </div>
+
+                        {/* Badges: pinned / important */}
+                        {(msg.isPinned || msg.isImportant) && (
+                          <div className={`flex items-center gap-1.5 mt-0.5 ${isOwn ? "justify-end" : ""}`}>
+                            {msg.isPinned && <Pin className="w-3 h-3 text-muted-foreground" />}
+                            {msg.isImportant && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                          </div>
+                        )}
+
+                        {/* Reactions */}
+                        {Object.keys(groupedReactions).length > 0 && (
+                          <div className={`flex flex-wrap gap-1 mt-1 ${isOwn ? "justify-end" : ""}`}>
+                            {Object.entries(groupedReactions).map(([emoji, userIds]) => (
+                              <button
+                                key={emoji}
+                                onClick={() => handleReaction(msg.id, emoji)}
+                                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border transition-colors ${
+                                  userIds.includes(currentUserId || "") ? "bg-primary/10 border-primary/30" : "bg-muted border-border hover:bg-muted/80"
+                                }`}
+                              >
+                                <span>{emoji}</span>
+                                {userIds.length > 1 && <span className="text-muted-foreground">{userIds.length}</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
                         <p className={`text-[10px] text-muted-foreground mt-1 ${isOwn ? "text-right" : ""}`}>
                           {formatTime(msg.createdAt)}
                         </p>
@@ -799,8 +1033,47 @@ export default function SquadPage() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Delete confirmation dialog */}
+            {deleteDialog && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeleteDialog(null)}>
+                <div className="bg-background rounded-xl shadow-xl p-5 max-w-sm w-full mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+                  <h3 className="font-semibold text-foreground">Supprimer le message ?</h3>
+                  <div className="space-y-2">
+                    <button onClick={() => confirmDelete('FOR_ME')} className="w-full text-left px-4 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm">
+                      🗑️ Supprimer pour moi
+                    </button>
+                    {deleteDialog.canDeleteForAll && (
+                      <button onClick={() => confirmDelete('FOR_ALL')} className="w-full text-left px-4 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-sm">
+                        🚫 Supprimer pour tous
+                      </button>
+                    )}
+                    {deleteDialog.isOwn && !deleteDialog.canDeleteForAll && (
+                      <p className="text-xs text-muted-foreground px-4">Ce message a plus d&apos;une heure. Vous ne pouvez le supprimer que pour vous.</p>
+                    )}
+                  </div>
+                  <Button variant="ghost" onClick={() => setDeleteDialog(null)} className="w-full">Annuler</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Reply preview bar */}
+            {replyTo && (
+              <div className="px-3 pt-2 pb-0 border-t border-border bg-muted/30">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border-l-2 border-primary">
+                  <Reply className="w-4 h-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-primary">{getFullName(replyTo.user?.candidateProfile)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{replyTo.type === "VOICE" ? "🎙️ Message vocal" : replyTo.content}</p>
+                  </div>
+                  <button onClick={() => setReplyTo(null)} className="shrink-0 p-1 hover:bg-muted rounded">
+                    <X className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Message Input */}
-            <div className="p-3 border-t border-border shrink-0">
+            <div className={`p-3 border-t border-border shrink-0 ${replyTo ? "pt-1 border-t-0" : ""}`}>
               {isRecording ? (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
