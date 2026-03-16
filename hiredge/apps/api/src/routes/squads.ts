@@ -123,6 +123,16 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/members', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
+      // Verify the requesting user is a member of this squad
+      const membership = await prisma.squadMember.findFirst({
+        where: { squadId: id, userId: request.user.id, isActive: true },
+      });
+      if (!membership) {
+        return reply.status(403).send({
+          success: false, error: { code: 'NOT_MEMBER', message: 'Vous n\'êtes pas membre de cette escouade' },
+        });
+      }
+
       const members = await prisma.squadMember.findMany({
         where: { squadId: id, isActive: true },
         include: { user: { select: { id: true, email: true } } },
