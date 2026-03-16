@@ -95,6 +95,12 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
+    // Check admin session
+    const adminToken = sessionStorage.getItem('adminToken')
+    if (!adminToken) {
+      router.replace('/admin/login')
+      return
+    }
     authApi.me().then(({ data }) => {
       if (!data.success || data.data?.role !== 'ADMIN') {
         router.replace('/dashboard')

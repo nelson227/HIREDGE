@@ -1,10 +1,34 @@
 import { FastifyPluginAsync } from 'fastify';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { adminService } from '../services/admin.service';
 import { requireRole } from '../middleware/auth';
 import { AppError } from '../services/auth.service';
+import { env } from '../config/env';
+
+// Admin panel credentials (password is bcrypt-hashed)
+const ADMIN_EMAIL = 'nguemtelekem400@gmail.com';
+const ADMIN_PASSWORD_HASH = '$2a$12$6YbCX7TDWW7.GrnHt4EwaeCpVbd3kFpnI7p7UhfnXYUcp.PRrioHi';
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
-  // All admin routes require ADMIN role
+  // POST /admin/verify-access — Admin panel login (no ADMIN role preHandler)
+  fastify.post('/verify-access', async (request, reply) => {
+    const { email, password } = request.body as { email?: string; password?: string };
+    if (!email || !password) {
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Email et mot de passe requis' } });
+    }
+    if (email !== ADMIN_EMAIL) {
+      return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
+    }
+    const valid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
+    if (!valid) {
+      return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
+    }
+    const adminToken = jwt.sign({ adminAccess: true, email }, env.JWT_SECRET, { expiresIn: '2h' });
+    return reply.send({ success: true, data: { adminToken } });
+  });
+
+  // All other admin routes require ADMIN role
   fastify.addHook('preHandler', requireRole('ADMIN'));
 
   // GET /admin/stats — Platform statistics

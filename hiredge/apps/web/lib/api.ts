@@ -285,6 +285,8 @@ export const notificationsApi = {
 
 // ─── Admin ───────────────────────────────────────────────────────
 export const adminApi = {
+  verifyAccess: (email: string, password: string) =>
+    api.post('/admin/verify-access', { email, password }),
   getStats: () => api.get('/admin/stats'),
   listUsers: (params?: { page?: number; limit?: number; search?: string; role?: string; subscriptionTier?: string; sortBy?: string; sortOrder?: string }) =>
     api.get('/admin/users', { params }),
