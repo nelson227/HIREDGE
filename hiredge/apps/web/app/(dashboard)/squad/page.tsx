@@ -33,7 +33,7 @@ import {
   SmilePlus,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
-import { connectSocket, disconnectSocket, joinSquadRoom, leaveSquadRoom, getSocket, emitTyping, emitStopTyping } from "@/lib/socket"
+import { connectSocket, joinSquadRoom, leaveSquadRoom, getSocket, emitTyping, emitStopTyping } from "@/lib/socket"
 
 // ─── Types ───────────────────────────────────────────────────────
 interface MemberUser {
@@ -286,12 +286,14 @@ export default function SquadPage() {
 
   // ─── WebSocket ──────────────────────────────────────────────────
   useEffect(() => {
-    let socket: ReturnType<typeof getSocket> = null
-    try {
-      socket = connectSocket()
-    } catch {
-      // No auth token yet — skip
-      return
+    // Use existing socket from layout, or reconnect if needed
+    let socket: ReturnType<typeof getSocket> = getSocket()
+    if (!socket?.connected) {
+      try {
+        socket = connectSocket()
+      } catch {
+        return
+      }
     }
 
     const onNewMessage = (msg: SquadMessage) => {
@@ -370,9 +372,13 @@ export default function SquadPage() {
     setTypingUsers([])
   }, [selectedSquadId])
 
-  // ─── Cleanup socket on unmount ──────────────────────────────────
+  // ─── Cleanup squad room on unmount ──────────────────────────────
   useEffect(() => {
-    return () => { disconnectSocket() }
+    return () => {
+      if (previousSquadIdRef.current) {
+        leaveSquadRoom(previousSquadIdRef.current)
+      }
+    }
   }, [])
 
   // ─── Actions ────────────────────────────────────────────────────

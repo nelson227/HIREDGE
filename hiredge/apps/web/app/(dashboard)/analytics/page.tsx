@@ -17,7 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { applicationsApi, interviewsApi, jobsApi } from "@/lib/api"
-import { getSocket } from "@/lib/socket"
+import { connectSocket } from "@/lib/socket"
 
 interface ApplicationStats {
   total: number
@@ -40,7 +40,8 @@ export default function AnalyticsPage() {
 
   // Real-time WebSocket listeners — refresh stats on key events
   useEffect(() => {
-    const socket = getSocket()
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
     if (!socket) return
 
     const refresh = () => loadStats()

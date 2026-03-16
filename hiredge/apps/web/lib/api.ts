@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { updateSocketToken } from './socket';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api/v1';
 
@@ -98,6 +99,8 @@ api.interceptors.response.use(
 
         if (data.success && data.data) {
           saveTokens(data.data.accessToken, data.data.refreshToken);
+          // Keep WebSocket connected with fresh token
+          updateSocketToken(data.data.accessToken);
           isRefreshing = false;
           onRefreshDone(true);
           return api(originalRequest);

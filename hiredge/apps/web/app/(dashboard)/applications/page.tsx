@@ -15,7 +15,7 @@ import {
   Briefcase,
 } from "lucide-react"
 import { applicationsApi } from "@/lib/api"
-import { getSocket } from "@/lib/socket"
+import { connectSocket } from "@/lib/socket"
 
 // Statuts UI du Kanban (frontend)
 type KanbanStatus = "draft" | "applied" | "screening" | "interview" | "offer" | "rejected"
@@ -82,7 +82,8 @@ export default function ApplicationsPage() {
 
   // Real-time WebSocket listeners
   useEffect(() => {
-    const socket = getSocket()
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
     if (!socket) return
 
     const handleCreated = () => {

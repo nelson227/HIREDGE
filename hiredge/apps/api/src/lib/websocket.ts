@@ -7,15 +7,21 @@ import prisma from '../db/prisma';
 let io: Server;
 
 export function initializeWebSocket(httpServer: HTTPServer): Server {
+  const corsOrigins = process.env.NODE_ENV === 'production'
+    ? (process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+        : ['https://hiredge.app', 'https://www.hiredge.app', 'https://hiredge-six.vercel.app'])
+    : true;
+
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.NODE_ENV === 'production'
-        ? ['https://hiredge.app', 'https://www.hiredge.app', 'https://hiredge-six.vercel.app']
-        : true,
+      origin: corsOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },
     transports: ['websocket', 'polling'],
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   // Auth middleware

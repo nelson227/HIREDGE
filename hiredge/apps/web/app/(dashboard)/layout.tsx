@@ -122,6 +122,8 @@ export default function DashboardLayout({
         socket.off('notification:read')
         socket.off('notification:all_read')
       }
+      // Disconnect socket when leaving the dashboard entirely
+      disconnectSocket()
     }
   }, [])
 

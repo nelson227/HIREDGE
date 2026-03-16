@@ -17,7 +17,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { interviewsApi } from "@/lib/api"
-import { getSocket } from "@/lib/socket"
+import { connectSocket } from "@/lib/socket"
 
 interface Interview {
   id: string
@@ -51,7 +51,8 @@ export default function InterviewsPage() {
 
   // Real-time WebSocket listeners
   useEffect(() => {
-    const socket = getSocket()
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
     if (!socket) return
 
     const refresh = () => loadData()

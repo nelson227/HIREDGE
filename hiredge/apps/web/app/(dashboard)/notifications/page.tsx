@@ -16,7 +16,7 @@ import {
   Info,
 } from "lucide-react"
 import { notificationsApi } from "@/lib/api"
-import { getSocket } from "@/lib/socket"
+import { connectSocket } from "@/lib/socket"
 
 interface Notification {
   id: string
@@ -59,7 +59,8 @@ export default function NotificationsPage() {
 
   // Real-time WebSocket listeners
   useEffect(() => {
-    const socket = getSocket()
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
     if (!socket) return
 
     const handleNewNotification = (notification: Notification) => {

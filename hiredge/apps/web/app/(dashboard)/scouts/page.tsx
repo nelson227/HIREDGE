@@ -19,7 +19,7 @@ import {
   UserSearch,
 } from "lucide-react"
 import { scoutsApi } from "@/lib/api"
-import { getSocket } from "@/lib/socket"
+import { connectSocket } from "@/lib/socket"
 
 interface Scout {
   id: string
@@ -58,7 +58,8 @@ export default function ScoutsPage() {
 
   // Real-time WebSocket listeners
   useEffect(() => {
-    const socket = getSocket()
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
     if (!socket) return
 
     const refresh = () => loadScouts()
