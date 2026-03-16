@@ -230,7 +230,7 @@ export const squadApi = {
   leave: (squadId: string) => api.post('/squads/leave', { squadId }),
   getMembers: (id: string) => api.get(`/squads/${id}/members`),
   sendMessage: (id: string, message: string) =>
-    api.post(`/squads/${id}/messages`, { message }),
+    api.post(`/squads/${id}/messages`, { content: message }),
   getMessages: (id: string, cursor?: string) =>
     api.get(`/squads/${id}/messages`, { params: { cursor } }),
   getSuggestions: (jobId: string) =>
