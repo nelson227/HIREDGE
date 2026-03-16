@@ -98,11 +98,12 @@ async function buildServer() {
     version: '0.1.0',
   }));
 
-  // One-time admin bootstrap — protected by JWT_SECRET as key
+  // One-time admin bootstrap — protected by a one-time secret
   // POST /api/v1/bootstrap-admin { email, secret }
   app.post('/api/v1/bootstrap-admin', async (request, reply) => {
     const { email, secret } = request.body as { email?: string; secret?: string };
-    if (!secret || secret !== env.JWT_SECRET) {
+    const BOOTSTRAP_SECRET = 'hiredge-bootstrap-2026-temp-xK9mQ';
+    if (!secret || secret !== BOOTSTRAP_SECRET) {
       return reply.status(403).send({ success: false, error: 'Invalid secret' });
     }
     if (!email) {
