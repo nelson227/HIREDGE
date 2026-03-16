@@ -204,6 +204,13 @@ export class JobService {
       enriched.matchAnalysis = matchResult.matchAnalysis;
       enriched.sellingPoints = matchResult.sellingPoints;
       enriched.gaps = matchResult.gaps;
+
+      // Check if user already applied
+      const existingApp = await prisma.application.findFirst({
+        where: { userId, jobId },
+        select: { id: true },
+      });
+      enriched.hasApplied = !!existingApp;
     }
 
     return enriched;

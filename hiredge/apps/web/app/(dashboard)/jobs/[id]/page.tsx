@@ -108,6 +108,9 @@ export default function JobDetailPage() {
   const [showSquadBanner, setShowSquadBanner] = useState(false)
   const [joiningSquad, setJoiningSquad] = useState<string | null>(null)
 
+  // Apply error feedback
+  const [applyError, setApplyError] = useState<string | null>(null)
+
   useEffect(() => {
     if (jobId) loadJob()
   }, [jobId])
@@ -116,8 +119,11 @@ export default function JobDetailPage() {
     try {
       setLoading(true)
       const res = await jobsApi.getById(jobId)
-      if (res.data?.data) setJob(res.data.data)
-      else if (res.data) setJob(res.data)
+      const jobData = res.data?.data || res.data
+      if (jobData) {
+        setJob(jobData)
+        if (jobData.hasApplied) setApplied(true)
+      }
     } catch {
       // job not found
     } finally {
@@ -173,9 +179,10 @@ export default function JobDetailPage() {
   }
 
   const handleApply = async () => {
-    if (!job || applying) return
+    if (!job || applying || applied) return
     try {
       setApplying(true)
+      setApplyError(null)
       await applicationsApi.create({ jobId: job.id })
       setApplied(true)
       // Fetch squad suggestions post-application
@@ -188,8 +195,11 @@ export default function JobDetailPage() {
       } catch {
         // Squad suggestions are non-blocking
       }
-    } catch {
-      // error
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || "Erreur lors de la candidature"
+      setApplyError(msg)
+      // If already applied, just mark as applied
+      if (err.response?.data?.error?.code === 'ALREADY_APPLIED') setApplied(true)
     } finally {
       setApplying(false)
     }
@@ -370,22 +380,27 @@ export default function JobDetailPage() {
                   {job.matchScore}% Match
                 </div>
               )}
-              {job.sourceUrl ? (
+              <Button onClick={handleApply} disabled={applying || applied}>
+                {applied ? "Candidature enregistrée ✓" : applying ? "Envoi..." : "Postuler"}
+              </Button>
+              {applied && job.sourceUrl && (
                 <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  <Button>
-                    Postuler <ExternalLink className="w-4 h-4 ml-2" />
+                  <Button variant="outline">
+                    Voir l'offre originale <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                 </a>
-              ) : (
-                <Button onClick={handleApply} disabled={applying || applied}>
-                  {applied ? "Candidature envoyée" : applying ? "Envoi..." : "Postuler"}
-                  {!applied && !applying && <ExternalLink className="w-4 h-4 ml-2" />}
-                </Button>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Apply error feedback */}
+      {applyError && !applied && (
+        <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg">
+          {applyError}
+        </div>
+      )}
 
       {/* EDGE Analysis Card */}
       <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
