@@ -111,6 +111,7 @@ export const updateApplicationStatusSchema = z.object({
 export const sendSquadMessageSchema = z.object({
   content: z.string().min(1).max(5000),
   type: z.enum(['TEXT', 'VOICE', 'SYSTEM']).default('TEXT'),
+  replyToId: z.string().uuid().optional(),
 });
 
 // --- Scout Schemas ---

@@ -886,7 +886,8 @@ export default function SquadPage() {
                   return (
                     <div
                       key={msg.id}
-                      className={`group relative flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}
+                      id={`msg-${msg.id}`}
+                      className={`group relative flex gap-2.5 transition-colors duration-1000 ${isOwn ? "flex-row-reverse" : ""}`}
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => { if (menuOpenId !== msg.id && emojiPickerMsgId !== msg.id) setHoveredMsgId(null) }}
                     >
@@ -895,11 +896,31 @@ export default function SquadPage() {
                       }`}>
                         {initials}
                       </div>
-                      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"} relative`}>
+                      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
                         {!isOwn && profile && (
                           <p className="text-xs font-medium text-muted-foreground mb-1">{getFullName(profile)}</p>
                         )}
 
+                        {/* Reply preview (quoted message) — clickable to scroll */}
+                        {msg.replyTo && (
+                          <div
+                            onClick={() => {
+                              const el = document.getElementById(`msg-${msg.replyTo!.id}`)
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                el.classList.add('bg-primary/10')
+                                setTimeout(() => el.classList.remove('bg-primary/10'), 2000)
+                              }
+                            }}
+                            className={`text-xs border-l-2 border-primary/50 pl-2.5 mb-1 py-1.5 pr-2 rounded-lg cursor-pointer hover:brightness-95 transition-all max-w-full ${isOwn ? "bg-primary/20 ml-auto" : "bg-muted"}`}
+                          >
+                            <span className="font-semibold text-primary/80 block">{getFullName(msg.replyTo.user?.candidateProfile)}</span>
+                            <p className="text-muted-foreground truncate mt-0.5">{msg.replyTo.type === "VOICE" ? "🎙️ Message vocal" : msg.replyTo.content}</p>
+                          </div>
+                        )}
+
+                        {/* Message bubble + hover actions wrapper */}
+                        <div className="relative">
                         {/* Hover actions: emoji (left) + menu arrow (right) */}
                         {isHovered && (
                           <div className={`absolute -top-3 ${isOwn ? "right-0" : "left-0"} flex items-center gap-0.5 z-10`}>
@@ -966,19 +987,11 @@ export default function SquadPage() {
                           </div>
                         )}
 
-                        {/* Reply preview (quoted message) */}
-                        {msg.replyTo && (
-                          <div className={`text-xs border-l-2 border-primary/40 pl-2 mb-1 py-0.5 rounded-r bg-muted/50 max-w-full ${isOwn ? "ml-auto" : ""}`}>
-                            <span className="font-medium text-primary/70">{getFullName(msg.replyTo.user?.candidateProfile)}</span>
-                            <p className="text-muted-foreground truncate">{msg.replyTo.type === "VOICE" ? "🎙️ Message vocal" : msg.replyTo.content}</p>
-                          </div>
-                        )}
-
                         {/* Message bubble */}
                         <div className={`rounded-2xl px-4 py-2.5 ${
                           isVoice
-                            ? (isOwn ? "bg-primary/15 text-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md")
-                            : (isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md")
+                            ? (isOwn ? "bg-primary/15 text-foreground rounded-br-md" : "bg-slate-100 dark:bg-slate-800 border border-border text-foreground rounded-bl-md")
+                            : (isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-slate-100 dark:bg-slate-800 border border-border text-foreground rounded-bl-md")
                         }`}>
                           {isVoice ? (
                             <div className="flex items-center gap-2 min-w-[200px]">
@@ -995,6 +1008,7 @@ export default function SquadPage() {
                             <p className="text-sm leading-relaxed">{msg.content}</p>
                           )}
                         </div>
+                        </div>{/* end relative wrapper for bubble + hover actions */}
 
                         {/* Badges: pinned / important */}
                         {(msg.isPinned || msg.isImportant) && (

@@ -289,7 +289,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       const message = await squadService.sendMessage(request.user.id, id, {
         content: parsed.data.content,
         type: parsed.data.type,
-        replyToId: (parsed.data as any).replyToId,
+        replyToId: parsed.data.replyToId,
       });
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
