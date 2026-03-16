@@ -17,7 +17,7 @@ import {
   Target,
   MapPin,
   Calendar,
-  Phone,
+  Phone as PhoneIcon,
   ChevronLeft,
   Clock,
   X,
@@ -178,7 +178,7 @@ export default function SquadPage() {
   const [mobileShowChat, setMobileShowChat] = useState(false)
 
   // Call state
-  const [activeCall, setActiveCall] = useState<{ roomName: string; audioOnly: boolean } | null>(null)
+  const [activeCall, setActiveCall] = useState<{ roomName: string } | null>(null)
   const [activeCallSquadId, setActiveCallSquadId] = useState<string | null>(null)
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
@@ -356,21 +356,20 @@ export default function SquadPage() {
   }
 
   // ─── Jitsi Calls ──────────────────────────────────────────────
-  const startCall = async (audioOnly: boolean) => {
+  const startCall = async () => {
     if (!selectedSquadId || !selectedSquad) return
     const ts = Date.now().toString(36)
     const safeName = selectedSquad.name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 20)
     const roomName = `hiredge-${safeName}-${selectedSquadId.substring(0, 8)}-${ts}`
 
-    setActiveCall({ roomName, audioOnly })
+    setActiveCall({ roomName })
     setActiveCallSquadId(selectedSquadId)
 
     // Send system message so others can join
-    const callType = audioOnly ? "vocal" : "vidéo"
     try {
       const { data } = await squadApi.sendMessage(
         selectedSquadId,
-        `📞 Appel ${callType} démarré — Rejoignez : https://meet.jit.si/${roomName}`
+        `📞 Appel démarré — Rejoignez : https://meet.jit.si/${roomName}`
       )
       if (data.success) setMessages(prev => [...prev, data.data])
     } catch {
@@ -386,7 +385,7 @@ export default function SquadPage() {
   const joinCallFromLink = (jitsiUrl: string) => {
     const roomName = jitsiUrl.replace("https://meet.jit.si/", "")
     if (!roomName) return
-    setActiveCall({ roomName, audioOnly: false })
+    setActiveCall({ roomName })
     setActiveCallSquadId(selectedSquadId)
   }
 
@@ -616,10 +615,7 @@ export default function SquadPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => startCall(true)} title="Appel vocal" disabled={!!activeCall}>
-                  <Phone className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => startCall(false)} title="Appel vidéo" disabled={!!activeCall}>
+                <Button variant="ghost" size="icon" onClick={() => startCall()} title="Démarrer un appel" disabled={!!activeCall}>
                   <Video className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowEventForm(true)} title="Planifier un événement">
@@ -674,7 +670,7 @@ export default function SquadPage() {
                 <JitsiCall
                   roomName={activeCall.roomName}
                   displayName={currentUserName}
-                  audioOnly={activeCall.audioOnly}
+                  audioOnly={false}
                   onClose={endCall}
                 />
               </div>
@@ -714,7 +710,7 @@ export default function SquadPage() {
                           <p className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</p>
                           {!activeCall && (
                             <Button size="sm" variant="outline" className="gap-1.5" onClick={() => joinCallFromLink(jitsiMatch[0])}>
-                              <Phone className="w-3.5 h-3.5" />Rejoindre l&apos;appel
+                              <PhoneIcon className="w-3.5 h-3.5" />Rejoindre l&apos;appel
                             </Button>
                           )}
                         </div>
@@ -842,7 +838,7 @@ export default function SquadPage() {
                   {events.map((evt) => (
                     <div key={evt.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/50">
                       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        {evt.type === "CALL" ? <Phone className="w-4 h-4 text-primary" /> : evt.type === "REVIEW" ? <Target className="w-4 h-4 text-primary" /> : <Video className="w-4 h-4 text-primary" />}
+                        {evt.type === "CALL" ? <PhoneIcon className="w-4 h-4 text-primary" /> : evt.type === "REVIEW" ? <Target className="w-4 h-4 text-primary" /> : <Video className="w-4 h-4 text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-foreground truncate">{evt.title}</p>
