@@ -98,24 +98,6 @@ async function buildServer() {
     version: '0.1.0',
   }));
 
-  // One-time admin bootstrap — protected by a one-time secret
-  // POST /api/v1/bootstrap-admin { email, secret }
-  app.post('/api/v1/bootstrap-admin', async (request, reply) => {
-    const { email, secret } = request.body as { email?: string; secret?: string };
-    const BOOTSTRAP_SECRET = 'hiredge-bootstrap-2026-temp-xK9mQ';
-    if (!secret || secret !== BOOTSTRAP_SECRET) {
-      return reply.status(403).send({ success: false, error: 'Invalid secret' });
-    }
-    if (!email) {
-      const users = await prisma.user.findMany({ select: { id: true, email: true, role: true }, orderBy: { createdAt: 'asc' }, take: 10 });
-      return reply.send({ success: true, data: users });
-    }
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return reply.status(404).send({ success: false, error: 'User not found' });
-    await prisma.user.update({ where: { email }, data: { role: 'ADMIN' } });
-    return reply.send({ success: true, message: `${email} promoted to ADMIN` });
-  });
-
   // Register routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(profileRoutes, { prefix: '/api/v1/profile' });
