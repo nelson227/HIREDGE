@@ -15,6 +15,8 @@ import {
   UserPlus,
   Copy,
   LogOut,
+  Target,
+  MapPin,
 } from "lucide-react"
 import { squadApi } from "@/lib/api"
 
@@ -37,10 +39,26 @@ interface Squad {
   name: string
   code: string
   description?: string
+  focus?: string
+  jobFamily?: string
+  experienceLevel?: string
+  locationFilter?: string
+  maxMembers: number
   createdAt: string
   _count: {
     members: number
   }
+}
+
+interface AvailableSquad {
+  id: string
+  name: string
+  focus?: string
+  jobFamily?: string
+  experienceLevel?: string
+  locationFilter?: string
+  maxMembers: number
+  _count: { members: number }
 }
 
 interface Message {
@@ -71,6 +89,8 @@ export default function SquadPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [feedbackMsg, setFeedbackMsg] = useState("")
+  const [availableSquads, setAvailableSquads] = useState<AvailableSquad[]>([])
+  const [loadingAvailable, setLoadingAvailable] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -97,9 +117,38 @@ export default function SquadPage() {
       // 404 = pas de squad, c'est normal
       if (error.response?.status !== 404) {
         // erreur inattendue
+      } else {
+        loadAvailableSquads()
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAvailableSquads = async () => {
+    try {
+      setLoadingAvailable(true)
+      const { data } = await squadApi.getAvailable()
+      if (data.success) {
+        setAvailableSquads(data.data || [])
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingAvailable(false)
+    }
+  }
+
+  const handleJoinSquad = async (squadId: string) => {
+    try {
+      setJoining(true)
+      await squadApi.joinById(squadId)
+      await loadSquad()
+    } catch (error: any) {
+      setFeedbackMsg(error.response?.data?.error?.message || "Impossible de rejoindre")
+      setTimeout(() => setFeedbackMsg(""), 3000)
+    } finally {
+      setJoining(false)
     }
   }
 
@@ -235,7 +284,7 @@ export default function SquadPage() {
             </div>
             <h1 className="text-2xl font-bold mb-2">Rejoindre une Squad</h1>
             <p className="text-muted-foreground">
-              Les Squads sont des groupes de max 6 personnes qui se soutiennent dans leur recherche d&apos;emploi.
+              Les Escouades sont des groupes de 3 à 10 personnes avec un objectif similaire qui se soutiennent dans leur recherche d&apos;emploi.
             </p>
           </div>
 
@@ -270,7 +319,7 @@ export default function SquadPage() {
                   <Input
                     value={newSquadName}
                     onChange={(e) => setNewSquadName(e.target.value)}
-                    placeholder="Nom de votre squad"
+                    placeholder="Nom de votre escouade"
                     maxLength={50}
                   />
                   <div className="flex gap-2">
@@ -286,11 +335,58 @@ export default function SquadPage() {
               ) : (
                 <Button variant="outline" onClick={() => setShowCreate(true)} className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
-                  Créer une nouvelle Squad
+                  Créer une nouvelle Escouade
                 </Button>
               )}
             </CardContent>
           </Card>
+
+          {/* Escouades disponibles */}
+          {loadingAvailable ? (
+            <div className="text-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
+            </div>
+          ) : availableSquads.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-center">Escouades disponibles</h2>
+              <p className="text-sm text-muted-foreground text-center">EDGE a trouvé des escouades qui correspondent à votre profil</p>
+              {availableSquads.map((sq) => (
+                <Card key={sq.id} className="hover:border-primary/50 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{sq.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {sq._count.members}/{sq.maxMembers}
+                          </span>
+                          {sq.jobFamily && (
+                            <span className="flex items-center gap-1">
+                              <Target className="w-3 h-3" />
+                              {sq.jobFamily}
+                            </span>
+                          )}
+                          {sq.locationFilter && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {sq.locationFilter}
+                            </span>
+                          )}
+                          {sq.experienceLevel && (
+                            <span className="px-1.5 py-0.5 rounded bg-muted">{sq.experienceLevel}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button size="sm" onClick={() => handleJoinSquad(sq.id)} disabled={joining}>
+                        {joining ? <Loader2 className="w-3 h-3 animate-spin" /> : "Rejoindre"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -422,7 +518,7 @@ export default function SquadPage() {
         <div className="p-6 space-y-6">
           {/* Squad Members */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Membres ({members.length}/6)</h3>
+            <h3 className="font-semibold text-foreground mb-4">Membres ({members.length}/{squad?.maxMembers || 10})</h3>
             <div className="space-y-3">
               {members.map((member) => {
                 const isMe = member.userId === currentUserId
@@ -463,7 +559,7 @@ export default function SquadPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-3">
-                Partagez ce code pour inviter jusqu&apos;à 6 membres :
+                Partagez ce code pour inviter des membres :
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 px-3 py-2 bg-muted rounded-md text-center font-mono">

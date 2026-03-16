@@ -1,6 +1,7 @@
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
 import { APPLICATION_LIMITS } from '@hiredge/shared';
+import { squadMatchingService } from './squad-matching.service';
 
 export class ApplicationService {
   async createApplication(userId: string, data: {
@@ -57,7 +58,24 @@ export class ApplicationService {
       },
     });
 
-    return application;
+    // Post-application: increment counter for squad cooldown tracking
+    await squadMatchingService.incrementApplicationsSinceDismissal(userId).catch(() => {});
+
+    // Check if we should suggest squads
+    let squadSuggestions = null;
+    try {
+      const shouldSuggest = await squadMatchingService.shouldSuggestSquad(userId);
+      if (shouldSuggest) {
+        const squads = await squadMatchingService.findMatchingSquads(userId, data.jobId);
+        if (squads.length > 0) {
+          squadSuggestions = squads;
+        }
+      }
+    } catch {
+      // Non-blocking: squad suggestion failure should never block application creation
+    }
+
+    return { ...application, squadSuggestions };
   }
 
   async getUserApplications(userId: string, filters: {

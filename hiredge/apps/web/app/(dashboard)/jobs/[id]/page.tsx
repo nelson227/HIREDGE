@@ -26,8 +26,10 @@ import {
   Users,
   Wifi,
   CheckCircle2,
+  Target,
+  X,
 } from "lucide-react"
-import { jobsApi, applicationsApi } from "@/lib/api"
+import { jobsApi, applicationsApi, squadApi } from "@/lib/api"
 
 interface Job {
   id: string
@@ -101,6 +103,11 @@ export default function JobDetailPage() {
   const [companyAnalysis, setCompanyAnalysis] = useState<CompanyAnalysisData | null>(null)
   const [companyLoading, setCompanyLoading] = useState(false)
 
+  // Squad suggestion state (post-application)
+  const [squadSuggestions, setSquadSuggestions] = useState<any[]>([])
+  const [showSquadBanner, setShowSquadBanner] = useState(false)
+  const [joiningSquad, setJoiningSquad] = useState<string | null>(null)
+
   useEffect(() => {
     if (jobId) loadJob()
   }, [jobId])
@@ -171,10 +178,37 @@ export default function JobDetailPage() {
       setApplying(true)
       await applicationsApi.create({ jobId: job.id })
       setApplied(true)
+      // Fetch squad suggestions post-application
+      try {
+        const { data } = await squadApi.getSuggestions(job.id)
+        if (data.success && data.data?.show && data.data.squads?.length > 0) {
+          setSquadSuggestions(data.data.squads)
+          setShowSquadBanner(true)
+        }
+      } catch {
+        // Squad suggestions are non-blocking
+      }
     } catch {
       // error
     } finally {
       setApplying(false)
+    }
+  }
+
+  const handleDismissSquad = async () => {
+    setShowSquadBanner(false)
+    try { await squadApi.dismiss() } catch {}
+  }
+
+  const handleJoinSuggestedSquad = async (squadId: string) => {
+    try {
+      setJoiningSquad(squadId)
+      await squadApi.joinById(squadId)
+      setShowSquadBanner(false)
+    } catch {
+      // error
+    } finally {
+      setJoiningSquad(null)
     }
   }
 
@@ -374,6 +408,64 @@ export default function JobDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Squad Suggestion Banner (post-application) */}
+      {showSquadBanner && squadSuggestions.length > 0 && (
+        <Card className="bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border-blue-500/20 animate-in fade-in slide-in-from-top-2 duration-500">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Candidature envoyée ! Rejoins une escouade</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    J&apos;ai trouvé des candidats avec un objectif similaire au tien. Rejoins une escouade pour vous soutenir mutuellement !
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {squadSuggestions.map((sq: any) => (
+                      <div key={sq.id} className="rounded-xl border bg-background p-3 hover:border-primary/50 transition-colors">
+                        <h4 className="font-medium text-sm text-foreground truncate">{sq.name}</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {sq._count?.members || 0}/{sq.maxMembers || 10}
+                          </span>
+                          {sq.jobFamily && (
+                            <span className="flex items-center gap-1">
+                              <Target className="w-3 h-3" />
+                              {sq.jobFamily}
+                            </span>
+                          )}
+                          {sq.locationFilter && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {sq.locationFilter}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full mt-2"
+                          onClick={() => handleJoinSuggestedSquad(sq.id)}
+                          disabled={joiningSquad === sq.id}
+                        >
+                          {joiningSquad === sq.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                          Rejoindre
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={handleDismissSquad} className="shrink-0">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs + Sidebar layout */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>

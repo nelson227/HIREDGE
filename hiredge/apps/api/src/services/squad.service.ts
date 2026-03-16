@@ -8,7 +8,15 @@ function generateSquadCode(): string {
 }
 
 export class SquadService {
-  async createSquad(userId: string, data: { name: string; description?: string; industry?: string }) {
+  async createSquad(userId: string, data: {
+    name: string;
+    description?: string;
+    industry?: string;
+    focus?: string;
+    jobFamily?: string;
+    experienceLevel?: string;
+    locationFilter?: string;
+  }) {
     // Check if user is already in a squad (FORMING or ACTIVE)
     const existing = await prisma.squadMember.findFirst({
       where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
@@ -31,6 +39,10 @@ export class SquadService {
         name: data.name,
         description: data.description,
         industry: data.industry,
+        focus: data.focus,
+        jobFamily: data.jobFamily,
+        experienceLevel: data.experienceLevel,
+        locationFilter: data.locationFilter,
         status: 'FORMING',
         maxMembers: SQUAD_LIMITS.MAX_MEMBERS,
         members: {
@@ -219,13 +231,17 @@ export class SquadService {
     return messages.reverse();
   }
 
-  async findAvailableSquads(userId: string, industry?: string) {
+  async findAvailableSquads(userId: string, filters?: { industry?: string; jobFamily?: string; experienceLevel?: string }) {
+    const where: any = {
+      status: 'FORMING',
+      members: { none: { userId } },
+    };
+    if (filters?.industry) where.industry = filters.industry;
+    if (filters?.jobFamily) where.jobFamily = filters.jobFamily;
+    if (filters?.experienceLevel) where.experienceLevel = filters.experienceLevel;
+
     const squads = await prisma.squad.findMany({
-      where: {
-        status: 'FORMING',
-        ...(industry ? { industry } : {}),
-        members: { none: { userId } },
-      },
+      where,
       include: {
         _count: { select: { members: true } },
       },

@@ -222,6 +222,7 @@ export const interviewsApi = {
 export const squadApi = {
   getMySquad: () => api.get('/squads/mine'),
   join: (code: string) => api.post('/squads/join', { code }),
+  joinById: (squadId: string) => api.post(`/squads/${squadId}/join`),
   create: (data: { name: string; description?: string }) =>
     api.post('/squads', data),
   leave: () => api.post('/squads/leave'),
@@ -230,6 +231,11 @@ export const squadApi = {
     api.post(`/squads/${id}/messages`, { message }),
   getMessages: (id: string, cursor?: string) =>
     api.get(`/squads/${id}/messages`, { params: { cursor } }),
+  getSuggestions: (jobId: string) =>
+    api.get('/squads/suggestions', { params: { jobId } }),
+  dismiss: () => api.post('/squads/dismiss'),
+  getAvailable: (filters?: { industry?: string; jobFamily?: string; experienceLevel?: string }) =>
+    api.get('/squads/available', { params: filters }),
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────

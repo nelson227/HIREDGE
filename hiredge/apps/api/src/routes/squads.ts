@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { sendSquadMessageSchema } from '@hiredge/shared';
 import { squadService } from '../services/squad.service';
+import { squadMatchingService } from '../services/squad-matching.service';
 import { AppError } from '../services/auth.service';
 import prisma from '../db/prisma';
 
@@ -30,6 +31,39 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const squad = await squadService.getMySquad(request.user.id);
       return reply.send({ success: true, data: squad });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // GET /squads/suggestions — Get AI-matched squad suggestions for a job application
+  fastify.get('/suggestions', async (request, reply) => {
+    const { jobId } = request.query as { jobId?: string };
+    if (!jobId) {
+      return reply.status(400).send({
+        success: false, error: { code: 'VALIDATION_ERROR', message: 'jobId requis' },
+      });
+    }
+
+    try {
+      const shouldSuggest = await squadMatchingService.shouldSuggestSquad(request.user.id);
+      if (!shouldSuggest) {
+        return reply.send({ success: true, data: { show: false, squads: [] } });
+      }
+      const squads = await squadMatchingService.findMatchingSquads(request.user.id, jobId);
+      return reply.send({ success: true, data: { show: true, squads } });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // POST /squads/dismiss — Dismiss squad suggestion (cooldown)
+  fastify.post('/dismiss', async (request, reply) => {
+    try {
+      await squadMatchingService.dismissSuggestion(request.user.id);
+      return reply.send({ success: true, data: { message: 'Suggestion ignorée' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
@@ -73,9 +107,9 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /squads/available — Find squads to join
   fastify.get('/available', async (request, reply) => {
-    const { industry } = request.query as { industry?: string };
+    const { industry, jobFamily, experienceLevel } = request.query as { industry?: string; jobFamily?: string; experienceLevel?: string };
     try {
-      const squads = await squadService.findAvailableSquads(request.user.id, industry);
+      const squads = await squadService.findAvailableSquads(request.user.id, { industry, jobFamily, experienceLevel });
       return reply.send({ success: true, data: squads });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
