@@ -350,7 +350,7 @@ export default function ProfilePage() {
                     <div className="w-24 h-24 rounded-2xl bg-primary flex items-center justify-center overflow-hidden">
                       {profile.avatarUrl ? (
                         <img
-                          src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${profile.avatarUrl}`}
+                          src={profile.avatarUrl.startsWith('data:') ? profile.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${profile.avatarUrl}`}
                           alt="Photo de profil"
                           className="w-full h-full object-cover"
                         />

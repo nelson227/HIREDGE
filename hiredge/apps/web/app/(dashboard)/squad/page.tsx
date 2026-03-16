@@ -994,7 +994,7 @@ export default function SquadPage() {
                         isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}>
                         {profile?.avatarUrl ? (
-                          <img src={`${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                          <img src={profile.avatarUrl.startsWith('data:') ? profile.avatarUrl : `${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
                         ) : initials}
                       </div>
                       <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
@@ -1264,7 +1264,7 @@ export default function SquadPage() {
                           isMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                         }`}>
                           {profile?.avatarUrl ? (
-                            <img src={`${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                            <img src={profile.avatarUrl.startsWith('data:') ? profile.avatarUrl : `${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
                           ) : initials}
                         </div>
                         <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background ${statusColor(status)}`} />

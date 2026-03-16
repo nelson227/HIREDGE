@@ -254,7 +254,7 @@ export default function DashboardLayout({
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-sidebar-primary flex items-center justify-center overflow-hidden">
                   {userInfo?.avatarUrl ? (
-                    <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${userInfo.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                    <img src={userInfo.avatarUrl.startsWith('data:') ? userInfo.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${userInfo.avatarUrl}`} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-sm font-semibold text-sidebar-primary-foreground">{userInitials}</span>
                   )}

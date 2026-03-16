@@ -186,30 +186,20 @@ export class ProfileService {
   }
 
   async uploadAvatar(userId: string, buffer: Buffer, mimetype: string): Promise<string> {
-    const fs = await import('fs/promises');
-    const path = await import('path');
-    const crypto = await import('crypto');
+    const sharp = (await import('sharp')).default;
 
     const profile = await prisma.candidateProfile.findUnique({ where: { userId } });
     if (!profile) throw new AppError('PROFILE_NOT_FOUND', 'Profil introuvable', 404);
 
-    const ext = mimetype === 'image/png' ? '.png' : mimetype === 'image/webp' ? '.webp' : '.jpg';
-    const filename = `avatar-${crypto.randomBytes(8).toString('hex')}${ext}`;
-    const userDir = path.join(process.cwd(), 'uploads', 'avatars', userId);
-    await fs.mkdir(userDir, { recursive: true });
+    // Resize to 512x512 max, compress as JPEG
+    const resized = await sharp(buffer)
+      .resize(512, 512, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
 
-    // Delete old avatar files in the directory
-    try {
-      const files = await fs.readdir(userDir);
-      for (const file of files) {
-        await fs.unlink(path.join(userDir, file));
-      }
-    } catch {}
+    // Store as base64 data URL in DB (persistent across deploys)
+    const avatarUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
 
-    const filePath = path.join(userDir, filename);
-    await fs.writeFile(filePath, buffer);
-
-    const avatarUrl = `/uploads/avatars/${userId}/${filename}`;
     await prisma.candidateProfile.update({
       where: { userId },
       data: { avatarUrl },
