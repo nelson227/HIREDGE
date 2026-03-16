@@ -1,4 +1,5 @@
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 # Install all dependencies
@@ -32,15 +33,16 @@ RUN npm ci --omit=dev
 
 # Production image
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Prisma engine binary needs openssl on Alpine
-RUN apk add --no-cache openssl
-
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 hiredge
+
+# Create uploads directory for fastify-static
+RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
