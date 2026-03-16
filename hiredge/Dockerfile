@@ -36,19 +36,24 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Prisma engine binary needs openssl on Alpine
+RUN apk add --no-cache openssl
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 hiredge
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+# Copy generated Prisma client (prisma generate ran in api-build, not in prod-deps)
+COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=api-build /app/apps/api ./apps/api
 COPY --from=shared-build /app/packages/shared ./packages/shared
+# COPY follows symlinks so @hiredge/shared in node_modules lost its link to packages/shared
+# Copy the built dist explicitly so require('@hiredge/shared') resolves correctly
+COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
 
 USER hiredge
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 CMD ["node", "apps/api/dist/server.js"]
