@@ -54,10 +54,6 @@ export const config = {
   jsearch: {
     apiKey: process.env.JSEARCH_API_KEY || '',
   },
-
-  daily: {
-    apiKey: process.env.DAILY_API_KEY || '',
-  },
 } as const;
 
 // Flat alias for backward compatibility

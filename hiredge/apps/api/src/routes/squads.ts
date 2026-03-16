@@ -3,7 +3,6 @@ import { sendSquadMessageSchema } from '@hiredge/shared';
 import { squadService } from '../services/squad.service';
 import { squadMatchingService } from '../services/squad-matching.service';
 import { AppError } from '../services/auth.service';
-import { config } from '../config/env';
 import prisma from '../db/prisma';
 
 const squadRoutes: FastifyPluginAsync = async (fastify) => {
@@ -182,63 +181,6 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
-    }
-  });
-
-  // ─── Calls (Daily.co) ─────────────────────────────────────────────
-
-  // POST /squads/:id/call — Create a Daily.co room for a squad call
-  fastify.post('/:id/call', async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    // Verify membership
-    const membership = await prisma.squadMember.findFirst({
-      where: { squadId: id, userId: request.user.id, isActive: true },
-      include: { squad: { select: { name: true } } },
-    });
-    if (!membership) {
-      return reply.status(403).send({ success: false, error: { code: 'NOT_MEMBER', message: 'Vous n\'êtes pas membre de cette escouade' } });
-    }
-
-    const apiKey = config.daily.apiKey;
-    if (!apiKey) {
-      return reply.status(503).send({ success: false, error: { code: 'DAILY_NOT_CONFIGURED', message: 'Service d\'appel non configuré' } });
-    }
-
-    try {
-      const safeName = membership.squad.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20).toLowerCase();
-      const roomName = `hiredge-${safeName}-${id.substring(0, 8)}-${Date.now().toString(36)}`;
-
-      const res = await fetch('https://api.daily.co/v1/rooms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          name: roomName,
-          properties: {
-            exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
-            enable_chat: true,
-            enable_screenshare: true,
-            start_video_off: false,
-            start_audio_off: false,
-            lang: 'fr',
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const errBody = await res.text();
-        fastify.log.error(`Daily.co room creation failed: ${res.status} ${errBody}`);
-        return reply.status(502).send({ success: false, error: { code: 'DAILY_ERROR', message: 'Impossible de créer la salle d\'appel' } });
-      }
-
-      const room = await res.json() as { url: string; name: string };
-      return reply.send({ success: true, data: { url: room.url, name: room.name } });
-    } catch (err) {
-      fastify.log.error(err, 'Daily.co call creation error');
-      return reply.status(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erreur lors de la création de l\'appel' } });
     }
   });
 

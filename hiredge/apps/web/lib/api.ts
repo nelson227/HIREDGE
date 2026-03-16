@@ -242,8 +242,6 @@ export const squadApi = {
   createEvent: (squadId: string, data: { title: string; type: string; scheduledAt: string; duration?: number; link?: string }) =>
     api.post(`/squads/${squadId}/events`, data),
   getEvents: (squadId: string) => api.get(`/squads/${squadId}/events`),
-  // Calls
-  createCall: (squadId: string) => api.post(`/squads/${squadId}/call`),
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────
