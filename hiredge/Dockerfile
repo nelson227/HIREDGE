@@ -56,6 +56,6 @@ COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/share
 
 USER hiredge
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "apps/api/dist/server.js"]
