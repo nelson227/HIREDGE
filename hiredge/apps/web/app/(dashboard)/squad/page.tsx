@@ -8,6 +8,7 @@ import {
   Users,
   Send,
   Mic,
+  MicOff,
   Video,
   Plus,
   Loader2,
@@ -21,6 +22,9 @@ import {
   ChevronLeft,
   Clock,
   X,
+  Play,
+  Pause,
+  Square,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
 
@@ -173,6 +177,13 @@ export default function SquadPage() {
   const [creatingEvent, setCreatingEvent] = useState(false)
 
   const [mobileShowChat, setMobileShowChat] = useState(false)
+
+  // Voice recording
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
 
@@ -347,6 +358,68 @@ export default function SquadPage() {
   const copyCode = (code?: string) => {
     if (code) navigator.clipboard.writeText(code)
   }
+
+  // ─── Voice Recording ──────────────────────────────────────────
+  const startRecording = async () => {
+    if (!selectedSquadId) return
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4' })
+      mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType })
+        if (blob.size < 1000) return // skip if too short
+
+        try {
+          const { data } = await squadApi.sendVoice(selectedSquadId!, blob)
+          if (data.success) setMessages(prev => [...prev, data.data])
+        } catch {}
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
+    } catch {
+      // Microphone permission denied
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current)
+      recordingTimerRef.current = null
+    }
+    setRecordingTime(0)
+  }
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.ondataavailable = null
+      mediaRecorderRef.current.onstop = null
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop())
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current)
+      recordingTimerRef.current = null
+    }
+    setRecordingTime(0)
+  }
+
+  const formatRecordingTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
   // ─── Calls (Jitsi — nouvel onglet) ─────────────────────────────
   const startCall = async () => {
@@ -681,6 +754,9 @@ export default function SquadPage() {
                   const profile = msg.user?.candidateProfile
                   const initials = getInitials(profile)
 
+                  // Voice message
+                  const isVoice = msg.type === "VOICE" || msg.type === "voice"
+
                   return (
                     <div key={msg.id} className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}>
                       <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
@@ -695,7 +771,16 @@ export default function SquadPage() {
                         <div className={`rounded-2xl px-4 py-2.5 ${
                           isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"
                         }`}>
-                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                          {isVoice ? (
+                            <div className="flex items-center gap-2 min-w-[200px]">
+                              <Mic className="w-4 h-4 shrink-0 opacity-60" />
+                              <audio controls preload="metadata" className="h-8 w-full [&::-webkit-media-controls-panel]:bg-transparent">
+                                <source src={msg.content} />
+                              </audio>
+                            </div>
+                          ) : (
+                            <p className="text-sm leading-relaxed">{msg.content}</p>
+                          )}
                         </div>
                         <p className={`text-[10px] text-muted-foreground mt-1 ${isOwn ? "text-right" : ""}`}>
                           {formatTime(msg.createdAt)}
@@ -710,10 +795,25 @@ export default function SquadPage() {
 
             {/* Message Input */}
             <div className="p-3 border-t border-border shrink-0">
-              <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex items-center gap-2">
-                <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
-                  <Mic className="w-5 h-5" />
-                </Button>
+              {isRecording ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-1 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
+                    <span className="text-sm font-medium text-destructive">Enregistrement</span>
+                    <span className="text-sm text-muted-foreground">{formatRecordingTime(recordingTime)}</span>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" onClick={cancelRecording} className="shrink-0 text-muted-foreground" title="Annuler">
+                    <X className="w-5 h-5" />
+                  </Button>
+                  <Button type="button" size="icon" onClick={stopRecording} className="shrink-0 bg-destructive hover:bg-destructive/90" title="Envoyer">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex items-center gap-2">
+                  <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground" onClick={startRecording} title="Enregistrer un message vocal">
+                    <Mic className="w-5 h-5" />
+                  </Button>
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -725,6 +825,7 @@ export default function SquadPage() {
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </form>
+              )}
             </div>
           </>
         )}

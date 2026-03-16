@@ -242,6 +242,14 @@ export const squadApi = {
   createEvent: (squadId: string, data: { title: string; type: string; scheduledAt: string; duration?: number; link?: string }) =>
     api.post(`/squads/${squadId}/events`, data),
   getEvents: (squadId: string) => api.get(`/squads/${squadId}/events`),
+  // Voice
+  sendVoice: (squadId: string, audioBlob: Blob) => {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'voice.webm')
+    return api.post(`/squads/${squadId}/voice`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────

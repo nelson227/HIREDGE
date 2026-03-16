@@ -3,7 +3,10 @@ import { sendSquadMessageSchema } from '@hiredge/shared';
 import { squadService } from '../services/squad.service';
 import { squadMatchingService } from '../services/squad-matching.service';
 import { AppError } from '../services/auth.service';
+import { config } from '../config/env';
 import prisma from '../db/prisma';
+import path from 'path';
+import fs from 'fs/promises';
 
 const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
@@ -214,6 +217,59 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const events = await squadService.getEvents(request.user.id, id);
       return reply.send({ success: true, data: events });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // ─── Voice Messages ───────────────────────────────────────────────
+
+  // POST /squads/:id/voice — Upload voice message
+  fastify.post('/:id/voice', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    // Verify membership
+    const membership = await prisma.squadMember.findFirst({
+      where: { squadId: id, userId: request.user.id, isActive: true },
+    });
+    if (!membership) {
+      return reply.status(403).send({ success: false, error: { code: 'NOT_MEMBER', message: 'Vous n\'êtes pas membre de cette escouade' } });
+    }
+
+    const data = await request.file();
+    if (!data) {
+      return reply.status(400).send({ success: false, error: { code: 'NO_FILE', message: 'Aucun fichier audio envoyé' } });
+    }
+
+    const allowedMimes = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/wav'];
+    if (!allowedMimes.includes(data.mimetype)) {
+      return reply.status(400).send({ success: false, error: { code: 'INVALID_FORMAT', message: 'Format audio non supporté' } });
+    }
+
+    const buffer = await data.toBuffer();
+    if (buffer.length > 2 * 1024 * 1024) {
+      return reply.status(400).send({ success: false, error: { code: 'FILE_TOO_LARGE', message: 'Le fichier audio ne doit pas dépasser 2 Mo' } });
+    }
+
+    try {
+      const voiceDir = path.join(process.cwd(), 'uploads', 'voice', id);
+      await fs.mkdir(voiceDir, { recursive: true });
+
+      const ext = data.mimetype === 'audio/webm' ? '.webm' : data.mimetype === 'audio/ogg' ? '.ogg' : data.mimetype === 'audio/mp4' ? '.m4a' : data.mimetype === 'audio/mpeg' ? '.mp3' : '.wav';
+      const filename = `${request.user.id}_${Date.now()}${ext}`;
+      const filePath = path.join(voiceDir, filename);
+      await fs.writeFile(filePath, buffer);
+
+      const voiceUrl = `${config.apiUrl}/uploads/voice/${id}/${filename}`;
+
+      // Create message with VOICE type
+      const message = await squadService.sendMessage(request.user.id, id, {
+        content: voiceUrl,
+        type: 'VOICE',
+      });
+
+      return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
