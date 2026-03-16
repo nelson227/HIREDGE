@@ -16,6 +16,7 @@ import {
   Info,
 } from "lucide-react"
 import { notificationsApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 interface Notification {
   id: string
@@ -55,6 +56,27 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetchNotifications()
   }, [fetchNotifications])
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleNewNotification = (notification: Notification) => {
+      setNotifications(prev => [notification, ...prev])
+    }
+    const handleAllRead = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    }
+
+    socket.on('notification:new', handleNewNotification)
+    socket.on('notification:all_read', handleAllRead)
+
+    return () => {
+      socket.off('notification:new', handleNewNotification)
+      socket.off('notification:all_read', handleAllRead)
+    }
+  }, [])
 
   const handleMarkAllRead = async () => {
     try {

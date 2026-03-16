@@ -19,6 +19,7 @@ import {
   UserSearch,
 } from "lucide-react"
 import { scoutsApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 interface Scout {
   id: string
@@ -53,6 +54,24 @@ export default function ScoutsPage() {
 
   useEffect(() => {
     loadScouts()
+  }, [selectedCompany])
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const refresh = () => loadScouts()
+
+    socket.on('scout:new_answer', refresh)
+    socket.on('notification:new', (n: any) => {
+      if (n.type === 'SCOUT') refresh()
+    })
+
+    return () => {
+      socket.off('scout:new_answer', refresh)
+      socket.off('notification:new')
+    }
   }, [selectedCompany])
 
   const loadScouts = async () => {

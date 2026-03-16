@@ -15,6 +15,7 @@ import {
   Briefcase,
 } from "lucide-react"
 import { applicationsApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 // Statuts UI du Kanban (frontend)
 type KanbanStatus = "draft" | "applied" | "screening" | "interview" | "offer" | "rejected"
@@ -77,6 +78,38 @@ export default function ApplicationsPage() {
   // Charger les candidatures depuis l'API
   useEffect(() => {
     loadApplications()
+  }, [])
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleCreated = () => {
+      loadApplications()
+    }
+    const handleStatusChanged = () => {
+      loadApplications()
+    }
+    const handleDeleted = ({ id }: { id: string }) => {
+      setApplications(prev => {
+        const updated = { ...prev }
+        for (const key of Object.keys(updated) as KanbanStatus[]) {
+          updated[key] = updated[key].filter(app => app.id !== id)
+        }
+        return updated
+      })
+    }
+
+    socket.on('application:created', handleCreated)
+    socket.on('application:status_changed', handleStatusChanged)
+    socket.on('application:deleted', handleDeleted)
+
+    return () => {
+      socket.off('application:created', handleCreated)
+      socket.off('application:status_changed', handleStatusChanged)
+      socket.off('application:deleted', handleDeleted)
+    }
   }, [])
 
   const loadApplications = async () => {

@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { createApplicationSchema, updateApplicationStatusSchema } from '@hiredge/shared';
 import { applicationService } from '../services/application.service';
 import { AppError } from '../services/auth.service';
+import { emitToUser } from '../lib/websocket';
 
 const applicationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
@@ -18,6 +19,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const application = await applicationService.createApplication(request.user.id, parsed.data);
+      emitToUser(request.user.id, 'application:created', application);
       return reply.status(201).send({ success: true, data: application });
     } catch (err) {
       if (err instanceof AppError) {
@@ -94,6 +96,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const application = await applicationService.updateApplicationStatus(request.user.id, id, parsed.data);
+      emitToUser(request.user.id, 'application:status_changed', application);
       return reply.send({ success: true, data: application });
     } catch (err) {
       if (err instanceof AppError) {
@@ -110,6 +113,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
     try {
       await applicationService.deleteApplication(request.user.id, id);
+      emitToUser(request.user.id, 'application:deleted', { id });
       return reply.send({ success: true, data: { message: 'Candidature supprimée' } });
     } catch (err) {
       if (err instanceof AppError) {

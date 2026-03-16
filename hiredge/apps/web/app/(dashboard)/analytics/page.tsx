@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { applicationsApi, interviewsApi, jobsApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 interface ApplicationStats {
   total: number
@@ -35,6 +36,28 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     loadStats()
+  }, [])
+
+  // Real-time WebSocket listeners — refresh stats on key events
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const refresh = () => loadStats()
+
+    socket.on('application:created', refresh)
+    socket.on('application:status_changed', refresh)
+    socket.on('application:deleted', refresh)
+    socket.on('interview:started', refresh)
+    socket.on('interview:completed', refresh)
+
+    return () => {
+      socket.off('application:created', refresh)
+      socket.off('application:status_changed', refresh)
+      socket.off('application:deleted', refresh)
+      socket.off('interview:started', refresh)
+      socket.off('interview:completed', refresh)
+    }
   }, [])
 
   const loadStats = async () => {

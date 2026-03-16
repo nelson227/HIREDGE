@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { startSimulationSchema } from '@hiredge/shared';
 import { interviewSimService } from '../services/interview.service';
 import { AppError } from '../services/auth.service';
+import { emitToUser } from '../lib/websocket';
 
 const interviewRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
@@ -38,6 +39,7 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const result = await interviewSimService.startSimulation(request.user.id, parsed.data);
+      emitToUser(request.user.id, 'interview:started', result);
       return reply.status(201).send({ success: true, data: result });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -94,6 +96,7 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
     try {
       const simulation = await interviewSimService.getSimulationDetails(request.user.id, id);
+      emitToUser(request.user.id, 'interview:completed', simulation);
       return reply.send({ success: true, data: simulation });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

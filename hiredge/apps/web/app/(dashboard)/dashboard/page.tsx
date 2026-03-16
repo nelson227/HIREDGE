@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { jobsApi, applicationsApi, interviewsApi, squadApi, profileApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 interface Job {
   id: string
@@ -121,6 +122,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData()
+  }, [])
+
+  // Real-time WebSocket listeners — refresh dashboard on key events
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const refresh = () => loadDashboardData()
+
+    socket.on('application:created', refresh)
+    socket.on('application:status_changed', refresh)
+    socket.on('application:deleted', refresh)
+    socket.on('interview:started', refresh)
+    socket.on('interview:completed', refresh)
+
+    return () => {
+      socket.off('application:created', refresh)
+      socket.off('application:status_changed', refresh)
+      socket.off('application:deleted', refresh)
+      socket.off('interview:started', refresh)
+      socket.off('interview:completed', refresh)
+    }
   }, [])
 
   const loadDashboardData = async () => {

@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { profileApi, authApi, notificationsApi, clearTokens } from "@/lib/api"
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket"
 
 const sidebarItems = [
   { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
@@ -104,7 +105,32 @@ export default function DashboardLayout({
       if (avatarUrl) setUserInfo(prev => prev ? { ...prev, avatarUrl } : prev)
     }
     window.addEventListener('avatar-updated', handleAvatarUpdate)
-    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
+
+    // Connect WebSocket for real-time updates
+    let socket: ReturnType<typeof getSocket> = null
+    try {
+      socket = connectSocket()
+      socket.on('notification:new', () => {
+        setUnreadCount(prev => prev + 1)
+      })
+      socket.on('notification:read', () => {
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      })
+      socket.on('notification:all_read', () => {
+        setUnreadCount(0)
+      })
+    } catch {
+      // Socket connection may fail if no token yet
+    }
+
+    return () => {
+      window.removeEventListener('avatar-updated', handleAvatarUpdate)
+      if (socket) {
+        socket.off('notification:new')
+        socket.off('notification:read')
+        socket.off('notification:all_read')
+      }
+    }
   }, [])
 
   const userInitials = userInfo 

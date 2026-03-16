@@ -17,6 +17,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { interviewsApi } from "@/lib/api"
+import { getSocket } from "@/lib/socket"
 
 interface Interview {
   id: string
@@ -46,6 +47,22 @@ export default function InterviewsPage() {
 
   useEffect(() => {
     loadData()
+  }, [])
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const refresh = () => loadData()
+
+    socket.on('interview:started', refresh)
+    socket.on('interview:completed', refresh)
+
+    return () => {
+      socket.off('interview:started', refresh)
+      socket.off('interview:completed', refresh)
+    }
   }, [])
 
   const loadData = async () => {

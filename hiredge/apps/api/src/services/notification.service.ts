@@ -1,5 +1,6 @@
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
+import { emitToUser } from '../lib/websocket';
 
 export class NotificationService {
   async getUserNotifications(userId: string, unreadOnly: boolean = false, limit: number = 50) {
@@ -31,6 +32,9 @@ export class NotificationService {
       where: { id: notificationId },
       data: { read: true },
     });
+
+    // Emit read event for real-time UI update
+    emitToUser(userId, 'notification:read', { id: notificationId });
   }
 
   async markAllAsRead(userId: string) {
@@ -38,6 +42,9 @@ export class NotificationService {
       where: { userId, read: false },
       data: { read: true },
     });
+
+    // Emit bulk read event
+    emitToUser(userId, 'notification:all_read', {});
   }
 
   async createNotification(userId: string, data: {
@@ -57,6 +64,9 @@ export class NotificationService {
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
       },
     });
+
+    // Emit real-time notification via WebSocket
+    emitToUser(userId, 'notification:new', notification);
 
     return notification;
   }
