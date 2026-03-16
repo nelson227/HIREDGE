@@ -283,4 +283,17 @@ export const notificationsApi = {
   markAllRead: () => api.patch('/notifications/read-all'),
 };
 
+// ─── Admin ───────────────────────────────────────────────────────
+export const adminApi = {
+  getStats: () => api.get('/admin/stats'),
+  listUsers: (params?: { page?: number; limit?: number; search?: string; role?: string; subscriptionTier?: string; sortBy?: string; sortOrder?: string }) =>
+    api.get('/admin/users', { params }),
+  getUserDetail: (id: string) => api.get(`/admin/users/${id}`),
+  updateUserRole: (id: string, role: string) =>
+    api.patch(`/admin/users/${id}/role`, { role }),
+  updateUserSubscription: (id: string, subscriptionTier: string) =>
+    api.patch(`/admin/users/${id}/subscription`, { subscriptionTier }),
+  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+};
+
 export default api;

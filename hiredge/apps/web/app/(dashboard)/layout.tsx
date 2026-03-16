@@ -23,6 +23,7 @@ import {
   Search,
   ChevronRight,
   LogOut,
+  Shield,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
@@ -54,41 +55,32 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string; avatarUrl?: string | null } | null>(null)
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string; avatarUrl?: string | null; role?: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
-    // Fetch user profile (auth is via httpOnly cookies)
-    profileApi.get()
-      .then(({ data }) => {
-        if (data.success && data.data) {
-          setUserInfo({
-            firstName: data.data.firstName || '',
-            lastName: data.data.lastName || '',
-            email: data.data.user?.email || '',
-            avatarUrl: data.data.avatarUrl || null,
-          })
-          setAuthChecked(true)
-        }
-      })
-      .catch(() => {
-        // If profile fails, try authApi.me
-        authApi.me().then(({ data }) => {
-          if (data.success && data.data) {
-            setUserInfo({
-              firstName: data.data.candidateProfile?.firstName || data.data.email?.split('@')[0] || '',
-              lastName: data.data.candidateProfile?.lastName || '',
-              email: data.data.email || '',
-              avatarUrl: data.data.candidateProfile?.avatarUrl || null,
-            })
-            setAuthChecked(true)
-          }
-        }).catch(() => {
-          // Both failed — user is not authenticated, redirect to login
-          router.replace('/login')
+    // Fetch user profile + role
+    Promise.all([
+      profileApi.get().catch(() => null),
+      authApi.me().catch(() => null),
+    ]).then(([profileRes, meRes]) => {
+      const profile = profileRes?.data?.success ? profileRes.data.data : null
+      const me = meRes?.data?.success ? meRes.data.data : null
+
+      if (profile || me) {
+        setUserInfo({
+          firstName: profile?.firstName || me?.candidateProfile?.firstName || me?.email?.split('@')[0] || '',
+          lastName: profile?.lastName || me?.candidateProfile?.lastName || '',
+          email: profile?.user?.email || me?.email || '',
+          avatarUrl: profile?.avatarUrl || me?.candidateProfile?.avatarUrl || null,
+          role: me?.role || 'CANDIDATE',
         })
-      })
+        setAuthChecked(true)
+      } else {
+        router.replace('/login')
+      }
+    })
 
     // Fetch unread notifications count
     notificationsApi.list(true)
@@ -223,6 +215,36 @@ export default function DashboardLayout({
                 )
               })}
             </ul>
+
+            {/* Admin section */}
+            {userInfo?.role === 'ADMIN' && (
+              <div className="mt-4 pt-4 border-t border-sidebar-border/50">
+                <p className="px-3 mb-2 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Admin</p>
+                <ul className="space-y-1">
+                  {[
+                    { label: "Administration", href: "/admin", icon: Shield },
+                  ].map((item) => {
+                    const isActive = pathname.startsWith(item.href)
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-red-500/10 text-red-500"
+                              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          {item.label}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
           </nav>
 
           {/* Bottom Items */}

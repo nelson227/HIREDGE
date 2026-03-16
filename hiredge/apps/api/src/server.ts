@@ -20,6 +20,7 @@ import scoutRoutes from './routes/scouts';
 import edgeRoutes from './routes/edge';
 import interviewRoutes from './routes/interviews';
 import notificationRoutes from './routes/notifications';
+import adminRoutes from './routes/admin';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -107,6 +108,7 @@ async function buildServer() {
   await app.register(edgeRoutes, { prefix: '/api/v1/edge' });
   await app.register(interviewRoutes, { prefix: '/api/v1/interviews' });
   await app.register(notificationRoutes, { prefix: '/api/v1/notifications' });
+  await app.register(adminRoutes, { prefix: '/api/v1/admin' });
 
   // Global error handler
   app.setErrorHandler((error: any, request, reply) => {
