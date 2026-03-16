@@ -280,6 +280,71 @@ npx prisma db seed
 
 ---
 
+## Déploiement
+
+### Vercel — Frontend Web ✅
+
+- **Plateforme** : [Vercel](https://vercel.com)
+- **Root Directory** : `hiredge` (sous-dossier du repo)
+- **Framework** : Next.js (auto-détecté)
+- **Build Command** : `turbo run build --filter=@hiredge/web`
+- **Output Directory** : `apps/web/.next`
+- **Install Command** : `rm -f package-lock.json && npm install`
+- **Config** : `hiredge/vercel.json`
+
+**Problème résolu — Cross-platform lockfile** :
+Le `package-lock.json` généré sur Windows ne contient pas les bindings natifs Linux (`@tailwindcss/oxide-linux-x64-gnu`, `@next/swc-linux-x64-gnu`). La solution est de supprimer le lockfile dans l'install command Vercel pour que npm résolve les dépendances natives Linux.
+
+> ⚠️ **NE PAS MODIFIER** `hiredge/vercel.json` — le frontend est déployé et fonctionnel.
+
+### Railway — Backend API ✅
+
+- **Plateforme** : [Railway](https://railway.app)
+- **Root Directory** : `hiredge`
+- **Builder** : Dockerfile (`hiredge/Dockerfile`)
+- **Config** : `hiredge/railway.toml`
+- **Healthcheck** : `GET /health` (timeout 300s)
+- **Region** : us-west2
+
+**Dockerfile multi-stage (6 stages)** :
+
+| Stage | Rôle |
+|-------|------|
+| `base` | `node:20-alpine` + openssl |
+| `deps` | `npm ci` — toutes les dépendances (build + runtime) |
+| `shared-build` | Compile `@hiredge/shared` (tsc) |
+| `api-build` | `prisma generate` + compile API (`tsc` + `tsc-alias`) |
+| `prod-deps` | `npm ci --omit=dev` — dépendances production seulement |
+| `runner` | Image finale — openssl, utilisateur non-root, copies ciblées |
+
+**Problèmes résolus** :
+
+1. **`npm ci` sans lockfile** — Le monorepo nécessite un `package-lock.json` généré via `npm install` à la racine `hiredge/`
+2. **`@hiredge/shared` sans script build** — Ajout de `"build": "tsc"` dans `packages/shared/package.json` + configuration tsconfig (rootDir, declaration, noEmit:false, module:CommonJS)
+3. **`Cannot read file '/app/tsconfig.json'`** — Les tsconfig.build.json héritent du root tsconfig. Ajout de `COPY tsconfig.json ./` dans les stages `shared-build` et `api-build`
+4. **`tsc-alias` : missing `run-parallel`** — Dépendance transitive manquante (tsc-alias → globby → fast-glob → @nodelib/fs.scandir → run-parallel). Bug npm de résolution. Ajout explicite en devDependencies
+5. **Prisma binary target mismatch** — `prisma generate` générait pour `linux-musl` mais le runtime (avec openssl) attendait `linux-musl-openssl-3.0.x`. Ajout de `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]` dans `schema.prisma`
+6. **OpenSSL manquant** — Le moteur Prisma nécessite openssl sur Alpine. `apk add --no-cache openssl` ajouté dans `base` ET `runner`
+7. **Prisma client non copié dans runner** — `prisma generate` tournait dans `api-build` mais les node_modules du runner venaient de `prod-deps`. Ajout de `COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma`
+8. **`@hiredge/shared` symlink perdu** — Docker COPY suit les symlinks (workspace npm), donc `require('@hiredge/shared')` ne trouvait pas `dist/`. Ajout de `COPY --from=shared-build .../dist → node_modules/@hiredge/shared/dist`
+9. **`/app/uploads` inexistant** — `fastify-static` crash si le dossier root n'existe pas. Ajout de `mkdir -p /app/uploads`
+
+**Variables d'environnement requises sur Railway** :
+
+| Variable | Source | Obligatoire |
+|----------|--------|:-----------:|
+| `DATABASE_URL` | Railway PostgreSQL (auto) | ✅ |
+| `REDIS_URL` | Railway Redis (auto) | ✅ |
+| `JWT_SECRET` | `openssl rand -base64 32` | ✅ |
+| `JWT_REFRESH_SECRET` | `openssl rand -base64 32` | ✅ |
+| `OPENAI_API_KEY` | OpenAI | Pour IA |
+| `ANTHROPIC_API_KEY` | Anthropic | Pour IA |
+| `CORS_ORIGIN` | URL Vercel (ex: `https://hiredge.vercel.app`) | ✅ |
+
+> ⚠️ Sans `JWT_SECRET` et `JWT_REFRESH_SECRET`, l'app crash au démarrage avec `FATAL: JWT_SECRET must be set in production`.
+
+---
+
 ## Statistiques Finales
 
 | Métrique | Valeur |
