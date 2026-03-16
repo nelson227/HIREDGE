@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────
+# HIREDGE API - Railway Configuration
+# ─────────────────────────────────────────────────────────
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+numReplicas = 1
+
+# Variables d'environnement (à configurer dans Railway Dashboard)
+# DATABASE_URL        - Fourni automatiquement par Railway PostgreSQL
+# REDIS_URL           - Fourni automatiquement par Railway Redis
+# JWT_SECRET          - Générer avec: openssl rand -base64 32
+# JWT_REFRESH_SECRET  - Générer avec: openssl rand -base64 32
+# OPENAI_API_KEY      - Depuis OpenAI
+# ANTHROPIC_API_KEY   - Depuis Anthropic
+# CORS_ORIGIN         - URL du frontend Vercel (ex: https://hiredge.vercel.app)

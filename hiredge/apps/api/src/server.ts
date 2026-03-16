@@ -39,10 +39,12 @@ async function buildServer() {
   });
 
   // Plugins
+  const corsOrigins = env.NODE_ENV === 'production'
+    ? (env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['https://hiredge.app', 'https://www.hiredge.app'])
+    : true;
+  
   await app.register(cors, {
-    origin: env.NODE_ENV === 'production'
-      ? ['https://hiredge.app', 'https://www.hiredge.app']
-      : true,
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
