@@ -100,9 +100,9 @@ export class InterviewSimService {
     await prisma.interviewSimulation.update({
       where: { id: simulation.id },
       data: {
-        transcriptJson: [
+        transcriptJson: JSON.stringify([
           { role: 'interviewer', content: opening, phase: 'WARMUP', timestamp: new Date().toISOString() },
-        ],
+        ]),
       },
     });
 
@@ -124,7 +124,7 @@ export class InterviewSimService {
     }
 
     const config = simulation.config as any;
-    const messages = ((simulation.transcriptJson as any[]) ?? []);
+    const messages: any[] = simulation.transcriptJson ? JSON.parse(simulation.transcriptJson as string) : [];
     const character = config.character as InterviewCharacter;
     const questionCount = messages.filter((m: any) => m.role === 'interviewer').length;
     const totalQuestions = config.totalQuestions ?? 6;
@@ -162,9 +162,9 @@ export class InterviewSimService {
         where: { id: simulationId },
         data: {
           status: 'COMPLETED',
-          transcriptJson: messages,
+          transcriptJson: JSON.stringify(messages),
           score: debrief.overallScore,
-          analysisJson: debrief.analysis,
+          analysisJson: JSON.stringify(debrief.analysis),
         },
       });
 
@@ -200,7 +200,7 @@ export class InterviewSimService {
 
     await prisma.interviewSimulation.update({
       where: { id: simulationId },
-      data: { transcriptJson: messages },
+      data: { transcriptJson: JSON.stringify(messages) },
     });
 
     return {

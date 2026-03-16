@@ -72,7 +72,7 @@ export class EdgeService {
       const context = await this.buildContext(userId, { intent: 'GENERAL_CHAT', confidence: 1, entities: {}, requiresToolCall: false }, convId);
       const response = await this.analyzeImage(message, imageBase64, context);
       await this.saveMessages(userId, message, response.message, convId);
-      this.autoTitleConversation(convId, message).catch((err) => { request?.log?.error?.(err, 'autoTitle failed') ?? console.error('[EdgeService] autoTitle failed:', err); });
+      this.autoTitleConversation(convId, message).catch((err) => { console.error('[EdgeService] autoTitle failed:', err); });
       return { ...response, conversationId: convId };
     }
 
@@ -89,7 +89,7 @@ export class EdgeService {
     await this.saveMessages(userId, message, response.message, convId);
 
     // 5. Auto-title new conversations
-    this.autoTitleConversation(convId, message).catch((err) => { request?.log?.error?.(err, 'autoTitle failed') ?? console.error('[EdgeService] autoTitle failed:', err); });
+    this.autoTitleConversation(convId, message).catch((err) => { console.error('[EdgeService] autoTitle failed:', err); });
 
     return { ...response, conversationId: convId };
   }
@@ -494,12 +494,12 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
       }
 
       case 'MOTIVATION': {
-        const phrases = [
+        const phrases: string[] = [
           `La recherche d'emploi c'est un marathon, pas un sprint. Chaque "non" te rapproche du "oui" qui compte. Tu as ${experiences.length > 0 ? experiences[0] : 'des compétences solides'} — c'est réel et précieux.`,
           `Même les meilleurs profils essuient des refus. Ce qui fait la différence ? Ne pas lâcher. Tu es là, tu cherches — c'est déjà beaucoup.`,
           `Rappelle-toi pourquoi tu fais ça. Le bon poste existe, il faut juste qu'il croise ton chemin. On continue ?`,
         ];
-        return phrases[Math.floor(Math.random() * phrases.length)];
+        return phrases[Math.floor(Math.random() * phrases.length)]!;
       }
 
       case 'SALARY_INFO': {

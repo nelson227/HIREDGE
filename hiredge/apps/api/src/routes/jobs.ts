@@ -75,7 +75,7 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
         query: parsed.data.q,
         location: parsed.data.location,
         contractType: parsed.data.contract,
-        remote: parsed.data.remote === 'remote' ? true : parsed.data.remote === 'onsite' ? false : undefined,
+        remote: parsed.data.remote === 'REMOTE' ? true : parsed.data.remote === 'ONSITE' ? false : undefined,
         salaryMin: parsed.data.salaryMin,
         experienceLevel: parsed.data.experienceLevel,
         postedAfter: parsed.data.postedAfter ? new Date(parsed.data.postedAfter) : undefined,

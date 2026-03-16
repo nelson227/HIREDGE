@@ -108,7 +108,7 @@ async function buildServer() {
   await app.register(notificationRoutes, { prefix: '/api/v1/notifications' });
 
   // Global error handler
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: any, request, reply) => {
     app.log.error(error);
 
     const statusCode = error.statusCode ?? 500;
@@ -137,8 +137,8 @@ async function start() {
 
     await app.listen({ port: env.PORT, host: '0.0.0.0' });
     app.log.info(`🚀 HIREDGE API + WebSocket running on port ${env.PORT}`);
-  } catch (err) {
-    app.log.error(err);
+  } catch (err: unknown) {
+    app.log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
 }
