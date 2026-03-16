@@ -144,6 +144,7 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* logout failure is non-blocking */ }
     clearTokens()
+    try { sessionStorage.removeItem('adminToken') } catch {}
     window.location.href = '/login'
   }
 

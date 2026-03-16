@@ -186,6 +186,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* no-op */ }
+    try { sessionStorage.removeItem('adminToken') } catch {}
     router.push("/login")
   }
 
