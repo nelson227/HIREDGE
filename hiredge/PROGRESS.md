@@ -307,3 +307,35 @@ npx prisma db seed
 - **CI/CD** : GitHub Actions (5 jobs)
 - **Mobile Builds** : EAS Build (3 profils)
 - **Couleurs** : Primary #6C5CE7, Secondary #00CEC9, Success #00B894, Warning #FDCB6E, Danger #FF7675
+
+---
+
+## Déploiement
+
+### Vercel (Frontend Web — Next.js)
+- **Repo** : `nelson227/HIREDGE` — branche `main`
+- **Root directory** : `hiredge/` (racine du monorepo)
+- **Config** : `hiredge/vercel.json`
+- **Build command** : `turbo run build --filter=@hiredge/web`
+- **Output directory** : `apps/web/.next`
+- **Install command** : `rm -f package-lock.json && npm install`
+- **Framework** : Next.js
+
+> ⚠️ **IMPORTANT — Bindings natifs cross-platform**
+> Le `package-lock.json` généré sur Windows n'inclut pas les bindings natifs Linux nécessaires pour Vercel :
+> - `@tailwindcss/oxide-linux-x64-gnu` (Tailwind CSS v4)
+> - `@next/swc-linux-x64-gnu` / `@next/swc-linux-x64-musl` (Next.js SWC)
+> 
+> **Solution** : L'install command supprime le lockfile avant `npm install`, ce qui permet à npm de résoudre les dépendances natives pour la plateforme Linux de Vercel.
+
+### Railway (Backend API — Fastify)
+- **Config** : `hiredge/Dockerfile` (multi-stage build)
+- **Stages** : `base` → `deps` → `shared-build` → `api-build` → `prod-deps` → `runner`
+- Le package `@hiredge/shared` doit être buildé **AVANT** l'API (Turbo `dependsOn: ["^build"]`)
+- `@hiredge/shared` : `main` = `./dist/index.js`, script build = `tsc`
+- Le Dockerfile utilise `npm ci` qui nécessite un `package-lock.json` présent dans le repo
+
+### Notes déploiement
+- Toujours tester avec `npx turbo run build --filter=@hiredge/web` en local avant de push
+- Les commits sur `main` déclenchent automatiquement un déploiement Vercel et Railway
+- Si le build Vercel échoue avec des erreurs de native bindings, vérifier que l'install command supprime bien le lockfile
