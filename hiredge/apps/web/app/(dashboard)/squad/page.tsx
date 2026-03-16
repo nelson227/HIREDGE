@@ -769,12 +769,14 @@ export default function SquadPage() {
                           <p className="text-xs font-medium text-muted-foreground mb-1">{getFullName(profile)}</p>
                         )}
                         <div className={`rounded-2xl px-4 py-2.5 ${
-                          isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"
+                          isVoice
+                            ? (isOwn ? "bg-primary/15 text-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md")
+                            : (isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md")
                         }`}>
                           {isVoice ? (
                             <div className="flex items-center gap-2 min-w-[200px]">
                               <Mic className="w-4 h-4 shrink-0 opacity-60" />
-                              <audio controls preload="metadata" className="h-8 w-full [&::-webkit-media-controls-panel]:bg-transparent">
+                              <audio controls preload="metadata" className="h-8 w-full">
                                 <source src={(() => {
                                   const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
                                   const idx = msg.content.indexOf('/uploads/');
