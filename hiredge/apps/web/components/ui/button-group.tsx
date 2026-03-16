@@ -1,5 +1,6 @@
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
+import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -21,11 +22,13 @@ const buttonGroupVariants = cva(
   },
 )
 
+interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof buttonGroupVariants> {}
+
 function ButtonGroup({
   className,
   orientation,
   ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
+}: ButtonGroupProps) {
   return (
     <div
       role="group"
@@ -37,13 +40,15 @@ function ButtonGroup({
   )
 }
 
+interface ButtonGroupTextProps extends React.HTMLAttributes<HTMLDivElement> {
+  asChild?: boolean
+}
+
 function ButtonGroupText({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<'div'> & {
-  asChild?: boolean
-}) {
+}: ButtonGroupTextProps) {
   const Comp = asChild ? Slot : 'div'
 
   return (
