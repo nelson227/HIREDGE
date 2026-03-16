@@ -54,8 +54,11 @@ COPY --from=shared-build /app/packages/shared ./packages/shared
 # Copy the built dist explicitly so require('@hiredge/shared') resolves correctly
 COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
 
+# Startup script: run prisma db push then start server
+COPY start.sh ./start.sh
+
 USER hiredge
 
 EXPOSE 8080
 
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["sh", "start.sh"]
