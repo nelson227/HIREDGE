@@ -30,7 +30,7 @@ async function main() {
     }
     
     // Promouvoir le premier utilisateur
-    const first = users[0];
+    const first = users[0]!;
     if (first.role === 'ADMIN') {
       console.log(`\n${first.email} est déjà ADMIN.`);
       return;
