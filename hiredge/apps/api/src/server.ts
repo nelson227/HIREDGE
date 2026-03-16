@@ -53,6 +53,7 @@ async function buildServer() {
 
   await app.register(helmet, {
     contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
 
   await app.register(rateLimit, {
