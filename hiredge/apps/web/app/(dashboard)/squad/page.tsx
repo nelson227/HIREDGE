@@ -23,6 +23,9 @@ import {
   X,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
+import dynamic from "next/dynamic"
+
+const JitsiCall = dynamic(() => import("@/components/jitsi-call"), { ssr: false })
 
 // ─── Types ───────────────────────────────────────────────────────
 interface MemberUser {
@@ -173,6 +176,10 @@ export default function SquadPage() {
   const [creatingEvent, setCreatingEvent] = useState(false)
 
   const [mobileShowChat, setMobileShowChat] = useState(false)
+
+  // Call state
+  const [activeCall, setActiveCall] = useState<{ roomName: string; audioOnly: boolean } | null>(null)
+  const [activeCallSquadId, setActiveCallSquadId] = useState<string | null>(null)
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
 
@@ -347,6 +354,49 @@ export default function SquadPage() {
   const copyCode = (code?: string) => {
     if (code) navigator.clipboard.writeText(code)
   }
+
+  // ─── Jitsi Calls ──────────────────────────────────────────────
+  const startCall = async (audioOnly: boolean) => {
+    if (!selectedSquadId || !selectedSquad) return
+    const ts = Date.now().toString(36)
+    const safeName = selectedSquad.name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 20)
+    const roomName = `hiredge-${safeName}-${selectedSquadId.substring(0, 8)}-${ts}`
+
+    setActiveCall({ roomName, audioOnly })
+    setActiveCallSquadId(selectedSquadId)
+
+    // Send system message so others can join
+    const callType = audioOnly ? "vocal" : "vidéo"
+    try {
+      const { data } = await squadApi.sendMessage(
+        selectedSquadId,
+        `📞 Appel ${callType} démarré — Rejoignez : https://meet.jit.si/${roomName}`
+      )
+      if (data.success) setMessages(prev => [...prev, data.data])
+    } catch {
+      // call still works even if message fails
+    }
+  }
+
+  const endCall = () => {
+    setActiveCall(null)
+    setActiveCallSquadId(null)
+  }
+
+  const joinCallFromLink = (jitsiUrl: string) => {
+    const roomName = jitsiUrl.replace("https://meet.jit.si/", "")
+    if (!roomName) return
+    setActiveCall({ roomName, audioOnly: false })
+    setActiveCallSquadId(selectedSquadId)
+  }
+
+  const currentUserName = (() => {
+    const me = members.find(m => m.userId === currentUserId)
+    if (me?.user?.candidateProfile) {
+      return `${me.user.candidateProfile.firstName} ${me.user.candidateProfile.lastName}`.trim()
+    }
+    return "Membre"
+  })()
 
   function getLastMessage(sq: Squad): string {
     const msgs = sq.messages
@@ -566,10 +616,10 @@ export default function SquadPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => { setShowEventForm(true); setEventForm(f => ({ ...f, type: "CALL" })) }} title="Planifier un appel">
+                <Button variant="ghost" size="icon" onClick={() => startCall(true)} title="Appel vocal" disabled={!!activeCall}>
                   <Phone className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setShowEventForm(true); setEventForm(f => ({ ...f, type: "MEETING" })) }} title="Planifier une réunion">
+                <Button variant="ghost" size="icon" onClick={() => startCall(false)} title="Appel vidéo" disabled={!!activeCall}>
                   <Video className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowEventForm(true)} title="Planifier un événement">
@@ -618,6 +668,18 @@ export default function SquadPage() {
               </div>
             )}
 
+            {/* Active Call */}
+            {activeCall && activeCallSquadId === selectedSquadId && (
+              <div className="h-[400px] border-b border-border shrink-0">
+                <JitsiCall
+                  roomName={activeCall.roomName}
+                  displayName={currentUserName}
+                  audioOnly={activeCall.audioOnly}
+                  onClose={endCall}
+                />
+              </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3">
               {messages.length === 0 ? (
@@ -635,6 +697,26 @@ export default function SquadPage() {
                       <div key={msg.id} className="flex justify-center">
                         <div className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground max-w-sm text-center">
                           {msg.content}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Detect call messages with Jitsi link
+                  const jitsiMatch = msg.content.match(/https:\/\/meet\.jit\.si\/(\S+)/)
+                  if (jitsiMatch && msg.content.startsWith("📞")) {
+                    return (
+                      <div key={msg.id} className="flex justify-center">
+                        <div className="px-4 py-3 rounded-xl bg-primary/5 border border-primary/20 max-w-sm text-center space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            {msg.userId === currentUserId ? "Vous avez" : getFullName(msg.user?.candidateProfile) + " a"} démarré un appel
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</p>
+                          {!activeCall && (
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => joinCallFromLink(jitsiMatch[0])}>
+                              <Phone className="w-3.5 h-3.5" />Rejoindre l&apos;appel
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )
