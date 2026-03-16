@@ -16,6 +16,7 @@ RUN cd packages/shared && npm run build
 
 # Build API
 FROM deps AS api-build
+COPY tsconfig.json ./
 COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
