@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkles, Eye, EyeOff, ArrowRight } from "lucide-react"
-import { authApi } from "@/lib/api"
+import { authApi, saveTokens } from "@/lib/api"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -25,7 +25,10 @@ export default function LoginPage() {
       const { data } = await authApi.login(email, password)
       
       if (data.success) {
-        // Tokens are set as httpOnly cookies by the server
+        // Save tokens for Safari/iOS where cross-origin cookies are blocked
+        if (data.data?.accessToken && data.data?.refreshToken) {
+          saveTokens(data.data.accessToken, data.data.refreshToken)
+        }
         router.push("/dashboard")
       } else {
         setError(data.error?.message || "Erreur de connexion")

@@ -2,11 +2,47 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'ax
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api/v1';
 
+// ─── Token Manager ───────────────────────────────────────────────
+// Stores tokens in memory + localStorage to work on Safari/iOS
+// where cross-origin httpOnly cookies are blocked by ITP.
+let accessToken: string | null = null;
+
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
+export function saveTokens(access: string, refresh: string) {
+  accessToken = access;
+  if (isBrowser()) {
+    try { localStorage.setItem('refreshToken', refresh); } catch {}
+  }
+}
+
+export function clearTokens() {
+  accessToken = null;
+  if (isBrowser()) {
+    try { localStorage.removeItem('refreshToken'); } catch {}
+  }
+}
+
+function getRefreshToken(): string | null {
+  if (!isBrowser()) return null;
+  try { return localStorage.getItem('refreshToken'); } catch { return null; }
+}
+
 const api = axios.create({
   baseURL: API_URL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // Send httpOnly cookies automatically
+  withCredentials: true, // Keep cookies as fallback for same-origin / Chrome
+});
+
+// Request interceptor — inject Authorization header if we have a token
+api.interceptors.request.use((config) => {
+  if (accessToken && config.headers) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
 });
 
 // Extend axios config type for retry logic
@@ -23,7 +59,7 @@ function onRefreshDone(success: boolean) {
   refreshSubscribers = [];
 }
 
-// Response interceptor — handle token refresh via httpOnly cookies
+// Response interceptor — handle token refresh
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
@@ -48,14 +84,22 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        // Send refreshToken in body (works even when cookies are blocked)
+        const storedRefresh = getRefreshToken();
+        const { data } = await axios.post(
+          `${API_URL}/auth/refresh`,
+          storedRefresh ? { refreshToken: storedRefresh } : {},
+          { withCredentials: true },
+        );
 
-        if (data.success) {
+        if (data.success && data.data) {
+          saveTokens(data.data.accessToken, data.data.refreshToken);
           isRefreshing = false;
           onRefreshDone(true);
           return api(originalRequest);
         }
       } catch {
+        clearTokens();
         isRefreshing = false;
         onRefreshDone(false);
         return Promise.reject(error);

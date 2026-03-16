@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkles, Eye, EyeOff, ArrowRight, Check } from "lucide-react"
-import { authApi, profileApi } from "@/lib/api"
+import { authApi, profileApi, saveTokens } from "@/lib/api"
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -40,7 +40,10 @@ export default function SignupPage() {
       const { data } = await authApi.register({ email, password, firstName, lastName })
       
       if (data.success) {
-        // Tokens are set as httpOnly cookies by the server
+        // Save tokens for Safari/iOS where cross-origin cookies are blocked
+        if (data.data?.accessToken && data.data?.refreshToken) {
+          saveTokens(data.data.accessToken, data.data.refreshToken)
+        }
         
         // Update profile with first/last name
         try {

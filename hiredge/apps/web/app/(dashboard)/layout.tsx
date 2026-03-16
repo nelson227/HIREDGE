@@ -26,7 +26,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { profileApi, authApi, notificationsApi } from "@/lib/api"
+import { profileApi, authApi, notificationsApi, clearTokens } from "@/lib/api"
 
 const sidebarItems = [
   { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
@@ -115,6 +115,7 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* logout failure is non-blocking */ }
+    clearTokens()
     window.location.href = '/login'
   }
 
