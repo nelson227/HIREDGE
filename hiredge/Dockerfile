@@ -10,6 +10,7 @@ RUN npm ci
 
 # Build shared package
 FROM deps AS shared-build
+COPY tsconfig.json ./
 COPY packages/shared/ ./packages/shared/
 RUN cd packages/shared && npm run build
 
