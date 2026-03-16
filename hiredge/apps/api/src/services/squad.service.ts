@@ -76,12 +76,12 @@ export class SquadService {
     }
 
     const member = await prisma.squadMember.create({
-      data: { squadId, userId, role: 'MEMBER' },
+      data: { squadId: squad.id, userId, role: 'MEMBER' },
     });
 
     // Auto-activate if minimum reached
     if (squad.members.length + 1 >= SQUAD_LIMITS.MIN_MEMBERS && squad.status === 'FORMING') {
-      await prisma.squad.update({ where: { id: squadId }, data: { status: 'ACTIVE' } });
+      await prisma.squad.update({ where: { id: squad.id }, data: { status: 'ACTIVE' } });
     }
 
     return member;
