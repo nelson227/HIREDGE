@@ -775,7 +775,11 @@ export default function SquadPage() {
                             <div className="flex items-center gap-2 min-w-[200px]">
                               <Mic className="w-4 h-4 shrink-0 opacity-60" />
                               <audio controls preload="metadata" className="h-8 w-full [&::-webkit-media-controls-panel]:bg-transparent">
-                                <source src={msg.content} />
+                                <source src={(() => {
+                                  const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
+                                  const idx = msg.content.indexOf('/uploads/');
+                                  return idx >= 0 ? `${base}${msg.content.slice(idx)}` : msg.content;
+                                })()} />
                               </audio>
                             </div>
                           ) : (

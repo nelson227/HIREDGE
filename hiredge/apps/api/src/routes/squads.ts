@@ -3,7 +3,6 @@ import { sendSquadMessageSchema } from '@hiredge/shared';
 import { squadService } from '../services/squad.service';
 import { squadMatchingService } from '../services/squad-matching.service';
 import { AppError } from '../services/auth.service';
-import { config } from '../config/env';
 import prisma from '../db/prisma';
 import path from 'path';
 import fs from 'fs/promises';
@@ -261,7 +260,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       const filePath = path.join(voiceDir, filename);
       await fs.writeFile(filePath, buffer);
 
-      const voiceUrl = `${config.apiUrl}/uploads/voice/${id}/${filename}`;
+      const voiceUrl = `/uploads/voice/${id}/${filename}`;
 
       // Create message with VOICE type
       const message = await squadService.sendMessage(request.user.id, id, {
