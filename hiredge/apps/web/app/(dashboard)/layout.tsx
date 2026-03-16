@@ -53,7 +53,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string } | null>(null)
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string; avatarUrl?: string | null } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
 
@@ -66,6 +66,7 @@ export default function DashboardLayout({
             firstName: data.data.firstName || '',
             lastName: data.data.lastName || '',
             email: data.data.user?.email || '',
+            avatarUrl: data.data.avatarUrl || null,
           })
           setAuthChecked(true)
         }
@@ -78,6 +79,7 @@ export default function DashboardLayout({
               firstName: data.data.candidateProfile?.firstName || data.data.email?.split('@')[0] || '',
               lastName: data.data.candidateProfile?.lastName || '',
               email: data.data.email || '',
+              avatarUrl: data.data.candidateProfile?.avatarUrl || null,
             })
             setAuthChecked(true)
           }
@@ -216,8 +218,12 @@ export default function DashboardLayout({
             {/* User Info */}
             <div className="mt-4 p-3 rounded-lg bg-sidebar-accent">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-sidebar-primary flex items-center justify-center">
-                  <span className="text-sm font-semibold text-sidebar-primary-foreground">{userInitials}</span>
+                <div className="w-9 h-9 rounded-full bg-sidebar-primary flex items-center justify-center overflow-hidden">
+                  {userInfo?.avatarUrl ? (
+                    <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${userInfo.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-semibold text-sidebar-primary-foreground">{userInitials}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>

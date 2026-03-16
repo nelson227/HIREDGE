@@ -119,6 +119,8 @@ interface AvailableSquad {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'
+
 function getInitials(profile?: { firstName: string; lastName: string } | null) {
   if (!profile) return "?"
   return `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase()
@@ -891,10 +893,12 @@ export default function SquadPage() {
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => { if (menuOpenId !== msg.id && emojiPickerMsgId !== msg.id) setHoveredMsgId(null) }}
                     >
-                      <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
+                      <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold overflow-hidden ${
                         isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}>
-                        {initials}
+                        {profile?.avatarUrl ? (
+                          <img src={`${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                        ) : initials}
                       </div>
                       <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
                         {!isOwn && profile && (
@@ -1141,10 +1145,12 @@ export default function SquadPage() {
                   return (
                     <div key={member.id} className="flex items-center gap-3">
                       <div className="relative">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold ${
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden ${
                           isMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                         }`}>
-                          {initials}
+                          {profile?.avatarUrl ? (
+                            <img src={`${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                          ) : initials}
                         </div>
                         <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background ${statusColor(status)}`} />
                       </div>

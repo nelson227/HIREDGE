@@ -183,6 +183,46 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // POST /profile/avatar — Upload profile picture
+  fastify.post('/avatar', async (request, reply) => {
+    try {
+      const data = await request.file();
+      if (!data) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'NO_FILE', message: 'Aucun fichier envoyé' },
+        });
+      }
+
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedMimes.includes(data.mimetype)) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'INVALID_FORMAT', message: 'Format non supporté. Utilisez JPG, PNG ou WebP.' },
+        });
+      }
+
+      const buffer = await data.toBuffer();
+      if (buffer.length > 10 * 1024 * 1024) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'FILE_TOO_LARGE', message: 'Le fichier est trop volumineux.' },
+        });
+      }
+
+      const avatarUrl = await profileService.uploadAvatar(request.user.id, buffer, data.mimetype);
+      return reply.send({ success: true, data: { avatarUrl } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: { code: err.code, message: err.message },
+        });
+      }
+      throw err;
+    }
+  });
+
   // POST /profile/cv — Upload and parse CV (PDF or DOCX)
   fastify.post('/cv', async (request, reply) => {
     try {

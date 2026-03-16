@@ -22,6 +22,7 @@ import {
   Upload,
   FileText,
   AlertCircle,
+  Camera,
 } from "lucide-react"
 import { profileApi } from "@/lib/api"
 
@@ -64,6 +65,7 @@ interface ProfileData {
   portfolioUrl: string
   completionScore: number
   cvUrl: string | null
+  avatarUrl: string | null
   skills: Skill[]
   experiences: Experience[]
   educations: Education[]
@@ -92,6 +94,10 @@ export default function ProfilePage() {
   const [newEdu, setNewEdu] = useState({ institution: "", degree: "", field: "", startDate: "", endDate: "", current: false })
   const [feedbackMsg, setFeedbackMsg] = useState("")
   const showFeedback = (msg: string) => { setFeedbackMsg(msg); setTimeout(() => setFeedbackMsg(""), 3000) }
+
+  // Avatar upload state
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // CV upload state
   const cvInputRef = useRef<HTMLInputElement>(null)
@@ -176,6 +182,36 @@ export default function ProfilePage() {
     if (!confirm("Supprimer cette formation ?")) return
     try { await profileApi.removeEducation(eduId); await loadProfile() }
     catch { showFeedback("Erreur lors de la suppression") }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp"]
+    if (!validTypes.includes(file.type)) {
+      showFeedback("Format non supporté. Utilisez JPG, PNG ou WebP.")
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showFeedback("Le fichier est trop volumineux.")
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const { data } = await profileApi.uploadAvatar(file)
+      if (data.success) {
+        await loadProfile()
+      } else {
+        showFeedback(data.error?.message || "Erreur lors de l'envoi")
+      }
+    } catch (err: any) {
+      showFeedback(err.response?.data?.error?.message || "Erreur lors de l'envoi de la photo")
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,10 +345,34 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 rounded-2xl bg-primary flex items-center justify-center">
-                    <span className="text-3xl font-bold text-primary-foreground">
-                      {(profile.firstName?.[0] || "")}{(profile.lastName?.[0] || "")}
-                    </span>
+                  <div className="relative group/avatar">
+                    <div className="w-24 h-24 rounded-2xl bg-primary flex items-center justify-center overflow-hidden">
+                      {profile.avatarUrl ? (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8083'}${profile.avatarUrl}`}
+                          alt="Photo de profil"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-3xl font-bold text-primary-foreground">
+                          {(profile.firstName?.[0] || "")}{(profile.lastName?.[0] || "")}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary border-2 border-background flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors shadow-md"
+                    >
+                      {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    </button>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
                   </div>
                   <div className="flex-1 space-y-4">
                     <div>
