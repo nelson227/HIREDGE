@@ -437,4 +437,49 @@ Chez TechCorp :    40K - 46K€ (basé sur 5 data points)
 
 ---
 
-*Document de features — Version 1.0*
+## 10. PANNEAU D'ADMINISTRATION ✅ IMPLÉMENTÉ
+
+### 10.1 Authentification Admin Dédiée
+
+- **Login séparé** : page `/admin/login` avec email et mot de passe
+- **Sécurité renforcée** : mot de passe hashé avec bcrypt, token JWT dédié (2h d'expiration)
+- **Stockage session** : token admin stocké en `sessionStorage` (non persistant entre onglets)
+- **Guard automatique** : redirection vers `/admin/login` si pas de token valide
+- **Nettoyage session** : token admin supprimé automatiquement lors du logout principal
+
+### 10.2 Dashboard Admin
+
+**Statistiques plateforme :**
+- Nombre total d'utilisateurs, d'offres, de candidatures, d'escouades
+- Répartition par rôle (CANDIDATE, SCOUT, RECRUITER, ADMIN)
+- Répartition par abonnement (FREE, PREMIUM)
+- Inscriptions récentes (7 derniers jours)
+- Utilisateurs actifs (7 derniers jours)
+
+### 10.3 Gestion des Utilisateurs
+
+**Fonctionnalités :**
+- **Liste paginée** : tous les utilisateurs avec leur rôle, abonnement, date d'inscription
+- **Recherche** : filtrer par email ou nom
+- **Filtres** : par rôle (CANDIDATE, SCOUT, RECRUITER, ADMIN) et par abonnement (FREE, PREMIUM)
+- **Tri** : par date d'inscription, dernière activité, email
+- **Détail utilisateur** : profil complet avec statistiques d'activité
+- **Modifier le rôle** : promouvoir/rétrograder un utilisateur
+- **Modifier l'abonnement** : changer le tier d'abonnement
+- **Supprimer un utilisateur** : suppression avec confirmation
+
+### 10.4 Endpoints API Admin
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/admin/verify-access` | POST | Authentification admin (bcrypt + JWT) |
+| `/admin/stats` | GET | Statistiques globales de la plateforme |
+| `/admin/users` | GET | Liste paginée des utilisateurs (filtres, recherche, tri) |
+| `/admin/users/:id` | GET | Détail d'un utilisateur |
+| `/admin/users/:id/role` | PATCH | Modifier le rôle d'un utilisateur |
+| `/admin/users/:id/subscription` | PATCH | Modifier l'abonnement d'un utilisateur |
+| `/admin/users/:id` | DELETE | Supprimer un utilisateur |
+
+---
+
+*Document de features — Version 1.1*

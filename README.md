@@ -188,6 +188,14 @@ Chaque utilisateur reçoit un agent IA qui :
 - **Photo de profil** : upload avatar (JPG/PNG/WebP), affichée partout (profil, chat, sidebar)
 - Score de complétion
 
+### Panneau d'Administration
+- **Dashboard admin** : statistiques plateforme (users, jobs, candidatures, escouades)
+- **Gestion utilisateurs** : liste paginée, filtres (rôle, abonnement), recherche, tri
+- **Actions admin** : modifier rôle, modifier abonnement, supprimer utilisateur
+- **Authentification admin dédiée** : login séparé avec email/mot de passe (bcrypt + JWT 2h)
+- **Guard de sécurité** : vérification du token admin en sessionStorage + rôle ADMIN
+- **Session admin** : nettoyée automatiquement lors du logout principal
+
 ---
 
 ## 📊 Métriques Clés (KPIs)
@@ -215,8 +223,8 @@ Chaque utilisateur reçoit un agent IA qui :
 ## 📞 Contact
 
 - **Projet** : HIREDGE
-- **Statut** : ✅ MVP complet — en production (Web + API + Mobile)
-- **Dernière mise à jour** : Mars 2026
+- **Statut** : ✅ MVP complet — en production (Web + API + Mobile) + Panneau Admin
+- **Dernière mise à jour** : Mars 2026 (Session 14)
 - **Équipe** : En cours de constitution
 
 ---

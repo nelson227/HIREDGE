@@ -517,7 +517,105 @@ Omar reçoit une offre de Orange : 38K€
 
 ---
 
-## 7. WORKFLOW COMPLET — SCHÉMA GLOBAL
+## 8. PARCOURS ADMINISTRATEUR ✅
+
+### 8.1 Connexion Admin
+
+```
+Administrateur accède à /admin
+                │
+                ▼
+┌──────────────────────────────────────────────────────────┐
+│  GUARD : Vérification sessionStorage('adminToken')        │
+│                                                            │
+│  Token absent ? → Redirection vers /admin/login            │
+│  Token présent ? → Vérification rôle ADMIN via API         │
+│                    → Si OK : afficher le dashboard          │
+│                    → Si KO : redirection vers /admin/login  │
+└──────────────────────────────────────────────────────────┘
+                │
+                ▼ (redirigé vers /admin/login)
+┌──────────────────────────────────────────────────────────┐
+│  PAGE LOGIN ADMIN                                         │
+│                                                            │
+│  🛡️                                                      │
+│  "Administration HIREDGE"                                 │
+│                                                            │
+│  [ Email admin          ]                                 │
+│  [ Mot de passe     👁️ ]                                 │
+│                                                            │
+│  [ 🔐 Se connecter ]                                     │
+│                                                            │
+│  → Appel POST /admin/verify-access                        │
+│  → Si succès : stockage adminToken en sessionStorage       │
+│  → Redirection vers /admin                                │
+│                                                            │
+│  → Si échec : "Email ou mot de passe incorrect"           │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 8.2 Dashboard Admin
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  PANNEAU D'ADMINISTRATION                                 │
+│                                                            │
+│  📊 Statistiques Plateforme                               │
+│                                                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ 247      │  │ 1834     │  │ 523      │  │ 45       │ │
+│  │ Users    │  │ Jobs     │  │ Applis   │  │ Squads   │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│                                                            │
+│  Par rôle : CANDIDATE 230 | SCOUT 10 | RECRUITER 5       │
+│  Par abonnement : FREE 200 | PREMIUM 47                   │
+│  Inscrits 7j : 12 | Actifs 7j : 89                       │
+│                                                            │
+│  [📋 Gérer les utilisateurs]                              │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 8.3 Gestion des Utilisateurs
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  GESTION DES UTILISATEURS                                 │
+│                                                            │
+│  [ 🔍 Rechercher par email ou nom... ]                    │
+│  [ Rôle ▼ ] [ Abonnement ▼ ] [ Trier par ▼ ]            │
+│                                                            │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │ Email              │ Rôle      │ Abo    │ Actions  │  │
+│  ├────────────────────┼───────────┼────────┼──────────┤  │
+│  │ user1@email.com    │ CANDIDATE │ FREE   │ 📝 🗑️   │  │
+│  │ scout@email.com    │ SCOUT     │ PREMIUM│ 📝 🗑️   │  │
+│  │ admin@hiredge.app  │ ADMIN     │ PREMIUM│ 📝       │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                            │
+│  Actions disponibles :                                    │
+│  📝 Modifier : changer rôle (CANDIDATE/SCOUT/RECRUITER/  │
+│     ADMIN) ou abonnement (FREE/PREMIUM)                   │
+│  🗑️ Supprimer : suppression avec confirmation             │
+│                                                            │
+│  ◀ Page 1 / 13 ▶                                         │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 8.4 Sécurité Admin
+
+```
+Mesures de sécurité :
+├── Mot de passe admin hashé avec bcrypt (coût 12)
+├── Token JWT dédié (2h d'expiration, distinct du token utilisateur)
+├── Stockage en sessionStorage (pas localStorage — non persistant)
+├── Double vérification : token admin + rôle ADMIN en base
+├── Nettoyage automatique : token admin supprimé lors du logout principal
+└── Endpoint verify-access placé AVANT le preHandler requireRole('ADMIN')
+```
+
+---
+
+## 9. WORKFLOW COMPLET — SCHÉMA GLOBAL
 
 ```
 INSCRIPTION ──► PROFIL IA ──► ESCOUADE ASSIGNÉE
@@ -574,4 +672,4 @@ INSCRIPTION ──► PROFIL IA ──► ESCOUADE ASSIGNÉE
 
 ---
 
-*Document de workflow — Version 1.0*
+*Document de workflow — Version 1.1*

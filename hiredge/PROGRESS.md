@@ -1,7 +1,7 @@
 # HIREDGE — Suivi de Progression
 
 > Document de suivi automatique du développement de l'application HIREDGE.
-> Dernière mise à jour : **Session 13 — Mars 2026**
+> Dernière mise à jour : **Session 14 — Mars 2026**
 
 ---
 
@@ -29,6 +29,7 @@
 | **Appels vidéo (Jitsi)** | 100% | ✅ Complet |
 | **Interactions messages** | 100% | ✅ Complet |
 | **Photo de profil (Avatar)** | 100% | ✅ Complet |
+| **Panneau d'administration** | 100% | ✅ Complet |
 
 **Progression globale : 100% ✅ PROJET COMPLET + FONCTIONNALITÉS AVANCÉES**
 
@@ -61,7 +62,7 @@
 - [x] `lib/redis.ts` — Client Redis avec retry + mode résilient (pas de crash si Redis down)
 - [x] `lib/websocket.ts` — Socket.io server
 - [x] `middleware/auth.ts` — JWT auth + role guard
-- [x] `server.ts` — Fastify entry point, CORS, Helmet (cross-origin resource policy), multipart (10MB), static files `/uploads/`
+- [x] `server.ts` — Fastify entry point, CORS, Helmet (cross-origin resource policy), multipart (10MB), static files `/uploads/`, Socket.io temps réel
 
 #### Services & Routes (9/9 modules)
 | Module | Service | Routes | Description |
@@ -75,6 +76,7 @@
 | EDGE AI | ✅ | ✅ | Détection d'intention, contexte, réponse IA |
 | Interview Sim | ✅ | ✅ | Multi-phase, personnage, évaluation temps réel |
 | Notifications | ✅ | ✅ | CRUD, unread count, mark as read |
+| Admin | ✅ | ✅ | Stats plateforme, gestion utilisateurs, rôles, abonnements, login admin dédié |
 
 #### Workers
 - [x] Matching Worker (recalcule les recommandations)
@@ -164,6 +166,9 @@
 | Analytics | `/analytics` | Statistiques personnelles détaillées |
 | Notifications | `/notifications` | Centre de notifications |
 | Paramètres | `/settings` | Préférences, compte, données personnelles |
+| Admin Dashboard | `/admin` | Panneau d'administration (stats, gestion utilisateurs) |
+| Admin Login | `/admin/login` | Authentification admin dédiée (email/mot de passe) |
+| Admin Users | `/admin/users` | Liste des utilisateurs avec filtres, rôles, abonnements |
 
 #### Escouades Web — Fonctionnalités avancées ✅
 - [x] **Layout 3 panneaux** : Liste escouades (gauche) + Chat (centre) + Membres/événements (droite)
@@ -301,6 +306,22 @@ HIREDGE cible exclusivement le **marché canadien** au lancement. Les offres son
 - **Squad Chat** : photos de profil affichées à côté des messages et dans la liste des membres
 - **Sidebar Layout** : avatar utilisateur dans le menu latéral affiche la photo si disponible
 - Partout où les initiales s'affichaient, la photo de profil est maintenant prioritaire
+
+### Session 14 : Panneau d'Administration & Sécurité
+- **Backend — Admin Service** : `admin.service.ts` — statistiques plateforme (users, jobs, applications, squads, by role/subscription), liste utilisateurs paginée avec filtres (recherche, rôle, abonnement, tri), détail utilisateur, modification rôle/abonnement, suppression utilisateur
+- **Backend — Admin Routes** : `routes/admin.ts` — 7 endpoints :
+  - `POST /admin/verify-access` : authentification admin dédiée (bcrypt + JWT 2h, avant le preHandler ADMIN)
+  - `GET /admin/stats` : statistiques globales
+  - `GET /admin/users` : liste utilisateurs paginée avec filtres
+  - `GET /admin/users/:id` : détail utilisateur
+  - `PATCH /admin/users/:id/role` : modifier le rôle
+  - `PATCH /admin/users/:id/subscription` : modifier l'abonnement
+  - `DELETE /admin/users/:id` : supprimer un utilisateur
+- **Web — Admin Dashboard** (`/admin`) : statistiques plateforme (total users, jobs, candidatures, escouades), graphiques par rôle et abonnement, guard sessionStorage + vérification rôle ADMIN
+- **Web — Admin Login** (`/admin/login`) : page d'authentification admin dédiée avec email/mot de passe, icône Shield, stockage du token admin en sessionStorage
+- **Web — Admin Users** (`/admin/users`) : table de gestion avec recherche, filtres rôle/abonnement, tri, détails utilisateur, modification rôle et abonnement
+- **Sécurité** : session admin (sessionStorage) supprimée automatiquement lors du logout principal (layout + settings)
+- **Socket.io temps réel** : refactoring pour connexion persistante avec rooms par escouade
 |---------|------|
 | `src/services/adzuna.service.ts` | Client Adzuna API — recherche, import, déduplique, normalise |
 | `src/services/jsearch.service.ts` | Client JSearch/RapidAPI — agrège LinkedIn/Indeed/Glassdoor, normalise salaires (horaire/mensuel → annuel), extrait ville/pays |

@@ -161,6 +161,13 @@
 - [x] Responsive design (mobile-first) ✅
 - [x] Déployé sur Vercel ✅
 
+#### Panneau d'Administration ✅
+- [x] Dashboard admin avec statistiques plateforme ✅
+- [x] Gestion des utilisateurs (liste, filtres, recherche, tri) ✅
+- [x] Actions admin (modifier rôle, modifier abonnement, supprimer) ✅
+- [x] Authentification admin dédiée (bcrypt + JWT, page login séparée) ✅
+- [x] Guard de sécurité (sessionStorage + vérification rôle ADMIN) ✅
+
 ### Croissance
 - [ ] Programme de parrainage (invite un ami → 1 mois premium gratuit)
 - [ ] Partenariats avec 5-10 universités/écoles

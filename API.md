@@ -1093,4 +1093,159 @@ Historique des factures.
 
 ---
 
-*Document API — Version 1.0*
+## 14. ADMIN SERVICE ✅
+
+> Endpoints réservés aux administrateurs. Nécessite un rôle `ADMIN` (sauf `verify-access`).
+
+### POST /admin/verify-access
+Authentification admin dédiée (sans preHandler ADMIN).
+
+**Body :**
+```json
+{
+  "email": "admin@hiredge.app",
+  "password": "MotDePasseAdmin"
+}
+```
+
+**Response 200 :**
+```json
+{
+  "success": true,
+  "data": {
+    "adminToken": "eyJhbG..."
+  }
+}
+```
+
+**Erreurs :**
+| Code | Message |
+|------|---------|
+| 400 | Email et mot de passe requis |
+| 401 | Identifiants admin invalides |
+
+**Notes :**
+- Le mot de passe est vérifié via bcrypt (hash stocké côté serveur)
+- Le token JWT retourné a une durée de vie de 2 heures
+- Ce token est distinct du token d'authentification utilisateur classique
+- Stocké en `sessionStorage` côté client (non persistant entre onglets)
+
+---
+
+### GET /admin/stats
+Statistiques globales de la plateforme.
+
+**Response 200 :**
+```json
+{
+  "success": true,
+  "data": {
+    "totalUsers": 247,
+    "totalJobs": 1834,
+    "totalApplications": 523,
+    "totalSquads": 45,
+    "recentSignups": 12,
+    "activeUsersLast7d": 89,
+    "usersByRole": {
+      "CANDIDATE": 230,
+      "SCOUT": 10,
+      "RECRUITER": 5,
+      "ADMIN": 2
+    },
+    "usersBySubscription": {
+      "FREE": 200,
+      "PREMIUM": 47
+    }
+  }
+}
+```
+
+---
+
+### GET /admin/users
+Liste des utilisateurs avec pagination et filtres.
+
+**Query params :**
+| Param | Type | Description |
+|-------|------|-------------|
+| page | int | Page (default: 1) |
+| limit | int | Par page (default: 20) |
+| search | string | Recherche par email ou nom |
+| role | string | Filtrer par rôle (CANDIDATE, SCOUT, RECRUITER, ADMIN) |
+| subscriptionTier | string | Filtrer par abonnement (FREE, PREMIUM) |
+| sortBy | string | Champ de tri (createdAt, lastActiveAt, email) |
+| sortOrder | string | Ordre de tri (asc, desc) |
+
+**Response 200 :**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-xxx",
+      "email": "user@example.com",
+      "role": "CANDIDATE",
+      "subscriptionTier": "FREE",
+      "createdAt": "2026-03-01T10:00:00Z",
+      "lastActiveAt": "2026-03-12T14:00:00Z",
+      "profile": {
+        "firstName": "Aminata",
+        "lastName": "Ngo",
+        "title": "Dev React"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 247,
+    "totalPages": 13
+  }
+}
+```
+
+---
+
+### GET /admin/users/:id
+Détail complet d'un utilisateur.
+
+---
+
+### PATCH /admin/users/:id/role
+Modifier le rôle d'un utilisateur.
+
+**Body :**
+```json
+{
+  "role": "ADMIN"
+}
+```
+
+---
+
+### PATCH /admin/users/:id/subscription
+Modifier l'abonnement d'un utilisateur.
+
+**Body :**
+```json
+{
+  "subscriptionTier": "PREMIUM"
+}
+```
+
+---
+
+### DELETE /admin/users/:id
+Supprimer un utilisateur.
+
+**Response 200 :**
+```json
+{
+  "success": true,
+  "message": "Utilisateur supprimé"
+}
+```
+
+---
+
+*Document API — Version 1.1*

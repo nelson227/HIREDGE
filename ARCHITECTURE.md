@@ -368,7 +368,28 @@ Dépendances :
 ├── PostgreSQL (subscriptions, invoices)
 └── Notification Service (emails de confirmation)
 ```
+### 3.12 Admin Service (Node.js) ✅
 
+```
+Responsabilités :
+├── Authentification admin dédiée (bcrypt + JWT 2h)
+├── Dashboard de statistiques plateforme
+│   ├── Total utilisateurs, offres, candidatures, escouades
+│   ├── Répartition par rôle et abonnement
+│   ├── Inscriptions et activité récentes
+├── Gestion des utilisateurs
+│   ├── Liste paginée avec filtres (rôle, abonnement, recherche)
+│   ├── Détail utilisateur complet
+│   ├── Modification de rôle
+│   ├── Modification d'abonnement
+│   └── Suppression d'utilisateur
+└── Guard de sécurité (preHandler requireRole ADMIN)
+
+Dépendances :
+├── PostgreSQL (users, profiles, stats)
+├── Auth middleware (JWT + role guard)
+└── bcryptjs (vérification mot de passe admin)
+```
 ---
 
 ## 4. SCHÉMA DE BASE DE DONNÉES (SIMPLIFIÉ)
@@ -696,4 +717,4 @@ Temps réel (WebSockets / Socket.io) :
 
 ---
 
-*Document d'architecture — Version 1.0*
+*Document d'architecture — Version 1.1*
