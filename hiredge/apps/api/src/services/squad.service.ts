@@ -1,19 +1,33 @@
+import crypto from 'crypto';
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
 import { SQUAD_LIMITS } from '@hiredge/shared';
 
+function generateSquadCode(): string {
+  return crypto.randomBytes(3).toString('hex').toUpperCase(); // e.g. "A3F2B1"
+}
+
 export class SquadService {
   async createSquad(userId: string, data: { name: string; description?: string; industry?: string }) {
-    // Check if user is already in a squad
+    // Check if user is already in a squad (FORMING or ACTIVE)
     const existing = await prisma.squadMember.findFirst({
-      where: { userId, squad: { status: 'ACTIVE' } },
+      where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
     if (existing) {
       throw new AppError('ALREADY_IN_SQUAD', 'Vous êtes déjà membre d\'une escouade active', 409);
     }
 
+    // Generate a unique code (retry on collision)
+    let code = generateSquadCode();
+    for (let i = 0; i < 5; i++) {
+      const exists = await prisma.squad.findUnique({ where: { code } });
+      if (!exists) break;
+      code = generateSquadCode();
+    }
+
     const squad = await prisma.squad.create({
       data: {
+        code,
         name: data.name,
         description: data.description,
         industry: data.industry,
@@ -32,19 +46,26 @@ export class SquadService {
     return squad;
   }
 
-  async joinSquad(userId: string, squadId: string) {
-    // Check if user is already in a squad
+  async joinSquad(userId: string, codeOrId: string) {
+    // Check if user is already in a squad (FORMING or ACTIVE)
     const existingMembership = await prisma.squadMember.findFirst({
-      where: { userId, squad: { status: 'ACTIVE' } },
+      where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
     if (existingMembership) {
       throw new AppError('ALREADY_IN_SQUAD', 'Vous êtes déjà membre d\'une escouade', 409);
     }
 
-    const squad = await prisma.squad.findUnique({
-      where: { id: squadId },
+    // Try to find by code first, then by id
+    let squad = await prisma.squad.findUnique({
+      where: { code: codeOrId },
       include: { members: true },
     });
+    if (!squad) {
+      squad = await prisma.squad.findUnique({
+        where: { id: codeOrId },
+        include: { members: true },
+      });
+    }
 
     if (!squad) throw new AppError('SQUAD_NOT_FOUND', 'Escouade introuvable', 404);
     if (squad.status !== 'FORMING' && squad.status !== 'ACTIVE') {

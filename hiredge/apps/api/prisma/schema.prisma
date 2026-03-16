@@ -242,6 +242,7 @@ model Application {
 
 model Squad {
   id          String      @id @default(uuid())
+  code        String?     @unique
   name        String
   description String?
   industry    String?
