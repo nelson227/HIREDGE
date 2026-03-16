@@ -75,7 +75,7 @@ async function cleanNonCanadianJobs() {
     select: { companyId: true },
     distinct: ['companyId'],
   });
-  const companyIdsWithJobs = companiesWithJobs.map(j => j.companyId);
+  const companyIdsWithJobs = companiesWithJobs.map((j: { companyId: string }) => j.companyId);
   
   const deletedOrphanCompanies = await prisma.company.deleteMany({
     where: {
@@ -94,7 +94,7 @@ async function cleanNonCanadianJobs() {
     distinct: ['location'],
   });
   console.log(`\n🗺️ Localisations restantes:`);
-  remainingLocations.forEach(l => console.log(`   - ${l.location}`));
+  remainingLocations.forEach((l: { location: string | null }) => console.log(`   - ${l.location}`));
 }
 
 cleanNonCanadianJobs()

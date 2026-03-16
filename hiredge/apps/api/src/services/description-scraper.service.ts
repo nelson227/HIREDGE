@@ -135,7 +135,7 @@ export class DescriptionScraperService {
 
     // Filtrer ceux avec description courte
     const pending = jobs
-      .filter(j => j.sourceUrl && j.description.length < minLength)
+      .filter((j: { id: string; sourceUrl: string | null; description: string }) => j.sourceUrl && j.description.length < minLength)
       .slice(0, limit);
 
     const results: ScrapeResult[] = [];
@@ -229,7 +229,7 @@ export class DescriptionScraperService {
     let bestText = '';
     let bestLength = 0;
 
-    $('div, section, article').each((_, el) => {
+    $('div, section, article').each((_: number, el: any) => {
       const $el = $(el);
       // Ignorer les éléments avec trop de descendants (c'est probablement un wrapper)
       if ($el.children().length > 20) return;

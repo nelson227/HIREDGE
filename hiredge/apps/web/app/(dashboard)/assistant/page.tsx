@@ -483,7 +483,7 @@ export default function AssistantPage() {
                     variant="ghost"
                     size="icon"
                     className="w-6 h-6 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
                       deleteConversation(conv.id)
                     }}

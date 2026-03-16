@@ -34,7 +34,7 @@ async function cleanFakeData() {
     select: { companyId: true },
     distinct: ['companyId'],
   });
-  const companyIdsWithJobs = companiesWithJobs.map(j => j.companyId);
+  const companyIdsWithJobs = companiesWithJobs.map((j: { companyId: string }) => j.companyId);
   
   const deletedOrphanCompanies = await prisma.company.deleteMany({
     where: {
