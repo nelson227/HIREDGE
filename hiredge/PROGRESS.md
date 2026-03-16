@@ -1,7 +1,7 @@
 # HIREDGE — Suivi de Progression
 
 > Document de suivi automatique du développement de l'application HIREDGE.
-> Dernière mise à jour : **Session 12 — Mars 2026**
+> Dernière mise à jour : **Session 13 — Mars 2026**
 
 ---
 
@@ -28,6 +28,7 @@
 | **Messages vocaux** | 100% | ✅ Complet |
 | **Appels vidéo (Jitsi)** | 100% | ✅ Complet |
 | **Interactions messages** | 100% | ✅ Complet |
+| **Photo de profil (Avatar)** | 100% | ✅ Complet |
 
 **Progression globale : 100% ✅ PROJET COMPLET + FONCTIONNALITÉS AVANCÉES**
 
@@ -60,13 +61,13 @@
 - [x] `lib/redis.ts` — Client Redis avec retry + mode résilient (pas de crash si Redis down)
 - [x] `lib/websocket.ts` — Socket.io server
 - [x] `middleware/auth.ts` — JWT auth + role guard
-- [x] `server.ts` — Fastify entry point, CORS, Helmet (cross-origin resource policy), multipart (5MB), static files `/uploads/`
+- [x] `server.ts` — Fastify entry point, CORS, Helmet (cross-origin resource policy), multipart (10MB), static files `/uploads/`
 
 #### Services & Routes (9/9 modules)
 | Module | Service | Routes | Description |
 |--------|:-------:|:------:|-------------|
 | Auth | ✅ | ✅ | Register, login, refresh, logout, token blacklisting |
-| Profile | ✅ | ✅ | CRUD profil, compétences, expériences, formation |
+| Profile | ✅ | ✅ | CRUD profil, compétences, expériences, formation, upload avatar |
 | Jobs | ✅ | ✅ | Recherche, recommandations, matching engine |
 | Applications | ✅ | ✅ | CRUD candidatures, limites abonnement, stats |
 | Squads | ✅ | ✅ | Création, join/leave, chat, messages vocaux, réactions, réponses, épinglage, suppression, événements, appels Jitsi |
@@ -158,7 +159,7 @@
 | Interview | `/interview` | Lancer une simulation d'entretien |
 | Interview Session | `/interviews/[id]` | Session simulation avec chat IA |
 | Assistant EDGE | `/assistant` | Conversation IA avec l'agent EDGE |
-| Profil | `/profile` | Profil complet avec compétences et expériences |
+| Profil | `/profile` | Profil complet avec compétences, expériences, photo de profil |
 | Éclaireurs | `/scouts` | Liste des conversations éclaireurs |
 | Analytics | `/analytics` | Statistiques personnelles détaillées |
 | Notifications | `/notifications` | Centre de notifications |
@@ -291,6 +292,15 @@ HIREDGE cible exclusivement le **marché canadien** au lancement. Les offres son
 - Boîtes de messages des autres bien visibles (fond `bg-slate-100` + bordure)
 - Positionnement des boutons survol au niveau de la bulle (pas du nom)
 - Clic sur citation → scroll vers le message original avec surbrillance temporaire
+
+### Session 13 : Photo de profil (Avatar)
+- **Backend** : route `POST /profile/avatar` — validation format (JPG/PNG/WebP), limite 10 Mo, stockage `/uploads/avatars/{userId}/`
+- **Service** : `uploadAvatar()` dans `profile.service.ts` — gestion stockage, suppression ancien avatar, mise à jour `avatarUrl` en base
+- **Multipart** : limite augmentée de 5 Mo → 10 Mo
+- **Page Profil** : photo affichée dans le bloc d'initiales, bouton "+" en bas à droite pour upload
+- **Squad Chat** : photos de profil affichées à côté des messages et dans la liste des membres
+- **Sidebar Layout** : avatar utilisateur dans le menu latéral affiche la photo si disponible
+- Partout où les initiales s'affichaient, la photo de profil est maintenant prioritaire
 |---------|------|
 | `src/services/adzuna.service.ts` | Client Adzuna API — recherche, import, déduplique, normalise |
 | `src/services/jsearch.service.ts` | Client JSearch/RapidAPI — agrège LinkedIn/Indeed/Glassdoor, normalise salaires (horaire/mensuel → annuel), extrait ville/pays |

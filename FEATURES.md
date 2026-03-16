@@ -198,6 +198,7 @@ Quand un membre est inactif >7 jours :
 - **Suppression intelligente** : ✅
   - Message propre < 1h → supprimer pour moi OU pour tous
   - Message propre > 1h → supprimer pour moi uniquement
+- **Photos de profil** : affichées dans les bulles de message et la liste des membres (remplace les initiales) ✅
   - Message d'autrui → supprimer pour moi uniquement
   - Messages supprimés pour tous → affichage "🚫 Ce message a été supprimé"
 - **Partage de fichiers** : CV, lettres, screenshots de conversations avec des recruteurs (prévu)

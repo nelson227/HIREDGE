@@ -185,6 +185,7 @@ Chaque utilisateur reçoit un agent IA qui :
 ### Profil & Onboarding
 - Onboarding interactif en 5 étapes
 - Profil complet (compétences, expériences, formation)
+- **Photo de profil** : upload avatar (JPG/PNG/WebP), affichée partout (profil, chat, sidebar)
 - Score de complétion
 
 ---

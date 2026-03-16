@@ -29,6 +29,7 @@
 #### Semaine 3-4 : Auth & Profil
 - [x] Implémenter l'authentification (JWT + refresh tokens) ✅
 - [x] Créer le système de profil candidat ✅
+- [x] Upload de photo de profil (avatar JPG/PNG/WebP, affiché dans profil, chat, sidebar) ✅
 - [ ] Développer le parsing de CV (PDF/DOCX → données structurées via IA)
 - [x] Créer l'onboarding conversationnel avec EDGE ✅
 - [x] Implémenter le score de préparation ✅
