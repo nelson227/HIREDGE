@@ -10,7 +10,7 @@ export function initializeWebSocket(httpServer: HTTPServer): Server {
   io = new Server(httpServer, {
     cors: {
       origin: process.env.NODE_ENV === 'production'
-        ? ['https://hiredge.app', 'https://www.hiredge.app']
+        ? ['https://hiredge.app', 'https://www.hiredge.app', 'https://hiredge-six.vercel.app']
         : true,
       methods: ['GET', 'POST'],
       credentials: true,

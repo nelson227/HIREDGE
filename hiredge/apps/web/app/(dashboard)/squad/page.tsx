@@ -33,6 +33,7 @@ import {
   SmilePlus,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
+import { connectSocket, disconnectSocket, joinSquadRoom, leaveSquadRoom, getSocket, emitTyping, emitStopTyping } from "@/lib/socket"
 
 // ─── Types ───────────────────────────────────────────────────────
 interface MemberUser {
@@ -196,6 +197,9 @@ export default function SquadPage() {
   const [creatingEvent, setCreatingEvent] = useState(false)
 
   const [mobileShowChat, setMobileShowChat] = useState(false)
+  const [typingUsers, setTypingUsers] = useState<string[]>([])
+  const previousSquadIdRef = useRef<string | null>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Voice recording
   const [isRecording, setIsRecording] = useState(false)
@@ -280,6 +284,97 @@ export default function SquadPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // ─── WebSocket ──────────────────────────────────────────────────
+  useEffect(() => {
+    let socket: ReturnType<typeof getSocket> = null
+    try {
+      socket = connectSocket()
+    } catch {
+      // No auth token yet — skip
+      return
+    }
+
+    const onNewMessage = (msg: SquadMessage) => {
+      // Only add if it's for the currently selected squad and not from us
+      if (msg.squadId === selectedSquadId && msg.userId !== currentUserId) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev
+          return [...prev, msg]
+        })
+      }
+    }
+
+    const onReaction = (data: { messageId: string; userId: string; action: string; emoji: string }) => {
+      setMessages(prev => prev.map(m => {
+        if (m.id !== data.messageId) return m
+        const reactions = [...(m.reactions || [])]
+        if (data.action === 'removed') {
+          return { ...m, reactions: reactions.filter(r => !(r.emoji === data.emoji && r.userId === data.userId)) }
+        }
+        return { ...m, reactions: [...reactions, { id: Date.now().toString(), emoji: data.emoji, userId: data.userId }] }
+      }))
+    }
+
+    const onPin = (data: { messageId: string; isPinned: boolean }) => {
+      setMessages(prev => prev.map(m => m.id === data.messageId ? { ...m, isPinned: data.isPinned } : m))
+    }
+
+    const onImportant = (data: { messageId: string; isImportant: boolean }) => {
+      setMessages(prev => prev.map(m => m.id === data.messageId ? { ...m, isImportant: data.isImportant } : m))
+    }
+
+    const onDelete = (data: { messageId: string; mode: string }) => {
+      if (data.mode === 'FOR_ALL') {
+        setMessages(prev => prev.map(m => m.id === data.messageId ? { ...m, deletedForAll: true, content: '🚫 Ce message a été supprimé' } : m))
+      }
+    }
+
+    const onUserTyping = (data: { userId: string }) => {
+      if (data.userId !== currentUserId) {
+        setTypingUsers(prev => prev.includes(data.userId) ? prev : [...prev, data.userId])
+      }
+    }
+
+    const onUserStopTyping = (data: { userId: string }) => {
+      setTypingUsers(prev => prev.filter(id => id !== data.userId))
+    }
+
+    socket.on('squad:new_message', onNewMessage)
+    socket.on('squad:reaction', onReaction)
+    socket.on('squad:pin', onPin)
+    socket.on('squad:important', onImportant)
+    socket.on('squad:delete', onDelete)
+    socket.on('squad:user_typing', onUserTyping)
+    socket.on('squad:user_stop_typing', onUserStopTyping)
+
+    return () => {
+      socket?.off('squad:new_message', onNewMessage)
+      socket?.off('squad:reaction', onReaction)
+      socket?.off('squad:pin', onPin)
+      socket?.off('squad:important', onImportant)
+      socket?.off('squad:delete', onDelete)
+      socket?.off('squad:user_typing', onUserTyping)
+      socket?.off('squad:user_stop_typing', onUserStopTyping)
+    }
+  }, [selectedSquadId, currentUserId])
+
+  // ─── Join/Leave squad rooms ─────────────────────────────────────
+  useEffect(() => {
+    if (previousSquadIdRef.current) {
+      leaveSquadRoom(previousSquadIdRef.current)
+    }
+    if (selectedSquadId) {
+      joinSquadRoom(selectedSquadId)
+    }
+    previousSquadIdRef.current = selectedSquadId
+    setTypingUsers([])
+  }, [selectedSquadId])
+
+  // ─── Cleanup socket on unmount ──────────────────────────────────
+  useEffect(() => {
+    return () => { disconnectSocket() }
+  }, [])
+
   // ─── Actions ────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedSquadId || sending) return
@@ -288,6 +383,8 @@ export default function SquadPage() {
     setNewMessage("")
     setReplyTo(null)
     setSending(true)
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    emitStopTyping(selectedSquadId)
     try {
       const { data } = await squadApi.sendMessage(selectedSquadId, content, replyId)
       if (data.success) setMessages(prev => [...prev, data.data])
@@ -1074,6 +1171,15 @@ export default function SquadPage() {
               </div>
             )}
 
+            {/* Typing indicator */}
+            {typingUsers.length > 0 && (
+              <div className="px-4 py-1 text-xs text-muted-foreground italic">
+                {typingUsers.length === 1
+                  ? `${members.find(m => m.userId === typingUsers[0])?.user?.candidateProfile?.firstName || 'Quelqu\'un'} est en train d'écrire...`
+                  : 'Plusieurs personnes écrivent...'}
+              </div>
+            )}
+
             {/* Reply preview bar */}
             {replyTo && (
               <div className="px-3 pt-2 pb-0 border-t border-border bg-muted/30">
@@ -1113,7 +1219,16 @@ export default function SquadPage() {
                   </Button>
                 <Input
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value)
+                    if (selectedSquadId && e.target.value.trim()) {
+                      emitTyping(selectedSquadId)
+                      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+                      typingTimeoutRef.current = setTimeout(() => {
+                        if (selectedSquadId) emitStopTyping(selectedSquadId)
+                      }, 2000)
+                    }
+                  }}
                   placeholder="Écrire un message..."
                   className="flex-1"
                   disabled={sending}

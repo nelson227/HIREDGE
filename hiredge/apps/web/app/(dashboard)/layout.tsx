@@ -97,6 +97,14 @@ export default function DashboardLayout({
         }
       })
       .catch(() => {})
+
+    // Listen for avatar updates from profile page
+    const handleAvatarUpdate = (e: Event) => {
+      const avatarUrl = (e as CustomEvent).detail?.avatarUrl
+      if (avatarUrl) setUserInfo(prev => prev ? { ...prev, avatarUrl } : prev)
+    }
+    window.addEventListener('avatar-updated', handleAvatarUpdate)
+    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
   }, [])
 
   const userInitials = userInfo 

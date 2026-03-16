@@ -11,6 +11,10 @@ function isBrowser() {
   return typeof window !== 'undefined';
 }
 
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
 export function saveTokens(access: string, refresh: string) {
   accessToken = access;
   if (isBrowser()) {

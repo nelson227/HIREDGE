@@ -204,6 +204,7 @@ export default function ProfilePage() {
       const { data } = await profileApi.uploadAvatar(file)
       if (data.success) {
         await loadProfile()
+        window.dispatchEvent(new CustomEvent('avatar-updated', { detail: { avatarUrl: data.data?.avatarUrl } }))
       } else {
         showFeedback(data.error?.message || "Erreur lors de l'envoi")
       }
