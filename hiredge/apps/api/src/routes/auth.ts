@@ -10,14 +10,14 @@ function setTokenCookies(reply: FastifyReply, accessToken: string, refreshToken:
   reply.setCookie('access_token', accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
     maxAge: 15 * 60, // 15 min
   });
   reply.setCookie('refresh_token', refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
