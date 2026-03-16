@@ -1,0 +1,736 @@
+2026-03-16T03:24:04.136004432Z [inf]  Starting Container
+2026-03-16T03:24:05.523154030Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:05.523165730Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:05.523552594Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:05.523558073Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:05.523564253Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:05.523570750Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:05.523576506Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:05.525684652Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:05.525724189Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:05.525729838Z [err]  
+2026-03-16T03:24:05.525734775Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:05.525740369Z [err]  
+2026-03-16T03:24:05.525747731Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:05.525755591Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:05.525760692Z [err]  
+2026-03-16T03:24:05.525766425Z [err]  generator client {
+2026-03-16T03:24:05.525772696Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:05.525777976Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:05.525783337Z [err]  }
+2026-03-16T03:24:05.525789278Z [err]  
+2026-03-16T03:24:05.525830552Z [err]  The following locations have been searched:
+2026-03-16T03:24:05.525837294Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:05.530669678Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:05.530680233Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:05.530689428Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:05.530696907Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:05.530703595Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:05.530710018Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:05.530718815Z [err]    errorCode: undefined
+2026-03-16T03:24:05.530725686Z [err]  }
+2026-03-16T03:24:05.530732321Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:05.530734990Z [err]  
+2026-03-16T03:24:05.530741991Z [err]  Node.js v20.20.1
+2026-03-16T03:24:06.484989253Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:06.573741756Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:06.573746156Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:06.573750859Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:06.573755272Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:07.346117377Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:07.346122161Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:07.346126543Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:07.352974385Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:07.352974579Z [err]  }
+2026-03-16T03:24:07.352977617Z [err]  
+2026-03-16T03:24:07.352986454Z [err]  
+2026-03-16T03:24:07.352986750Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:07.352992745Z [err]  The following locations have been searched:
+2026-03-16T03:24:07.352996364Z [err]  
+2026-03-16T03:24:07.352997804Z [err]  generator client {
+2026-03-16T03:24:07.353008225Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:07.353010780Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:07.353017506Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:07.353020533Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:07.353021105Z [err]  
+2026-03-16T03:24:07.353025520Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:07.353029162Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:07.353033052Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:07.353039490Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:07.353045127Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:24:07.353051926Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:07.353058184Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:07.353064054Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:07.353069938Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:07.354877881Z [err]  }
+2026-03-16T03:24:07.354886597Z [err]  
+2026-03-16T03:24:07.354892637Z [err]  Node.js v20.20.1
+2026-03-16T03:24:07.354961625Z [err]    errorCode: undefined
+2026-03-16T03:24:09.142624375Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:09.142630682Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:09.142636882Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:09.142643747Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:09.142650597Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:09.142657082Z [inf]  incoming request
+2026-03-16T03:24:09.142663307Z [inf]  request completed
+2026-03-16T03:24:09.142670647Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:09.142679319Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:09.144878633Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:09.144886399Z [err]  
+2026-03-16T03:24:09.144893369Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:09.144901628Z [err]  
+2026-03-16T03:24:09.144913322Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:09.144921005Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:09.144927569Z [err]  
+2026-03-16T03:24:09.144934494Z [err]  generator client {
+2026-03-16T03:24:09.144940658Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:09.144947088Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:09.144953582Z [err]  }
+2026-03-16T03:24:09.144960146Z [err]  
+2026-03-16T03:24:09.144965886Z [err]  The following locations have been searched:
+2026-03-16T03:24:09.144972011Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:09.144976648Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:09.150334673Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:09.150341382Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:09.150348565Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:09.150355304Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:09.150361919Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:09.150368716Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:09.150375260Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:09.150382603Z [err]    errorCode: undefined
+2026-03-16T03:24:09.150388539Z [err]  }
+2026-03-16T03:24:09.150395323Z [err]  
+2026-03-16T03:24:09.150403178Z [err]  Node.js v20.20.1
+2026-03-16T03:24:11.253884228Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:11.253894347Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:11.253960458Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:11.253961759Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:11.253967105Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:11.253969266Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:11.253978612Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:11.258957263Z [err]  
+2026-03-16T03:24:11.258964593Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:11.258970497Z [err]  generator client {
+2026-03-16T03:24:11.258976713Z [err]  
+2026-03-16T03:24:11.258980369Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:11.258983110Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:11.258988134Z [err]  
+2026-03-16T03:24:11.258993429Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:11.259001708Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:11.259040752Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:11.259050376Z [err]  }
+2026-03-16T03:24:11.259058136Z [err]  
+2026-03-16T03:24:11.259064784Z [err]  The following locations have been searched:
+2026-03-16T03:24:11.259071841Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:11.259078778Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:11.263292897Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:11.263309471Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:11.263317331Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:11.263324678Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:24:11.263333633Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:11.263340689Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:11.263346466Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:11.263352734Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:11.263358927Z [err]    errorCode: undefined
+2026-03-16T03:24:11.263365475Z [err]  }
+2026-03-16T03:24:11.263372513Z [err]  
+2026-03-16T03:24:11.263379645Z [err]  Node.js v20.20.1
+2026-03-16T03:24:13.459866860Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:13.459874176Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:13.459881580Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:13.459890155Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:13.459897184Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:13.459904537Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:13.459918882Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:13.463857564Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:13.463868154Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:13.463906515Z [err]  
+2026-03-16T03:24:13.463917005Z [err]  generator client {
+2026-03-16T03:24:13.463934449Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:13.463940780Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:13.463946718Z [err]  }
+2026-03-16T03:24:13.463953864Z [err]  
+2026-03-16T03:24:13.463964106Z [err]  The following locations have been searched:
+2026-03-16T03:24:13.464121386Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:13.464130085Z [err]  
+2026-03-16T03:24:13.464136930Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:13.464142989Z [err]  
+2026-03-16T03:24:13.464149961Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:13.464157710Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:13.478100587Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:13.478106824Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:13.478114708Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:13.478120570Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:24:13.478126206Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:13.478246359Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:13.478262608Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:13.478271724Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:13.478369966Z [err]    errorCode: undefined
+2026-03-16T03:24:13.478378165Z [err]  }
+2026-03-16T03:24:13.478386981Z [err]  
+2026-03-16T03:24:13.478395018Z [err]  Node.js v20.20.1
+2026-03-16T03:24:15.389880946Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:15.421971021Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:15.421983515Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:15.421992512Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:15.425146610Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:15.452295319Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:15.452304060Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:15.452311761Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:15.455661417Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:15.455667755Z [err]  
+2026-03-16T03:24:15.455673829Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:15.455675771Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:15.455683589Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:15.455684090Z [err]  
+2026-03-16T03:24:15.455690674Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:15.455697135Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:15.455697722Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:15.455704934Z [err]  
+2026-03-16T03:24:15.455705569Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:15.455713723Z [err]  generator client {
+2026-03-16T03:24:15.455714108Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:15.455721314Z [err]    errorCode: undefined
+2026-03-16T03:24:15.455722255Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:15.455727947Z [err]  }
+2026-03-16T03:24:15.455730104Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:15.455736354Z [err]  }
+2026-03-16T03:24:15.455741725Z [err]  
+2026-03-16T03:24:15.455749555Z [err]  The following locations have been searched:
+2026-03-16T03:24:15.455754836Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:15.455760854Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:15.455766624Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:15.462555929Z [err]  
+2026-03-16T03:24:15.462564070Z [err]  Node.js v20.20.1
+2026-03-16T03:24:18.438594851Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:18.438600046Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:18.438605532Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:18.438612383Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:18.438619766Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:18.438624587Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:18.438628798Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:18.439575415Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:18.439583077Z [err]  
+2026-03-16T03:24:18.439590800Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:18.439597697Z [err]  
+2026-03-16T03:24:18.439604001Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:18.439610255Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:18.439615808Z [err]  
+2026-03-16T03:24:18.439621414Z [err]  generator client {
+2026-03-16T03:24:18.439627700Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:18.439633479Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:18.439639194Z [err]  }
+2026-03-16T03:24:18.439644585Z [err]  
+2026-03-16T03:24:18.439651307Z [err]  The following locations have been searched:
+2026-03-16T03:24:18.439656708Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:18.439662324Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:18.441961841Z [err]  Node.js v20.20.1
+2026-03-16T03:24:18.441999920Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:18.442008209Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:18.442015315Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:18.442023764Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:18.442030685Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:24:18.442038166Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:18.442046791Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:18.442053428Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:18.442060421Z [err]    errorCode: undefined
+2026-03-16T03:24:18.442068768Z [err]  }
+2026-03-16T03:24:18.442078753Z [err]  
+2026-03-16T03:24:20.372305015Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:20.372313651Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:20.372320580Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:20.372327334Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:20.372334684Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:20.372341275Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:20.372347972Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:20.375032003Z [err]  
+2026-03-16T03:24:20.375044107Z [err]  The following locations have been searched:
+2026-03-16T03:24:20.375052967Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:20.375053376Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:20.375061778Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:20.375061962Z [err]  
+2026-03-16T03:24:20.375078850Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:20.375086871Z [err]  
+2026-03-16T03:24:20.375095919Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:20.375102835Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:20.375113717Z [err]  
+2026-03-16T03:24:20.375119952Z [err]  generator client {
+2026-03-16T03:24:20.375125490Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:20.375131183Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:20.375136272Z [err]  }
+2026-03-16T03:24:20.376549057Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:20.376555806Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:20.376562446Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:20.376569081Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:20.376575381Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:20.376581920Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:20.380741567Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:20.380794192Z [err]    errorCode: undefined
+2026-03-16T03:24:20.380804851Z [err]  }
+2026-03-16T03:24:20.380812834Z [err]  
+2026-03-16T03:24:20.380820846Z [err]  Node.js v20.20.1
+2026-03-16T03:24:22.467277407Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:22.467286713Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:22.467296581Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:22.467301752Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:22.467359829Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:22.467364832Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:22.467369685Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:22.468148494Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:22.468150167Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:22.468161144Z [err]  
+2026-03-16T03:24:22.468161330Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:22.468163470Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:22.468168539Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:22.468175454Z [err]  
+2026-03-16T03:24:22.468176688Z [err]  }
+2026-03-16T03:24:22.468177530Z [err]  
+2026-03-16T03:24:22.468186999Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:22.468187065Z [err]  The following locations have been searched:
+2026-03-16T03:24:22.468195527Z [err]  
+2026-03-16T03:24:22.468195999Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:22.468204449Z [err]  generator client {
+2026-03-16T03:24:22.468211700Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:22.469808770Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:22.469817933Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:22.469834117Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:22.469840586Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:22.469892982Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:22.469895342Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:22.469903551Z [err]    errorCode: undefined
+2026-03-16T03:24:22.469903975Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:22.469909443Z [err]  }
+2026-03-16T03:24:22.469916547Z [err]  
+2026-03-16T03:24:22.469921687Z [err]  Node.js v20.20.1
+2026-03-16T03:24:24.279810855Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:24.279814491Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:24.279818509Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:24.279822454Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:24.279826626Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:24.279830765Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:24.279834643Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:24.280003440Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:24.280007057Z [err]  
+2026-03-16T03:24:24.280010692Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:24.280014932Z [err]  
+2026-03-16T03:24:24.280019610Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:24.280024120Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:24.280028521Z [err]  
+2026-03-16T03:24:24.280032212Z [err]  generator client {
+2026-03-16T03:24:24.280036130Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:24.280039800Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:24.280043382Z [err]  }
+2026-03-16T03:24:24.280047226Z [err]  
+2026-03-16T03:24:24.280051322Z [err]  The following locations have been searched:
+2026-03-16T03:24:24.280055168Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:24.280062322Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:24.288236403Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:24.288241538Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:24.288246939Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:24.288251518Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:24.288258136Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:24.288263001Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:24.288267481Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:24.288271960Z [err]    errorCode: undefined
+2026-03-16T03:24:24.288278484Z [err]  }
+2026-03-16T03:24:24.288284626Z [err]  
+2026-03-16T03:24:24.288290789Z [err]  Node.js v20.20.1
+2026-03-16T03:24:26.438303362Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:24:26.438309513Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:24:26.438316493Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:24:26.439061928Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:24:26.439069855Z [err]  [Redis] Connection error: 
+2026-03-16T03:24:26.439076194Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:24:26.439086682Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:24:26.439218362Z [err]  The following locations have been searched:
+2026-03-16T03:24:26.439226926Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:24:26.439233146Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:24:26.439356670Z [err]  
+2026-03-16T03:24:26.439363350Z [err]  generator client {
+2026-03-16T03:24:26.439369889Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:24:26.439377144Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:24:26.439378413Z [err]  
+2026-03-16T03:24:26.439385188Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:26.439392418Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:24:26.439410456Z [err]  }
+2026-03-16T03:24:26.439420105Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:24:26.439421542Z [err]  
+2026-03-16T03:24:26.439424899Z [err]  
+2026-03-16T03:24:26.439429614Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:24:26.440025882Z [err]  
+2026-03-16T03:24:26.440033017Z [err]  Node.js v20.20.1
+2026-03-16T03:24:26.440068851Z [err]    /tmp/prisma-engines
+2026-03-16T03:24:26.440076565Z [err]    /app/apps/api/prisma
+2026-03-16T03:24:26.440088260Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:24:26.440095402Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:24:26.440102407Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:24:26.440109262Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:24:26.440115231Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:24:26.440121476Z [err]    errorCode: undefined
+2026-03-16T03:24:26.440127688Z [err]  }
+2026-03-16T03:25:06.661298170Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:06.661311741Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:06.661320696Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:06.661327404Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:06.661523469Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:06.661528861Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:06.661535292Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:06.671373783Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:06.671380469Z [err]  
+2026-03-16T03:25:06.671385363Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.671391879Z [err]  
+2026-03-16T03:25:06.671400087Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.671406430Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:06.671411910Z [err]  
+2026-03-16T03:25:06.671419630Z [err]  generator client {
+2026-03-16T03:25:06.671425932Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:06.671432726Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:06.671438292Z [err]  }
+2026-03-16T03:25:06.671442833Z [err]  
+2026-03-16T03:25:06.671447346Z [err]  The following locations have been searched:
+2026-03-16T03:25:06.671452227Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:06.671456780Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:06.677122638Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:06.677129542Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:06.677136008Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:06.677142074Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:25:06.677147726Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:06.677153569Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:06.677219969Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:06.677225883Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:06.677237092Z [err]    errorCode: undefined
+2026-03-16T03:25:06.677243067Z [err]  }
+2026-03-16T03:25:06.677248697Z [err]  
+2026-03-16T03:25:06.677255800Z [err]  Node.js v20.20.1
+2026-03-16T03:25:06.677262027Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:06.677267653Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:06.677273054Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:06.677290159Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:06.677296678Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:06.677302558Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:06.677308372Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:06.683437998Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:06.683457647Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:06.683570752Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:06.683576821Z [err]  
+2026-03-16T03:25:06.683582922Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.683590712Z [err]  
+2026-03-16T03:25:06.683596626Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.683602808Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:06.683608750Z [err]  
+2026-03-16T03:25:06.683615055Z [err]  generator client {
+2026-03-16T03:25:06.683620611Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:06.683626390Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:06.683631703Z [err]  }
+2026-03-16T03:25:06.683638280Z [err]  
+2026-03-16T03:25:06.683644871Z [err]  The following locations have been searched:
+2026-03-16T03:25:06.686393903Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:06.686397718Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:06.686401782Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:06.686405985Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:06.686409596Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:06.686413698Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:06.686431372Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:06.686435632Z [err]    errorCode: undefined
+2026-03-16T03:25:06.686439792Z [err]  }
+2026-03-16T03:25:06.686445880Z [err]  
+2026-03-16T03:25:06.686449954Z [err]  Node.js v20.20.1
+2026-03-16T03:25:06.686455477Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:06.686460652Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:06.686466292Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:06.686472299Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:06.686476328Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:06.686481996Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:06.686486401Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:06.691618732Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:06.691664476Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:06.691683038Z [err]  
+2026-03-16T03:25:06.691690438Z [err]  generator client {
+2026-03-16T03:25:06.691696850Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:06.691702484Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:06.691713734Z [err]  }
+2026-03-16T03:25:06.691719473Z [err]  
+2026-03-16T03:25:06.691724973Z [err]  The following locations have been searched:
+2026-03-16T03:25:06.691732674Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:06.691895857Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:06.691903904Z [err]  
+2026-03-16T03:25:06.691911163Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.691917357Z [err]  
+2026-03-16T03:25:06.691923879Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.696620182Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:06.696648494Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:06.696657497Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:25:06.696664254Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:06.696671543Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:06.696679987Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:06.696689059Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:06.696695839Z [err]    errorCode: undefined
+2026-03-16T03:25:06.696703164Z [err]  }
+2026-03-16T03:25:06.696712098Z [err]  
+2026-03-16T03:25:06.696719927Z [err]  Node.js v20.20.1
+2026-03-16T03:25:06.696727116Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:06.696736814Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:06.696747570Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:06.696756025Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:06.696763227Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:06.696769964Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:06.696778009Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:06.696890384Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:06.700112327Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:06.700119690Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:06.700130278Z [err]  
+2026-03-16T03:25:06.700136458Z [err]  generator client {
+2026-03-16T03:25:06.700142468Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:06.700148487Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:06.700160932Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:06.700168364Z [err]  
+2026-03-16T03:25:06.700170204Z [err]  }
+2026-03-16T03:25:06.700176989Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.700179416Z [err]  
+2026-03-16T03:25:06.700186678Z [err]  
+2026-03-16T03:25:06.700189333Z [err]  The following locations have been searched:
+2026-03-16T03:25:06.700192864Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.700198213Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:06.706201338Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:06.706207496Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:06.706213460Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:06.706218700Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:06.706224349Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:06.706229915Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:06.706235021Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:06.706240804Z [err]    errorCode: undefined
+2026-03-16T03:25:06.706247037Z [err]  }
+2026-03-16T03:25:06.706253344Z [err]  
+2026-03-16T03:25:06.706261854Z [err]  Node.js v20.20.1
+2026-03-16T03:25:06.706268946Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:06.706275207Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:06.706280663Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:06.706286213Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:06.706291992Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:06.706297791Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:06.706304961Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:06.712082772Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:06.712089169Z [err]  
+2026-03-16T03:25:06.712124222Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.712130622Z [err]  
+2026-03-16T03:25:06.712137744Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:06.712144280Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:06.712151223Z [err]  
+2026-03-16T03:25:06.712157638Z [err]  generator client {
+2026-03-16T03:25:06.712166554Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:06.712173316Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:06.712179421Z [err]  }
+2026-03-16T03:25:06.712207029Z [err]  
+2026-03-16T03:25:06.712217889Z [err]  The following locations have been searched:
+2026-03-16T03:25:06.712224864Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:06.712230767Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:06.715692546Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:06.715699675Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:06.715707354Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:06.715713899Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:06.715719844Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:06.715726414Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:06.715733260Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:06.715739386Z [err]    errorCode: undefined
+2026-03-16T03:25:06.715746057Z [err]  }
+2026-03-16T03:25:06.715753136Z [err]  
+2026-03-16T03:25:06.715761351Z [err]  Node.js v20.20.1
+2026-03-16T03:25:07.656385134Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:07.656393520Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:07.656399414Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:07.656405060Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:07.656411488Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:07.656417473Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:07.656422111Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:07.659167119Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:07.659179118Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:07.659183049Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:07.659191725Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:07.659199769Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:07.659207954Z [err]  }
+2026-03-16T03:25:07.659211573Z [err]  
+2026-03-16T03:25:07.659224619Z [err]  
+2026-03-16T03:25:07.659229029Z [err]  The following locations have been searched:
+2026-03-16T03:25:07.659235616Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:07.659235751Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:07.659243337Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:07.659245861Z [err]  
+2026-03-16T03:25:07.659249819Z [err]  
+2026-03-16T03:25:07.659254217Z [err]  generator client {
+2026-03-16T03:25:07.662570411Z [err]  Node.js v20.20.1
+2026-03-16T03:25:07.662631666Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:07.662638787Z [err]    errorCode: undefined
+2026-03-16T03:25:07.662645261Z [err]  }
+2026-03-16T03:25:07.662652484Z [err]  
+2026-03-16T03:25:07.662660615Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:07.662668293Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:07.662674729Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:07.662677711Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:07.662683976Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:07.662695340Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:09.677313142Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:09.677322083Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:09.677330332Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:09.677389663Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:09.677396501Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:09.684238711Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:09.684248077Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:09.684255418Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:09.688583400Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:09.688595157Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:09.688606894Z [err]  
+2026-03-16T03:25:09.688616069Z [err]  generator client {
+2026-03-16T03:25:09.688622723Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:09.688629448Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:09.688635210Z [err]  }
+2026-03-16T03:25:09.688641207Z [err]  
+2026-03-16T03:25:09.688647048Z [err]  The following locations have been searched:
+2026-03-16T03:25:09.688653989Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:09.688660523Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:09.688666789Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:09.688671759Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:09.688677597Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:09.688684339Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:09.688690252Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:09.688696106Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:09.688704626Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:09.688710673Z [err]    errorCode: undefined
+2026-03-16T03:25:09.688715725Z [err]  }
+2026-03-16T03:25:09.688734689Z [err]  
+2026-03-16T03:25:09.688739129Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:09.688743410Z [err]  
+2026-03-16T03:25:09.693656319Z [err]  
+2026-03-16T03:25:09.693662972Z [err]  Node.js v20.20.1
+2026-03-16T03:25:11.591808342Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:11.683012838Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:11.683019733Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:11.683025662Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:11.683035002Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:11.719444661Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:11.719452219Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:11.719458246Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:11.723612013Z [err]  
+2026-03-16T03:25:11.723624283Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:11.723634944Z [err]  
+2026-03-16T03:25:11.723645971Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:11.723654010Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:11.723661644Z [err]  
+2026-03-16T03:25:11.723669390Z [err]  generator client {
+2026-03-16T03:25:11.723677280Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:11.723682992Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:11.723688676Z [err]  }
+2026-03-16T03:25:11.723694849Z [err]  
+2026-03-16T03:25:11.723699923Z [err]  The following locations have been searched:
+2026-03-16T03:25:11.723705199Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:11.723710510Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:11.723715949Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:11.723721449Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:11.723726991Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:11.723732520Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:11.723737987Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:11.723743353Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:11.723748648Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:11.723754172Z [err]    errorCode: undefined
+2026-03-16T03:25:11.723759980Z [err]  }
+2026-03-16T03:25:11.726912437Z [err]  
+2026-03-16T03:25:11.726918504Z [err]  Node.js v20.20.1
+2026-03-16T03:25:13.738921780Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:13.795374952Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:13.795380223Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:13.795384974Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:13.795389170Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:13.823891969Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:13.823916763Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:13.823924243Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:13.828431299Z [err]  
+2026-03-16T03:25:13.828438376Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:13.828443482Z [err]  
+2026-03-16T03:25:13.828448055Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:13.828452788Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:13.828457577Z [err]  
+2026-03-16T03:25:13.828462011Z [err]  generator client {
+2026-03-16T03:25:13.828466659Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:13.828471123Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:13.828476151Z [err]  }
+2026-03-16T03:25:13.828480940Z [err]  
+2026-03-16T03:25:13.828486681Z [err]  The following locations have been searched:
+2026-03-16T03:25:13.828491939Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:13.828497610Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:13.828508039Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:13.828514554Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:13.828520288Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:13.828526375Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-16T03:25:13.828531833Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:13.828537391Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:13.828543100Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:13.828549395Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:13.830730048Z [err]    errorCode: undefined
+2026-03-16T03:25:13.830736167Z [err]  }
+2026-03-16T03:25:13.830740490Z [err]  
+2026-03-16T03:25:13.830744462Z [err]  Node.js v20.20.1
+2026-03-16T03:25:15.813109876Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:15.871857692Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:15.871863337Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:15.871868524Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:15.882140713Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:15.903344407Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:15.903351153Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:15.903358593Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:15.908418833Z [err]  
+2026-03-16T03:25:15.908427961Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:15.908433798Z [err]  
+2026-03-16T03:25:15.908438957Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:15.908444419Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:15.908451459Z [err]  
+2026-03-16T03:25:15.908456783Z [err]  generator client {
+2026-03-16T03:25:15.908461453Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:15.908466285Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:15.908471919Z [err]  }
+2026-03-16T03:25:15.908477639Z [err]  
+2026-03-16T03:25:15.908483158Z [err]  The following locations have been searched:
+2026-03-16T03:25:15.908489629Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:15.908495145Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:15.908501019Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:15.908506344Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:15.908512379Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:15.908518113Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:15.908526889Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:15.908532581Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:15.908537791Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:15.908543459Z [err]    errorCode: undefined
+2026-03-16T03:25:15.908548686Z [err]  }
+2026-03-16T03:25:15.911867251Z [err]  
+2026-03-16T03:25:15.911878964Z [err]  Node.js v20.20.1
+2026-03-16T03:25:17.832036674Z [inf]  "root" path "/app/uploads" must exist
+2026-03-16T03:25:17.884732788Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T03:25:17.884761900Z [inf]  Server listening at http://10.159.1.156:8080
+2026-03-16T03:25:17.884770438Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T03:25:17.890158230Z [err]  [Redis] Connection error: 
+2026-03-16T03:25:17.907685579Z [err]  /app/node_modules/@prisma/client/runtime/library.js:64
+2026-03-16T03:25:17.907694876Z [err]  ${et(e)}`}var zd=L("prisma:client:engines:resolveEnginePath"),Yd=()=>new RegExp("runtime[\\\\/]library\\.m?js$");async function za(e,t){let r={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}[e]??t.prismaPath;if(r!==void 0)return r;let{enginePath:n,searchedLocations:i}=await Zd(e,t);if(zd("enginePath",n),n!==void 0&&e==="binary"&&li(n),n!==void 0)return t.prismaPath=n;let o=await nt(),s=t.generator?.binaryTargets??[],a=s.some(d=>d.native),l=!s.some(d=>d.value===o),u=__filename.match(Yd())===null,c={searchedLocations:i,generatorBinaryTargets:s,generator:t.generator,runtimeBinaryTarget:o,queryEngineName:Ya(e,o),expectedLocation:Er.default.relative(process.cwd(),t.dirname),errorStack:new Error().stack},p;throw a&&l?p=Wa(c):l?p=Qa(c):u?p=Ja(c):p=Ha(c),new R(p,t.clientVersion)}async function Zd(engineType,config){let binaryTarget=await nt(),searchedLocations=[],dirname=eval("__dirname"),searchLocations=[config.dirname,Er.default.resolve(dirname,".."),config.generator?.output?.value??dirname,Er.default.resolve(dirname,"../../../.prisma/client"),"/tmp/prisma-engines",config.cwd];__filename.includes("resolveEnginePath")&&searchLocations.push(Yo());for(let e of searchLocations){let t=Ya(engineType,binaryTarget),r=Er.default.join(e,t);if(searchedLocations.push(e),Ka.default.existsSync(r))return{enginePath:r,searchedLocations}}return{enginePath:void 0,searchedLocations}}function Ya(e,t){return e==="library"?qr(t,"fs"):`query-engine-${t}${t==="windows"?".exe":""}`}var Hi=k(bi());function Za(e){return e?e.replace(/".*"/g,'"X"').replace(/[\s:\[]([+-]?([0-9]*[.])?[0-9]+)/g,t=>`${t[0]}5`):""}function Xa(e){return e.split(`
+2026-03-16T03:25:17.907701523Z [err]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+2026-03-16T03:25:17.910329661Z [err]  
+2026-03-16T03:25:17.910341795Z [err]      at za (/app/node_modules/@prisma/client/runtime/library.js:64:805)
+2026-03-16T03:25:17.910343703Z [err]  PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:17.910352227Z [err]  
+2026-03-16T03:25:17.910362118Z [err]      at async Object.loadLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:10084)
+2026-03-16T03:25:17.910368808Z [err]      at async _r.loadEngine (/app/node_modules/@prisma/client/runtime/library.js:112:448)
+2026-03-16T03:25:17.910374852Z [err]  This happened because Prisma Client was generated for "linux-musl", but the actual deployment required "linux-musl-openssl-3.0.x".
+2026-03-16T03:25:17.910376323Z [err]      at async _r.instantiateLibrary (/app/node_modules/@prisma/client/runtime/library.js:111:12599) {
+2026-03-16T03:25:17.910386646Z [err]    clientVersion: '5.22.0',
+2026-03-16T03:25:17.910389336Z [err]  Add "linux-musl-openssl-3.0.x" to `binaryTargets` in the "schema.prisma" file and run `prisma generate` after saving it:
+2026-03-16T03:25:17.910400738Z [err]  
+2026-03-16T03:25:17.910403291Z [err]    errorCode: undefined
+2026-03-16T03:25:17.910415443Z [err]  }
+2026-03-16T03:25:17.910418387Z [err]  generator client {
+2026-03-16T03:25:17.910426741Z [err]    provider      = "prisma-client-js"
+2026-03-16T03:25:17.910432672Z [err]    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+2026-03-16T03:25:17.910447019Z [err]  }
+2026-03-16T03:25:17.910454141Z [err]  
+2026-03-16T03:25:17.910459715Z [err]  The following locations have been searched:
+2026-03-16T03:25:17.910465589Z [err]    /app/node_modules/.prisma/client
+2026-03-16T03:25:17.910471805Z [err]    /app/node_modules/@prisma/client
+2026-03-16T03:25:17.910477912Z [err]    /tmp/prisma-engines
+2026-03-16T03:25:17.910483246Z [err]    /app/apps/api/prisma
+2026-03-16T03:25:17.912907940Z [err]  
+2026-03-16T03:25:17.912918116Z [err]  Node.js v20.20.1
