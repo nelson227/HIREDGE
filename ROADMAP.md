@@ -16,39 +16,39 @@
 ### Objectif : Poser les bases techniques et valider le concept
 
 #### Semaine 1-2 : Setup & Infrastructure
-- [ ] Initialiser le monorepo (Turborepo ou Nx)
-- [ ] Setup CI/CD (GitHub Actions)
-- [ ] Configurer l'infrastructure cloud (AWS/Railway pour le MVP)
-- [ ] Créer la base de données PostgreSQL + Redis
-- [ ] Setup du projet React Native (Expo)
-- [ ] Setup du projet Next.js (web)
-- [ ] Setup du backend Node.js (API principale)
-- [ ] Setup du service Python (IA)
-- [ ] Configurer les environnements (dev, staging, prod)
+- [x] Initialiser le monorepo (Turborepo + npm workspaces) ✅
+- [x] Setup CI/CD (GitHub Actions — 5 jobs) ✅
+- [x] Configurer l'infrastructure cloud (Railway pour API + PostgreSQL, Vercel pour Web) ✅
+- [x] Créer la base de données PostgreSQL + Redis ✅
+- [x] Setup du projet React Native (Expo 51) ✅
+- [x] Setup du projet Next.js (Next.js 14 App Router) ✅
+- [x] Setup du backend Node.js (Fastify 5 + TypeScript) ✅
+- [ ] Setup du service Python (IA) — non requis, agents IA intégrés en Node.js
+- [x] Configurer les environnements (dev, staging, prod) ✅
 
 #### Semaine 3-4 : Auth & Profil
-- [ ] Implémenter l'authentification (JWT, Google Sign-In, Apple Sign-In)
-- [ ] Créer le système de profil candidat
+- [x] Implémenter l'authentification (JWT + refresh tokens) ✅
+- [x] Créer le système de profil candidat ✅
 - [ ] Développer le parsing de CV (PDF/DOCX → données structurées via IA)
-- [ ] Créer l'onboarding conversationnel avec EDGE
-- [ ] Implémenter le score de préparation
-- [ ] Tests unitaires et d'intégration
+- [x] Créer l'onboarding conversationnel avec EDGE ✅
+- [x] Implémenter le score de préparation ✅
+- [x] Tests unitaires et d'intégration (Vitest, 25 tests) ✅
 
 #### Semaine 5-6 : Agent EDGE Core
-- [ ] Développer le pipeline de prompts pour la conversation EDGE
-- [ ] Implémenter la génération de CV adapté
-- [ ] Implémenter la génération de lettre de motivation ciblée
-- [ ] Créer le système de matching offre/profil (embeddings + scoring)
-- [ ] Développer l'analyse d'entreprise automatique
+- [x] Développer le pipeline de prompts pour la conversation EDGE ✅
+- [x] Implémenter la génération de CV adapté ✅
+- [x] Implémenter la génération de lettre de motivation ciblée ✅
+- [x] Créer le système de matching offre/profil (scoring multi-critère) ✅
+- [x] Développer l'analyse d'entreprise automatique ✅
 - [ ] Tests de qualité des sorties IA
 
 #### Semaine 7-8 : Scraping v1
-- [ ] Développer le scraper Indeed
-- [ ] Développer le scraper Welcome to the Jungle
+- [x] Intégrer l'API Adzuna (Canada, illimité) ✅
+- [x] Intégrer JSearch / RapidAPI (LinkedIn, Indeed, Glassdoor) ✅
 - [ ] Développer le crawler de sites carrières (top 100 entreprises cibles)
-- [ ] Implémenter la déduplication d'offres
+- [x] Implémenter la déduplication d'offres ✅
 - [ ] Implémenter la détection d'arnaques (patterns basiques)
-- [ ] Stocker et indexer les offres dans PostgreSQL + Pinecone
+- [x] Stocker et indexer les offres dans PostgreSQL ✅ (120+ offres Canada)
 
 ### Livrables Phase 0 :
 - ✅ App fonctionnelle (inscription, profil, import CV)
@@ -63,34 +63,34 @@
 ### Objectif : MVP testable avec les premiers utilisateurs
 
 #### Candidatures
-- [ ] Pipeline de candidature complet (draft → validation → envoi)
-- [ ] Dashboard kanban de suivi
+- [x] Pipeline de candidature complet (draft → validation → envoi) ✅
+- [x] Dashboard kanban de suivi ✅
 - [ ] Système de relance intelligente
-- [ ] Notifications push (offres compatibles, relances)
-- [ ] Historique et statistiques personnelles
+- [x] Notifications push (offres compatibles, relances) ✅
+- [x] Historique et statistiques personnelles ✅
 
 #### Escouades v1
-- [ ] Algorithme de formation des escouades
-- [ ] Chat de groupe temps réel (texte)
-- [ ] Messages vocaux
+- [x] Algorithme de formation des escouades (suggestions IA) ✅
+- [x] Chat de groupe temps réel (texte) ✅
+- [x] Messages vocaux (enregistrement + lecture) ✅
 - [ ] Système d'animation IA (questions du jour, défis)
 - [ ] Détection d'inactivité et relance
 - [ ] Événement de célébration quand un membre est embauché
 
 #### Éclaireurs v1
-- [ ] Inscription comme éclaireur
-- [ ] Questionnaire initial
-- [ ] Chat anonyme éclaireur ↔ candidat (basique)
-- [ ] Système de crédits
+- [x] Inscription comme éclaireur ✅
+- [x] Questionnaire initial ✅
+- [x] Chat anonyme éclaireur ↔ candidat (basique) ✅
+- [x] Système de crédits ✅
 
 #### UI/UX Mobile
-- [ ] Écrans d'onboarding
-- [ ] Feed d'offres recommandées
-- [ ] Écran de dossier de candidature
-- [ ] Écran escouade (chat)
-- [ ] Écran dashboard / pipeline
-- [ ] Écran notifications
-- [ ] Design system complet (couleurs, typo, composants)
+- [x] Écrans d'onboarding (5 étapes) ✅
+- [x] Feed d'offres recommandées ✅
+- [x] Écran de dossier de candidature ✅
+- [x] Écran escouade (chat) ✅
+- [x] Écran dashboard / pipeline ✅
+- [x] Écran notifications ✅
+- [x] Design system complet (Button, Input, Card, Badge, Avatar, EmptyState) ✅
 
 ### Tests & Validation
 - [ ] Beta fermée : 50-100 utilisateurs (étudiants en informatique)
@@ -121,15 +121,23 @@
 - [ ] Estimation du processus de recrutement par entreprise
 
 #### Préparation Entretiens
-- [ ] Simulation d'entretien IA en vocal (recruteur IA)
-- [ ] Transcription Whisper des réponses
-- [ ] Analyse des réponses (contenu, structure, tics)
-- [ ] Rapport post-simulation détaillé
+- [x] Simulation d'entretien IA (multi-phase, personnage configurable) ✅
+- [ ] Transcription Whisper des réponses (vocal)
+- [x] Analyse des réponses (contenu, structure, évaluation temps réel) ✅
+- [x] Rapport post-simulation détaillé ✅
 - [ ] Questions fréquentes par entreprise (intelligence collective)
 - [ ] Brief pré-entretien (J-1 notification)
 
-#### Escouades v2
-- [ ] Appels visio intégrés (Daily.co / LiveKit)
+#### Escouades v2 ✅
+- [x] Appels visio intégrés (Jitsi Meet, nouvel onglet) ✅
+- [x] Multi-escouades (jusqu'à 5 par utilisateur) ✅
+- [x] Layout 3 panneaux style WhatsApp ✅
+- [x] Réactions emoji (8 emojis rapides au survol) ✅
+- [x] Répondre à un message (citation + scroll au message original) ✅
+- [x] Menu contextuel (Répondre, Copier, Réagir, Épingler, Important, Supprimer) ✅
+- [x] Suppression (pour moi / pour tous avec règle 1h) ✅
+- [x] Épingler et marquer comme important ✅
+- [x] Événements planifiés (réunions, appels, revues) ✅
 - [ ] Mock interviews en escouade
 - [ ] Système de défis hebdomadaires
 - [ ] Non-compétition : détection de chevauchement d'offres
@@ -146,10 +154,11 @@
 - [ ] Affichage de la fourchette réelle par poste/entreprise
 - [ ] Coach de négociation IA (simulation)
 
-#### Web App
-- [ ] Version web complète (Next.js)
-- [ ] Dashboard candidat web
-- [ ] Responsive design
+#### Web App ✅
+- [x] Version web complète (Next.js 14, App Router, Tailwind, Radix UI) ✅
+- [x] Dashboard candidat web (15+ pages) ✅
+- [x] Responsive design (mobile-first) ✅
+- [x] Déployé sur Vercel ✅
 
 ### Croissance
 - [ ] Programme de parrainage (invite un ami → 1 mois premium gratuit)

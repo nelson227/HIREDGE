@@ -185,13 +185,23 @@ Quand un membre est inactif >7 jours :
 | **Défi hebdomadaire** | "Cette semaine : chacun postule à 3 offres hors de sa zone de confort" | Hebdomadaire |
 | **Célébration** | Quand quelqu'un reçoit un entretien ou une offre | Ponctuel |
 
-### 2.4 Communication
+### 2.4 Communication ✅ IMPLÉMENTÉ
 
-- **Chat texte** : messagerie instantanée de groupe
-- **Messages vocaux** : pour les retours détaillés (comme WhatsApp)
-- **Visio intégrée** : pour les mock interviews et les réunions d'escouade (max 8 participants)
-- **Partage de fichiers** : CV, lettres, screenshots de conversations avec des recruteurs
-- **Réactions** : emojis rapides sur les messages (👏🔥❤️💪)
+- **Chat texte** : messagerie instantanée de groupe ✅
+- **Messages vocaux** : enregistrement via micro, lecture intégrée (comme WhatsApp) ✅
+- **Visio intégrée** : appels Jitsi Meet ouverts dans un nouvel onglet, lien partagé automatiquement au groupe ✅
+- **Réactions emoji** : 8 emojis rapides au survol (👍❤️😂😮😢🙏🔥🎉), toggle, compteur groupé ✅
+- **Répondre à un message** : citation avec nom de l'auteur et aperçu, clic pour scroller au message original ✅
+- **Menu contextuel complet** : Répondre, Copier, Réagir, Épingler, Marquer important, Supprimer ✅
+- **Épingler des messages** : badge 📌 visible sous le message ✅
+- **Marquer comme important** : badge ⭐ visible sous le message ✅
+- **Suppression intelligente** : ✅
+  - Message propre < 1h → supprimer pour moi OU pour tous
+  - Message propre > 1h → supprimer pour moi uniquement
+  - Message d'autrui → supprimer pour moi uniquement
+  - Messages supprimés pour tous → affichage "🚫 Ce message a été supprimé"
+- **Partage de fichiers** : CV, lettres, screenshots de conversations avec des recruteurs (prévu)
+- **Événements planifiés** : réunions vidéo, appels, revues CV avec formulaire intégré ✅
 
 ---
 

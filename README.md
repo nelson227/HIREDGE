@@ -104,20 +104,88 @@ Chaque utilisateur reçoit un agent IA qui :
 
 ---
 
-## 🏗️ Stack Technique (Prévu)
+## 🏗️ Stack Technique
 
-| Composant | Technologie |
-|-----------|------------|
-| **Mobile** | React Native / Flutter |
-| **Web** | React.js / Next.js |
-| **Backend** | Node.js (Express) ou Python (FastAPI) |
-| **Base de données** | PostgreSQL + Redis (cache) |
-| **IA / LLM** | OpenAI GPT-4o / Claude / Modèle fine-tuné |
-| **Recherche sémantique** | Pinecone / Weaviate (vector DB) |
-| **Scraping** | Puppeteer / Playwright / API partenaires |
-| **Temps réel** | Socket.io / WebSockets |
-| **Infrastructure** | AWS / GCP |
-| **CI/CD** | GitHub Actions |
+| Composant | Technologie | Statut |
+|-----------|------------|--------|
+| **Mobile** | React Native + Expo 51 | ✅ Déployé |
+| **Web** | Next.js 14 (App Router) + Tailwind + Radix UI | ✅ Déployé sur Vercel |
+| **Backend** | Node.js + Fastify 5 + TypeScript | ✅ Déployé sur Railway |
+| **Base de données** | PostgreSQL 16 (Railway) + Redis 7 | ✅ Production |
+| **ORM** | Prisma 5.22 (20 modèles, 15+ enums) | ✅ |
+| **IA / LLM** | OpenAI GPT-4o / Claude (via agents) | ✅ |
+| **Validation** | Zod (partagé frontend/backend via `@hiredge/shared`) | ✅ |
+| **Temps réel** | Socket.io (WebSockets) | ✅ |
+| **Monorepo** | Turborepo + npm workspaces | ✅ |
+| **Appels vidéo** | Jitsi Meet (gratuit, nouvel onglet) | ✅ |
+| **Messages vocaux** | MediaRecorder API + fichiers serveur | ✅ |
+| **CI/CD** | GitHub Actions (5 jobs) | ✅ |
+| **Docker** | Multi-stage build, docker-compose | ✅ |
+| **Recherche sémantique** | Pinecone / Weaviate (vector DB) — prévu | 🔜 |
+| **Scraping** | Adzuna API + JSearch (RapidAPI) | ✅ |
+
+### URLs de Production
+
+| Service | URL |
+|---------|-----|
+| **Web App** | https://hiredge-six.vercel.app |
+| **API Backend** | https://hiredge-production.up.railway.app |
+| **GitHub** | https://github.com/nelson227/HIREDGE.git |
+
+---
+
+## 🚀 Fonctionnalités Implémentées (Mars 2026)
+
+### Agent IA "EDGE"
+- Chat conversationnel avec détection d'intention
+- Génération de dossiers de candidature (CV adapté, lettre de motivation, analyse entreprise)
+- Recommandations d'offres avec scoring de compatibilité
+
+### Offres d'emploi
+- 120+ offres réelles importées (marché canadien via Adzuna)
+- Recherche avec filtres (contrat, localisation, salaire)
+- Système de matching profil/offre
+
+### Candidatures
+- Pipeline complet (brouillon → validation → envoi → suivi)
+- Dashboard avec statistiques
+- Limites par abonnement
+
+### Escouades (Groupes de soutien)
+- Création, invitation par code, rejoindre par ID
+- Multi-escouades (jusqu'à 5 par utilisateur)
+- **Chat WhatsApp-style** :
+  - Messages texte en temps réel
+  - Messages vocaux (enregistrement + lecture)
+  - Réactions emoji (8 emojis rapides au survol)
+  - Répondre à un message (citation cliquable qui scroll au message original)
+  - Menu contextuel (Répondre, Copier, Réagir, Épingler, Important, Supprimer)
+  - Suppression pour moi / pour tous (règle 1h pour suppression collective)
+  - Badges épinglé 📌 et important ⭐
+- Appels vidéo via Jitsi Meet
+- Événements planifiés (réunions, appels, revues)
+- Membres en ligne, indicateurs de statut
+- Layout 3 panneaux (liste / chat / membres)
+
+### Simulation d'entretien
+- Multi-types (RH, technique, stress, culture fit)
+- Personnage IA avec personnalité configurable
+- Évaluation en temps réel + rapport détaillé
+
+### Éclaireurs
+- Inscription et questionnaires
+- Chat anonyme avec les candidats
+- Système de crédits
+
+### Notifications
+- Centre de notifications avec types/priorités
+- Compteur de non-lus
+- Marquer comme lu
+
+### Profil & Onboarding
+- Onboarding interactif en 5 étapes
+- Profil complet (compétences, expériences, formation)
+- Score de complétion
 
 ---
 
@@ -146,7 +214,8 @@ Chaque utilisateur reçoit un agent IA qui :
 ## 📞 Contact
 
 - **Projet** : HIREDGE
-- **Statut** : Phase de conception
+- **Statut** : ✅ MVP complet — en production (Web + API + Mobile)
+- **Dernière mise à jour** : Mars 2026
 - **Équipe** : En cours de constitution
 
 ---

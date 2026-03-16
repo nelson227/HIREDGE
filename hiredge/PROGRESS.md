@@ -1,7 +1,7 @@
 # HIREDGE — Suivi de Progression
 
 > Document de suivi automatique du développement de l'application HIREDGE.
-> Dernière mise à jour : **Session 4 — FINAL**
+> Dernière mise à jour : **Session 12 — Mars 2026**
 
 ---
 
@@ -14,7 +14,8 @@
 | **Packages partagés** | 100% | ✅ Complet |
 | **Base de données (Prisma)** | 100% | ✅ Complet |
 | **Backend API** | 100% | ✅ Complet |
-| **Application Mobile** | 100% | ✅ Complet |
+| **Application Mobile (Expo)** | 100% | ✅ Complet |
+| **Application Web (Next.js)** | 100% | ✅ Complet |
 | **Design System** | 100% | ✅ Complet |
 | **Workers (Background Jobs)** | 100% | ✅ Complet |
 | **WebSocket (Temps réel)** | 100% | ✅ Complet |
@@ -23,8 +24,12 @@
 | **Docker** | 100% | ✅ Complet |
 | **Config Production** | 100% | ✅ Complet |
 | **Import d'offres** | 100% | ✅ Complet (Adzuna + JSearch) |
+| **Escouades v2 (WhatsApp-style)** | 100% | ✅ Complet |
+| **Messages vocaux** | 100% | ✅ Complet |
+| **Appels vidéo (Jitsi)** | 100% | ✅ Complet |
+| **Interactions messages** | 100% | ✅ Complet |
 
-**Progression globale : 100% ✅ PROJET COMPLET**
+**Progression globale : 100% ✅ PROJET COMPLET + FONCTIONNALITÉS AVANCÉES**
 
 ---
 
@@ -38,22 +43,24 @@
 
 ### 2. Package Partagé `@hiredge/shared` ✅
 - [x] `types.ts` — Toutes les interfaces TypeScript (~20 types)
-- [x] `validation.ts` — Schémas Zod (~12 schémas)
+- [x] `validation.ts` — Schémas Zod (~13 schémas, incluant `sendSquadMessageSchema` avec `replyToId`)
 - [x] `constants.ts` — Constantes (Squad, Matching, Pricing, etc.)
 - [x] `index.ts` — Barrel export
 
 ### 3. Base de Données ✅
-- [x] `schema.prisma` — 18 modèles, 15 enums, index, relations, cascades
+- [x] `schema.prisma` — 20 modèles, 15+ enums, index, relations, cascades
 - [x] Client Prisma (singleton)
+- [x] Modèles ajoutés : `SquadMessageReaction`, `SquadMessageHidden`
+- [x] Champs ajoutés à `SquadMessage` : `replyToId`, `isPinned`, `isImportant`, `deletedForAll`, relations `replyTo`/`replies`, `reactions`, `hiddenFor`
 
 ### 4. Backend API ✅
 #### Infrastructure
 - [x] `config/env.ts` — Variables d'environnement
 - [x] `db/prisma.ts` — Client Prisma
-- [x] `lib/redis.ts` — Client Redis avec retry
+- [x] `lib/redis.ts` — Client Redis avec retry + mode résilient (pas de crash si Redis down)
 - [x] `lib/websocket.ts` — Socket.io server
 - [x] `middleware/auth.ts` — JWT auth + role guard
-- [x] `server.ts` — Fastify entry point, CORS, plugins, routes
+- [x] `server.ts` — Fastify entry point, CORS, Helmet (cross-origin resource policy), multipart (5MB), static files `/uploads/`
 
 #### Services & Routes (9/9 modules)
 | Module | Service | Routes | Description |
@@ -62,7 +69,7 @@
 | Profile | ✅ | ✅ | CRUD profil, compétences, expériences, formation |
 | Jobs | ✅ | ✅ | Recherche, recommandations, matching engine |
 | Applications | ✅ | ✅ | CRUD candidatures, limites abonnement, stats |
-| Squads | ✅ | ✅ | Création, join/leave, chat, lifecycle automatique |
+| Squads | ✅ | ✅ | Création, join/leave, chat, messages vocaux, réactions, réponses, épinglage, suppression, événements, appels Jitsi |
 | Scouts | ✅ | ✅ | Inscription, conversations, crédits, anonymat |
 | EDGE AI | ✅ | ✅ | Détection d'intention, contexte, réponse IA |
 | Interview Sim | ✅ | ✅ | Multi-phase, personnage, évaluation temps réel |
@@ -124,7 +131,62 @@
 - [x] `EmptyState.tsx` — Icône, titre, description, bouton action optionnel
 - [x] `index.ts` — Barrel export
 
-### 6. Tests ✅
+### 6. Application Web (Next.js) ✅
+
+#### Infrastructure ✅
+- [x] Next.js 14+ avec App Router
+- [x] Tailwind CSS + Radix UI (Shadcn/ui)
+- [x] `lib/api.ts` — Client Axios avec intercepteurs, token refresh, baseURL configurable
+- [x] `lib/utils.ts` — Utilitaires (cn, clsx)
+- [x] Thème clair/sombre (ThemeProvider)
+- [x] Composants UI complets (Button, Input, Card, Badge, Dialog, etc.)
+- [x] Déployé sur **Vercel** (`https://hiredge-six.vercel.app`)
+
+#### Pages & Écrans ✅
+| Page | Route | Description |
+|------|-------|-------------|
+| Landing | `/` | Page d'accueil avec présentation produit |
+| Login | `/login` | Connexion par email/mot de passe |
+| Signup | `/signup` | Inscription avec onboarding |
+| Onboarding | `/onboarding` | Onboarding interactif multi-étapes |
+| Dashboard | `/dashboard` | Vue d'ensemble : stats, activité, jobs recommandés |
+| Jobs | `/jobs` | Recherche d'offres avec filtres avancés |
+| Job Detail | `/jobs/[id]` | Détail d'offre, score de matching, postuler |
+| Applications | `/applications` | Suivi des candidatures (pipeline kanban) |
+| App Detail | `/applications/[id]` | Détail candidature, timeline, actions |
+| Escouades | `/squad` | Chat de groupe style WhatsApp, multi-escouades |
+| Interview | `/interview` | Lancer une simulation d'entretien |
+| Interview Session | `/interviews/[id]` | Session simulation avec chat IA |
+| Assistant EDGE | `/assistant` | Conversation IA avec l'agent EDGE |
+| Profil | `/profile` | Profil complet avec compétences et expériences |
+| Éclaireurs | `/scouts` | Liste des conversations éclaireurs |
+| Analytics | `/analytics` | Statistiques personnelles détaillées |
+| Notifications | `/notifications` | Centre de notifications |
+| Paramètres | `/settings` | Préférences, compte, données personnelles |
+
+#### Escouades Web — Fonctionnalités avancées ✅
+- [x] **Layout 3 panneaux** : Liste escouades (gauche) + Chat (centre) + Membres/événements (droite)
+- [x] **Style WhatsApp** : aperçu dernier message, indicateur en ligne, code d'invitation
+- [x] **Multi-escouades** : jusqu'à 5 escouades simultanées, navigation par onglets
+- [x] **Messages texte** : envoi, affichage par auteur, horodatage
+- [x] **Messages vocaux** : enregistrement via MediaRecorder, lecture audio intégrée
+- [x] **Appels vidéo** : intégration Jitsi Meet (ouvre dans un nouvel onglet), message automatique au groupe
+- [x] **Événements** : planification de réunions, appels, revues CV avec formulaire intégré
+- [x] **Réactions emoji** : 8 emojis rapides (👍❤️😂😮😢🙏🔥🎉) au survol, toggle, compteur groupé
+- [x] **Répondre à un message** : citation avec nom de l'auteur, aperçu du contenu, barre de réponse au-dessus de l'input
+- [x] **Clic sur citation → scroll** : cliquer sur un message cité fait défiler jusqu'au message original avec surbrillance temporaire
+- [x] **Menu contextuel** : Répondre, Copier, Réagir, Épingler/Désépingler, Marquer comme important, Supprimer
+- [x] **Épingler des messages** : badge 📌 affiché sous le message
+- [x] **Marquer comme important** : badge ⭐ affiché sous le message
+- [x] **Suppression de messages** :
+  - Message propre < 1h : supprimer pour moi OU pour tous
+  - Message propre > 1h : supprimer pour moi uniquement
+  - Message d'autrui : supprimer pour moi uniquement
+  - Messages supprimés pour tous : affichage "🚫 Ce message a été supprimé"
+- [x] **Boîtes de message visibles** : bulles bleues (propres messages), bordure + fond gris clair (messages des autres)
+- [x] **Responsive** : mobile-first, panneau gauche/chat toggle sur petits écrans
+
+### 7. Tests ✅
 
 #### Backend (`apps/api/src/__tests__/`)
 - [x] `auth.test.ts` — 6 tests (validation email, hashing, doublons, login, tokens)
@@ -137,23 +199,23 @@
 #### Mobile (`apps/mobile/__tests__/`)
 - [x] `components.test.ts` — Tests logique : initiales Avatar, couleurs Badge, formatRelativeTime, labels statut, parsing salaire, couleurs match score
 
-### 7. Docker & Infrastructure ✅
+### 8. Docker & Infrastructure ✅
 - [x] `Dockerfile` — Build multi-stage (base → deps → shared-build → api-build → runner), node:20-alpine, utilisateur non-root, health check
 - [x] `docker-compose.yml` — PostgreSQL 16, Redis 7, API service, service migrate one-shot, volumes nommés
 - [x] `.dockerignore` — Exclut node_modules, .git, mobile, coverage
 
-### 8. CI/CD ✅
+### 9. CI/CD ✅
 - [x] `.github/workflows/ci.yml` — 5 jobs : lint & type-check, tests backend (services PG + Redis), tests mobile, Docker build + push GHCR, deploy staging
 
-### 9. EAS Build (Mobile) ✅
+### 10. EAS Build (Mobile) ✅
 - [x] `eas.json` — 3 profils (development/preview/production), config submit App Store + Play Store
 
-### 10. Configuration Production ✅
+### 11. Configuration Production ✅
 - [x] `.env.example` — Toutes les variables d'environnement documentées par catégorie
 - [x] `package.json` — Scripts : test, test:api, test:mobile, docker:up/down/build/logs, db:push/generate/migrate/seed
 - [x] `prisma/seed.ts` — Données démo canadiennes : utilisateur (Amadou Diallo, Full-Stack JS, Montréal), 3 entreprises (Shopify, Element AI, Wealthsimple), 3 offres à Toronto/Montréal, 1 escouade
 
-### 11. Import d'offres d'emploi — Sources multiples ✅
+### 12. Import d'offres d'emploi — Sources multiples ✅
 
 #### Stratégie
 HIREDGE cible exclusivement le **marché canadien** au lancement. Les offres sont importées depuis 2 agrégateurs API qui couvrent les plateformes majeures :
@@ -165,9 +227,70 @@ HIREDGE cible exclusivement le **marché canadien** au lancement. Les offres son
 | **Adzuna** | Adzuna, agrégation multi-sources Canada | `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | Illimité |
 | **JSearch (RapidAPI)** | **LinkedIn**, **Indeed**, **Glassdoor**, ZipRecruiter, + autres sites | `JSEARCH_API_KEY` | 500 req/mois |
 
-#### Services backend
+### 13. Déploiement Production ✅
 
-| Fichier | Rôle |
+| Service | Plateforme | URL |
+|---------|-----------|-----|
+| **API Backend** | Railway | `https://hiredge-production.up.railway.app` |
+| **Web Frontend** | Vercel | `https://hiredge-six.vercel.app` |
+| **Base de données** | Railway PostgreSQL | `caboose.proxy.rlwy.net:39234/railway` |
+| **Code source** | GitHub | `https://github.com/nelson227/HIREDGE.git` (branche `main`) |
+
+---
+
+## Historique des sessions de développement
+
+### Sessions 1-4 : Fondations
+- Monorepo Turborepo + npm workspaces
+- Backend Fastify 5 + Prisma + PostgreSQL
+- Application mobile React Native (Expo)
+- Seed de la base de données (120 offres Adzuna Canada)
+- Docker, CI/CD, tests
+
+### Session 5 : Correctifs et sécurité
+- Fix `vercel.json` (configuration de déploiement)
+- Redis résilient (pas de crash si Redis indisponible)
+- Audit d'isolation des données utilisateur
+- Fix auth Safari/iOS (cookies)
+
+### Session 6 : Escouades v1
+- Système de codes d'invitation
+- Fix TypeScript build
+
+### Session 7 : Escouades v2 complètes
+- Layout 3 panneaux style WhatsApp
+- Multi-escouades (jusqu'à 5)
+- Chat temps réel, membres en ligne
+- Événements planifiés
+- Suggestions d'escouades par IA
+
+### Session 8 : Correctifs UX
+- Fix flow de candidature
+- Fix suggestions d'escouades
+- Fix erreur 400 chat (champ `content` vs `message`)
+
+### Session 9 : Appels vidéo
+- Intégration Jitsi Meet (bouton vidéo → nouvel onglet)
+- Message automatique au groupe avec lien de l'appel
+- Tentative Daily.co abandonnée (payant)
+
+### Session 10 : Messages vocaux
+- Backend : route `POST /squads/:id/voice`, stockage `uploads/voice/{squadId}/`
+- Frontend : MediaRecorder, enregistrement, envoi, lecture audio
+- Fix URL relative (plus de `localhost:3000` en production)
+- Fix CORS Helmet (`cross-origin-resource-policy`)
+- Fix visibilité audio propre (fond clair pour bulles vocales de l'auteur)
+
+### Session 11 : Interactions messages WhatsApp-style
+- **Schema Prisma** : `SquadMessageReaction`, `SquadMessageHidden`, champs reply/pin/important/delete sur `SquadMessage`
+- **Backend** : 4 nouveaux endpoints (réaction, épingler, important, supprimer)
+- **Frontend** : survol avec emojis + flèche, menu contextuel complet, système de réponses avec citation cliquable, réactions groupées, badges épinglé/important, suppression pour moi/pour tous avec règle 1 heure
+
+### Session 12 : Corrections UX finales
+- Fix réponse à un message qui ne s'affichait pas (schéma Zod manquait `replyToId`)
+- Boîtes de messages des autres bien visibles (fond `bg-slate-100` + bordure)
+- Positionnement des boutons survol au niveau de la bulle (pas du nom)
+- Clic sur citation → scroll vers le message original avec surbrillance temporaire
 |---------|------|
 | `src/services/adzuna.service.ts` | Client Adzuna API — recherche, import, déduplique, normalise |
 | `src/services/jsearch.service.ts` | Client JSearch/RapidAPI — agrège LinkedIn/Indeed/Glassdoor, normalise salaires (horaire/mensuel → annuel), extrait ville/pays |
