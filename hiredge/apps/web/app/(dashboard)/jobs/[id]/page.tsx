@@ -183,17 +183,13 @@ export default function JobDetailPage() {
     try {
       setApplying(true)
       setApplyError(null)
-      await applicationsApi.create({ jobId: job.id })
+      const response = await applicationsApi.create({ jobId: job.id })
       setApplied(true)
-      // Fetch squad suggestions post-application
-      try {
-        const { data } = await squadApi.getSuggestions(job.id)
-        if (data.success && data.data?.show && data.data.squads?.length > 0) {
-          setSquadSuggestions(data.data.squads)
-          setShowSquadBanner(true)
-        }
-      } catch {
-        // Squad suggestions are non-blocking
+      // Use squad suggestions from the application creation response (no separate call needed)
+      const appData = response.data?.data
+      if (appData?.squadSuggestions?.length > 0) {
+        setSquadSuggestions(appData.squadSuggestions)
+        setShowSquadBanner(true)
       }
     } catch (err: any) {
       const msg = err.response?.data?.error?.message || "Erreur lors de la candidature"
