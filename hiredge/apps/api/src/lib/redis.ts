@@ -14,78 +14,105 @@ const createRedis = () => {
 
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) {
-    console.warn('[Redis] REDIS_URL not set — using in-memory fallback');
+    console.warn('[Redis] REDIS_URL not set — running without Redis cache');
     return null;
   }
 
   return new Redis(redisUrl, {
-    maxRetriesPerRequest: 3,
-    retryStrategy: (times: number) => Math.min(times * 500, 10000),
+    maxRetriesPerRequest: 1,
     enableOfflineQueue: false,
+    retryStrategy: (times: number) => {
+      if (times > 5) return null; // Stop reconnecting after 5 attempts
+      return Math.min(times * 1000, 5000);
+    },
+    lazyConnect: true,
   });
 };
 
 const rawRedis = createRedis();
+let redisAvailable = false;
+let loggedError = false;
 
 if (rawRedis) {
   rawRedis.on('error', (err: Error) => {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[Redis] Connection error:', err.message);
+    redisAvailable = false;
+    if (!loggedError) {
+      console.warn(`[Redis] Unavailable: ${err.message || 'connection failed'} — running without cache`);
+      loggedError = true;
     }
   });
 
   rawRedis.on('connect', () => {
-    // connected
+    redisAvailable = true;
+    loggedError = false;
+    console.log('[Redis] Connected');
+  });
+
+  // Attempt initial connection
+  rawRedis.connect().catch(() => {
+    // Already handled by error event
   });
 }
 
 // Resilient wrapper: all operations are safe even if Redis is unavailable
 const redis = {
   async get(key: string): Promise<string | null> {
+    if (!rawRedis || !redisAvailable) return null;
     try {
-      return rawRedis ? await rawRedis.get(key) : null;
+      return await rawRedis.get(key);
     } catch {
       return null;
     }
   },
   async setex(key: string, seconds: number, value: string): Promise<void> {
+    if (!rawRedis || !redisAvailable) return;
     try {
-      if (rawRedis) await rawRedis.setex(key, seconds, value);
+      await rawRedis.setex(key, seconds, value);
     } catch {
       // ignore
     }
   },
-  async set(key: string, value: string): Promise<void> {
+  async set(key: string, value: string, ...args: any[]): Promise<void> {
+    if (!rawRedis || !redisAvailable) return;
     try {
-      if (rawRedis) await rawRedis.set(key, value);
+      // Support redis.set(key, value, 'EX', ttl) syntax
+      if (args.length >= 2 && args[0] === 'EX') {
+        await rawRedis.setex(key, args[1] as number, value);
+      } else {
+        await rawRedis.set(key, value);
+      }
     } catch {
       // ignore
     }
   },
   async del(key: string): Promise<void> {
+    if (!rawRedis || !redisAvailable) return;
     try {
-      if (rawRedis) await rawRedis.del(key);
+      await rawRedis.del(key);
     } catch {
       // ignore
     }
   },
   async incr(key: string): Promise<number> {
+    if (!rawRedis || !redisAvailable) return 0;
     try {
-      return rawRedis ? await rawRedis.incr(key) : 0;
+      return await rawRedis.incr(key);
     } catch {
       return 0;
     }
   },
   async expire(key: string, seconds: number): Promise<void> {
+    if (!rawRedis || !redisAvailable) return;
     try {
-      if (rawRedis) await rawRedis.expire(key, seconds);
+      await rawRedis.expire(key, seconds);
     } catch {
       // ignore
     }
   },
   async exists(key: string): Promise<number> {
+    if (!rawRedis || !redisAvailable) return 0;
     try {
-      return rawRedis ? await rawRedis.exists(key) : 0;
+      return await rawRedis.exists(key);
     } catch {
       return 0;
     }

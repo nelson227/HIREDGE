@@ -1,0 +1,353 @@
+2026-03-16T09:43:11.099467091Z [inf]  Starting Container
+2026-03-16T09:43:11.848561801Z [inf]  
+2026-03-16T09:43:11.848569643Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-16T09:43:11.848574143Z [inf]  
+2026-03-16T09:43:11.848662643Z [inf]  Running Prisma db push...
+2026-03-16T09:43:11.848667071Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-16T09:43:11.848671401Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-16T09:43:11.883681515Z [err]  npm notice
+2026-03-16T09:43:11.883687832Z [err]  npm notice New major version of npm available! 10.8.2 -> 11.11.1
+2026-03-16T09:43:11.883691294Z [err]  npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+2026-03-16T09:43:11.883694615Z [err]  npm notice To update run: npm install -g npm@11.11.1
+2026-03-16T09:43:11.883697953Z [err]  npm notice
+2026-03-16T09:43:11.883701817Z [inf]  Starting server...
+2026-03-16T09:43:12.444814357Z [inf]  Server listening at http://127.0.0.1:8080
+2026-03-16T09:43:12.444818334Z [inf]  Server listening at http://10.147.27.231:8080
+2026-03-16T09:43:12.444822162Z [inf]  🚀 HIREDGE API + WebSocket running on port 8080
+2026-03-16T09:43:12.444826865Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:12.925552169Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:13.296402743Z [inf]  incoming request
+2026-03-16T09:43:13.299831682Z [inf]  request completed
+2026-03-16T09:43:13.952794750Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:15.458393876Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:17.438881254Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:19.938254469Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:22.935490652Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:26.439949725Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:30.495519770Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:34.988580996Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:40.107268321Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:45.453275184Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:51.479550899Z [err]  [Redis] Connection error: 
+2026-03-16T09:43:57.964230659Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:04.969139112Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:12.717391073Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:20.805572348Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:28.986251902Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:38.191830365Z [err]  [Redis] Connection error: 
+2026-03-16T09:44:47.498094000Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:07.495775115Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:07.513331052Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:27.433423825Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:27.527443707Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:47.519135924Z [err]  [Redis] Connection error: 
+2026-03-16T09:45:47.545462363Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:07.543493434Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:07.558945112Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:27.279702787Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:27.757411711Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:47.508967460Z [err]  [Redis] Connection error: 
+2026-03-16T09:46:47.589628610Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:07.586221690Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:07.599730696Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:27.609808038Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:27.609810725Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:47.717488390Z [err]  [Redis] Connection error: 
+2026-03-16T09:47:47.717493724Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:07.609399761Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:07.654660986Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:17.646092528Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:37.781146270Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:37.781149869Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:57.570926965Z [err]  [Redis] Connection error: 
+2026-03-16T09:48:57.685138594Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:17.683967509Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:17.688126844Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:37.782031176Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:37.782035349Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:57.631977487Z [err]  [Redis] Connection error: 
+2026-03-16T09:49:58.044686554Z [err]  [Redis] Connection error: 
+2026-03-16T09:50:07.735120412Z [err]  [Redis] Connection error: 
+2026-03-16T09:50:27.756819498Z [err]  [Redis] Connection error: 
+2026-03-16T09:50:27.756822511Z [err]  [Redis] Connection error: 
+2026-03-16T09:50:37.774056439Z [err]  [Redis] Connection error: 
+2026-03-16T09:50:47.754784577Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:07.737903674Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:07.770186315Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:27.471853455Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:27.901846351Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:47.621202474Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:48.115622017Z [err]  [Redis] Connection error: 
+2026-03-16T09:51:57.823560655Z [err]  [Redis] Connection error: 
+2026-03-16T09:52:07.816664643Z [err]  [Redis] Connection error: 
+2026-03-16T09:52:27.965841064Z [err]  [Redis] Connection error: 
+2026-03-16T09:52:27.965848185Z [err]  [Redis] Connection error: 
+2026-03-16T09:52:47.679855885Z [err]  [Redis] Connection error: 
+2026-03-16T09:52:48.113369177Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:07.793991672Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:07.862837339Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:27.857070568Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:27.871517849Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:47.904721545Z [err]  [Redis] Connection error: 
+2026-03-16T09:53:47.904788945Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:07.705101307Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:08.244573515Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:17.910258927Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:37.938482248Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:37.938485602Z [err]  [Redis] Connection error: 
+2026-03-16T09:54:47.934360271Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:07.969660156Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:07.969723282Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:27.774927101Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:28.278319859Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:47.964489519Z [err]  [Redis] Connection error: 
+2026-03-16T09:55:47.989471823Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:08.001589323Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:08.001596590Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:28.003041819Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:28.010015435Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:48.059370877Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:48.059374144Z [err]  [Redis] Connection error: 
+2026-03-16T09:56:58.033674925Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:17.759266120Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:18.184759844Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:37.947615713Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:38.061626481Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:58.122329233Z [err]  [Redis] Connection error: 
+2026-03-16T09:57:58.122334657Z [err]  [Redis] Connection error: 
+2026-03-16T09:58:17.802450579Z [err]  [Redis] Connection error: 
+2026-03-16T09:58:18.310709606Z [err]  [Redis] Connection error: 
+2026-03-16T09:58:38.156105129Z [err]  [Redis] Connection error: 
+2026-03-16T09:58:38.156108901Z [err]  [Redis] Connection error: 
+2026-03-16T09:58:48.104933699Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:07.807322741Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:08.330615655Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:28.039442171Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:28.151720986Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:38.148487185Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:58.178576639Z [err]  [Redis] Connection error: 
+2026-03-16T09:59:58.178580202Z [err]  [Redis] Connection error: 
+2026-03-16T10:00:17.925709162Z [err]  [Redis] Connection error: 
+2026-03-16T10:00:18.390307084Z [err]  [Redis] Connection error: 
+2026-03-16T10:00:38.130576384Z [err]  [Redis] Connection error: 
+2026-03-16T10:00:38.557747376Z [err]  [Redis] Connection error: 
+2026-03-16T10:00:48.195787810Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:08.181008746Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:08.213841717Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:27.921089991Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:28.406435435Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:48.180853797Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:48.261219066Z [err]  [Redis] Connection error: 
+2026-03-16T10:01:58.251482802Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:18.280369319Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:18.280372770Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:28.274203344Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:47.986928371Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:48.626455936Z [err]  [Redis] Connection error: 
+2026-03-16T10:02:58.284216279Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:18.290618737Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:18.299015584Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:38.399630547Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:38.399633798Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:58.080892233Z [err]  [Redis] Connection error: 
+2026-03-16T10:03:58.578271528Z [err]  [Redis] Connection error: 
+2026-03-16T10:04:08.360133980Z [err]  [Redis] Connection error: 
+2026-03-16T10:04:18.349003759Z [err]  [Redis] Connection error: 
+2026-03-16T10:04:28.349099849Z [err]  [Redis] Connection error: 
+2026-03-16T10:04:48.407285625Z [err]  [Redis] Connection error: 
+2026-03-16T10:04:48.407292306Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:08.161541707Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:08.626643243Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:18.391918606Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:38.401745156Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:38.401750731Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:58.459744777Z [err]  [Redis] Connection error: 
+2026-03-16T10:05:58.459747933Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:18.076852662Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:18.795098615Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:28.456851875Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:38.448597665Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:58.156034954Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:58.156038198Z [inf]  incoming request
+2026-03-16T10:06:58.156041248Z [inf]  request completed
+2026-03-16T10:06:58.156044346Z [inf]  incoming request
+2026-03-16T10:06:58.156047854Z [inf]  request completed
+2026-03-16T10:06:58.156051094Z [inf]  incoming request
+2026-03-16T10:06:58.156054620Z [inf]  request completed
+2026-03-16T10:06:58.156058286Z [inf]  incoming request
+2026-03-16T10:06:58.156061989Z [inf]  request completed
+2026-03-16T10:06:58.157591788Z [inf]  incoming request
+2026-03-16T10:06:58.157596181Z [inf]  request completed
+2026-03-16T10:06:58.157599393Z [inf]  incoming request
+2026-03-16T10:06:58.157602395Z [inf]  request completed
+2026-03-16T10:06:58.157605527Z [inf]  incoming request
+2026-03-16T10:06:58.157608545Z [inf]  request completed
+2026-03-16T10:06:58.157611381Z [inf]  incoming request
+2026-03-16T10:06:58.157614241Z [inf]  Stream isn't writeable and enableOfflineQueue options is false
+2026-03-16T10:06:58.159221682Z [inf]  request completed
+2026-03-16T10:06:58.661040359Z [err]  [Redis] Connection error: 
+2026-03-16T10:06:59.301916847Z [inf]  incoming request
+2026-03-16T10:06:59.665608766Z [inf]  request completed
+2026-03-16T10:07:08.741731079Z [err]  [Redis] Connection error: 
+2026-03-16T10:07:18.501667414Z [err]  [Redis] Connection error: 
+2026-03-16T10:07:28.471092696Z [err]  [Redis] Connection error: 
+2026-03-16T10:07:48.471959402Z [err]  [Redis] Connection error: 
+2026-03-16T10:07:48.485715243Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:08.586641247Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:08.586644496Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:28.345715520Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:28.864791123Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:38.517614645Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:58.523125935Z [err]  [Redis] Connection error: 
+2026-03-16T10:08:58.529714345Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:18.514548848Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:18.544841464Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:38.201353158Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:38.712682386Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:58.479353275Z [err]  [Redis] Connection error: 
+2026-03-16T10:09:58.861898228Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:08.648825374Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:18.595794266Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:38.595446468Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:38.612005348Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:58.317147396Z [err]  [Redis] Connection error: 
+2026-03-16T10:10:58.842689794Z [err]  [Redis] Connection error: 
+2026-03-16T10:11:18.638865361Z [err]  [Redis] Connection error: 
+2026-03-16T10:11:18.638870153Z [err]  [Redis] Connection error: 
+2026-03-16T10:11:38.571903733Z [err]  [Redis] Connection error: 
+2026-03-16T10:11:38.671893427Z [err]  [Redis] Connection error: 
+2026-03-16T10:11:48.671944299Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:08.427618117Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:08.892925835Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:28.445091307Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:28.702749838Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:48.664473035Z [err]  [Redis] Connection error: 
+2026-03-16T10:12:48.717303836Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:08.836885520Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:08.836889572Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:28.708064456Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:28.752834780Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:48.773884972Z [err]  [Redis] Connection error: 
+2026-03-16T10:13:48.773887594Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:08.571083367Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:09.029878241Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:18.794960512Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:38.770469088Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:38.817408354Z [err]  [Redis] Connection error: 
+2026-03-16T10:14:48.815391186Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:08.777278012Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:08.827867324Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:28.503458070Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:29.062319893Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:48.855327125Z [err]  [Redis] Connection error: 
+2026-03-16T10:15:48.855330690Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:08.854373573Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:08.869792824Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:28.521191499Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:28.991066417Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:48.701282679Z [err]  [Redis] Connection error: 
+2026-03-16T10:16:48.900016295Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:08.895790772Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:08.920999743Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:28.965113665Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:28.965124214Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:38.958331835Z [err]  [Redis] Connection error: 
+2026-03-16T10:17:48.941036855Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:08.728608829Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:09.166694552Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:28.891237078Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:28.970100230Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:49.001663657Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:49.001679727Z [err]  [Redis] Connection error: 
+2026-03-16T10:18:58.996468374Z [err]  [Redis] Connection error: 
+2026-03-16T10:19:18.986370146Z [err]  [Redis] Connection error: 
+2026-03-16T10:19:19.004956964Z [err]  [Redis] Connection error: 
+2026-03-16T10:19:38.878221204Z [err]  [Redis] Connection error: 
+2026-03-16T10:19:39.325781020Z [err]  [Redis] Connection error: 
+2026-03-16T10:19:49.026905477Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:09.024264578Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:09.042567033Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:28.988631313Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:29.059447564Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:48.890774870Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:49.417348306Z [err]  [Redis] Connection error: 
+2026-03-16T10:20:59.085527108Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:19.198448113Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:19.198451337Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:29.110609491Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:49.426804622Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:49.426812623Z [err]  [Redis] Connection error: 
+2026-03-16T10:21:59.159214232Z [err]  [Redis] Connection error: 
+2026-03-16T10:22:09.144977667Z [err]  [Redis] Connection error: 
+2026-03-16T10:22:29.142705537Z [err]  [Redis] Connection error: 
+2026-03-16T10:22:29.157427915Z [err]  [Redis] Connection error: 
+2026-03-16T10:22:48.844611567Z [err]  [Redis] Connection error: 
+2026-03-16T10:22:49.331934894Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:09.140123914Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:09.536496772Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:19.194497468Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:39.096038419Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:39.243626577Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:49.234576254Z [err]  [Redis] Connection error: 
+2026-03-16T10:23:51.504964194Z [inf]  incoming request
+2026-03-16T10:23:51.504967988Z [inf]  request completed
+2026-03-16T10:23:51.504974776Z [inf]  incoming request
+2026-03-16T10:23:51.504978539Z [inf]  request completed
+2026-03-16T10:23:51.731118816Z [inf]  incoming request
+2026-03-16T10:23:51.731123538Z [inf]  request completed
+2026-03-16T10:23:51.877284866Z [inf]  incoming request
+2026-03-16T10:23:52.272662711Z [inf]  request completed
+2026-03-16T10:23:52.272667344Z [inf]  incoming request
+2026-03-16T10:23:52.272671689Z [inf]  request completed
+2026-03-16T10:23:52.272675788Z [inf]  incoming request
+2026-03-16T10:23:52.272679868Z [inf]  request completed
+2026-03-16T10:23:52.295592158Z [inf]  incoming request
+2026-03-16T10:23:52.531418878Z [inf]  request completed
+2026-03-16T10:23:55.429113912Z [inf]  incoming request
+2026-03-16T10:23:55.444982661Z [inf]  Stream isn't writeable and enableOfflineQueue options is false
+2026-03-16T10:23:55.446434052Z [inf]  request completed
+2026-03-16T10:23:59.336021047Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:00.353086713Z [inf]  incoming request
+2026-03-16T10:24:00.376625796Z [inf]  request completed
+2026-03-16T10:24:01.554971111Z [inf]  incoming request
+2026-03-16T10:24:01.598149089Z [inf]  request completed
+2026-03-16T10:24:01.622573613Z [inf]  incoming request
+2026-03-16T10:24:01.628471373Z [inf]  request completed
+2026-03-16T10:24:01.721929723Z [inf]  incoming request
+2026-03-16T10:24:01.926101041Z [inf]  request completed
+2026-03-16T10:24:09.392672589Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:29.147852438Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:29.147857667Z [inf]  incoming request
+2026-03-16T10:24:29.147860859Z [inf]  Stream isn't writeable and enableOfflineQueue options is false
+2026-03-16T10:24:29.147863672Z [inf]  request completed
+2026-03-16T10:24:29.237898411Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:39.237404078Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:59.244408658Z [err]  [Redis] Connection error: 
+2026-03-16T10:24:59.258980538Z [err]  [Redis] Connection error: 
+2026-03-16T10:25:18.702186023Z [err]  [Redis] Connection error: 
+2026-03-16T10:25:19.387963301Z [err]  [Redis] Connection error: 
+2026-03-16T10:25:29.279472332Z [err]  [Redis] Connection error: 
+2026-03-16T10:25:49.281904866Z [err]  [Redis] Connection error: 
+2026-03-16T10:25:49.289085330Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:09.317655125Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:09.317658257Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:28.999399359Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:29.438738298Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:34.083411425Z [inf]  incoming request
+2026-03-16T10:26:34.083415345Z [inf]  Stream isn't writeable and enableOfflineQueue options is false
+2026-03-16T10:26:34.083418584Z [inf]  request completed
+2026-03-16T10:26:39.537691190Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:59.363437501Z [err]  [Redis] Connection error: 
+2026-03-16T10:26:59.363440762Z [err]  [Redis] Connection error: 
+2026-03-16T10:27:09.360766018Z [err]  [Redis] Connection error: 
+2026-03-16T10:27:29.361061659Z [err]  [Redis] Connection error: 
+2026-03-16T10:27:29.368334194Z [err]  [Redis] Connection error: 
+2026-03-16T10:27:49.042144335Z [err]  [Redis] Connection error: 
+2026-03-16T10:27:49.516645161Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:09.242107577Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:09.736648611Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:19.400619541Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:39.371176545Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:39.418477503Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:59.362238477Z [err]  [Redis] Connection error: 
+2026-03-16T10:28:59.442863130Z [err]  [Redis] Connection error: 
