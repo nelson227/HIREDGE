@@ -122,11 +122,11 @@ export class SquadMatchingService {
     const experienceLevel = detectExperienceLevel(job);
     const location = normalizeLocation(job);
 
-    // 3. Check if user already in a squad
-    const existingMembership = await prisma.squadMember.findFirst({
+    // 3. Check multi-squad limit
+    const activeCount = await prisma.squadMember.count({
       where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
-    if (existingMembership) return []; // Already in a squad
+    if (activeCount >= SQUAD_LIMITS.MAX_SQUADS_PER_USER) return [];
 
     // 4. Search for FORMING or ACTIVE squads with available space
     const compatibleSquads = await prisma.squad.findMany({
@@ -216,11 +216,11 @@ export class SquadMatchingService {
    * Check if we should show squad suggestions (respects cooldown & preferences)
    */
   async shouldSuggestSquad(userId: string): Promise<boolean> {
-    // 1. Check if user already in a squad
-    const existingMembership = await prisma.squadMember.findFirst({
+    // 1. Check multi-squad limit
+    const activeCount = await prisma.squadMember.count({
       where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
-    if (existingMembership) return false;
+    if (activeCount >= SQUAD_LIMITS.MAX_SQUADS_PER_USER) return false;
 
     // 2. Check user preference
     const profile = await prisma.candidateProfile.findUnique({ where: { userId } });

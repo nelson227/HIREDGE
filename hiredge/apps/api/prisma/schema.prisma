@@ -33,6 +33,7 @@ model User {
   applications       Application[]
   squadMembers       SquadMember[]
   squadMessages      SquadMessage[]
+  squadEventsCreated SquadEvent[] @relation("SquadEventCreator")
   simulations        InterviewSimulation[]
   scoutConversations ScoutConversation[] @relation("CandidateConversations")
 
@@ -261,6 +262,7 @@ model Squad {
 
   members  SquadMember[]
   messages SquadMessage[]
+  events   SquadEvent[]
 
   @@index([status])
   @@index([jobFamily, experienceLevel, status])
@@ -298,6 +300,24 @@ model SquadMessage {
 
   @@index([squadId, createdAt])
   @@map("squad_messages")
+}
+
+model SquadEvent {
+  id          String   @id @default(uuid())
+  squadId     String
+  createdById String
+  title       String
+  type        String   @default("MEETING") // MEETING | CALL | REVIEW
+  scheduledAt DateTime
+  duration    Int      @default(30) // minutes
+  link        String?  // optional video call link
+  createdAt   DateTime @default(now())
+
+  squad     Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  createdBy User  @relation("SquadEventCreator", fields: [createdById], references: [id])
+
+  @@index([squadId, scheduledAt])
+  @@map("squad_events")
 }
 
 // ============================================================

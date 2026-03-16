@@ -220,12 +220,14 @@ export const interviewsApi = {
 
 // ─── Squad ───────────────────────────────────────────────────────
 export const squadApi = {
-  getMySquad: () => api.get('/squads/mine'),
+  getMySquads: () => api.get('/squads/mine'),
+  getMySquad: () => api.get('/squads/mine'), // legacy compat
+  getDetails: (id: string) => api.get(`/squads/${id}`),
   join: (code: string) => api.post('/squads/join', { code }),
   joinById: (squadId: string) => api.post(`/squads/${squadId}/join`),
   create: (data: { name: string; description?: string }) =>
     api.post('/squads', data),
-  leave: () => api.post('/squads/leave'),
+  leave: (squadId: string) => api.post('/squads/leave', { squadId }),
   getMembers: (id: string) => api.get(`/squads/${id}/members`),
   sendMessage: (id: string, message: string) =>
     api.post(`/squads/${id}/messages`, { message }),
@@ -236,6 +238,10 @@ export const squadApi = {
   dismiss: () => api.post('/squads/dismiss'),
   getAvailable: (filters?: { industry?: string; jobFamily?: string; experienceLevel?: string }) =>
     api.get('/squads/available', { params: filters }),
+  // Events
+  createEvent: (squadId: string, data: { title: string; type: string; scheduledAt: string; duration?: number; link?: string }) =>
+    api.post(`/squads/${squadId}/events`, data),
+  getEvents: (squadId: string) => api.get(`/squads/${squadId}/events`),
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────

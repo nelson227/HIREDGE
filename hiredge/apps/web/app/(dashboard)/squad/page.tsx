@@ -1,15 +1,14 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Users,
   Send,
   Mic,
   Video,
-  Trophy,
   Plus,
   Loader2,
   UserPlus,
@@ -17,37 +16,74 @@ import {
   LogOut,
   Target,
   MapPin,
+  Calendar,
+  Phone,
+  ChevronLeft,
+  Clock,
+  X,
 } from "lucide-react"
-import { squadApi } from "@/lib/api"
+import { squadApi, authApi } from "@/lib/api"
+
+// ─── Types ───────────────────────────────────────────────────────
+interface MemberUser {
+  id: string
+  email: string
+  lastActiveAt?: string | null
+  candidateProfile?: {
+    firstName: string
+    lastName: string
+    title?: string
+    avatarUrl?: string
+  }
+}
 
 interface SquadMember {
   id: string
   userId: string
   role: string
   joinedAt: string
+  user: MemberUser
+}
+
+interface SquadMessage {
+  id: string
+  squadId: string
+  userId: string
+  content: string
+  type: string
+  createdAt: string
   user: {
-    profile?: {
-      firstName: string
-      lastName: string
-      title?: string
-    }
+    id: string
+    candidateProfile?: { firstName: string; lastName: string; avatarUrl?: string }
   }
+}
+
+interface SquadEvent {
+  id: string
+  title: string
+  type: string
+  scheduledAt: string
+  duration: number
+  link?: string
+  createdBy: { candidateProfile?: { firstName: string; lastName: string } }
 }
 
 interface Squad {
   id: string
   name: string
-  code: string
+  code?: string
   description?: string
   focus?: string
   jobFamily?: string
   experienceLevel?: string
   locationFilter?: string
   maxMembers: number
+  status: string
   createdAt: string
-  _count: {
-    members: number
-  }
+  members?: SquadMember[]
+  messages?: SquadMessage[]
+  events?: SquadEvent[]
+  _count?: { members: number }
 }
 
 interface AvailableSquad {
@@ -61,137 +97,159 @@ interface AvailableSquad {
   _count: { members: number }
 }
 
-interface Message {
-  id: string
-  userId: string
-  content: string
-  type: string
-  createdAt: string
-  user: {
-    profile?: {
-      firstName: string
-      lastName: string
-    }
-  }
+// ─── Helpers ─────────────────────────────────────────────────────
+function getInitials(profile?: { firstName: string; lastName: string } | null) {
+  if (!profile) return "?"
+  return `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase()
 }
 
+function getFullName(profile?: { firstName: string; lastName: string } | null) {
+  if (!profile) return "Membre"
+  return `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
+}
+
+function formatTime(dateString: string) {
+  return new Date(dateString).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })
+}
+
+function formatDate(dateString: string) {
+  const d = new Date(dateString)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const isTomorrow = d.toDateString() === tomorrow.toDateString()
+
+  if (isToday) return `Aujourd'hui, ${formatTime(dateString)}`
+  if (isTomorrow) return `Demain, ${formatTime(dateString)}`
+  return d.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" }) + `, ${formatTime(dateString)}`
+}
+
+type OnlineStatus = "online" | "away" | "offline"
+
+function getOnlineStatus(lastActiveAt?: string | null): OnlineStatus {
+  if (!lastActiveAt) return "offline"
+  const diff = Date.now() - new Date(lastActiveAt).getTime()
+  if (diff < 5 * 60 * 1000) return "online"
+  if (diff < 60 * 60 * 1000) return "away"
+  return "offline"
+}
+
+function statusColor(status: OnlineStatus) {
+  if (status === "online") return "bg-green-500"
+  if (status === "away") return "bg-orange-400"
+  return "bg-red-400"
+}
+
+function countOnline(members: SquadMember[]) {
+  return members.filter(m => getOnlineStatus(m.user?.lastActiveAt) === "online").length
+}
+
+// ─── Component ───────────────────────────────────────────────────
 export default function SquadPage() {
-  const [squad, setSquad] = useState<Squad | null>(null)
-  const [members, setMembers] = useState<SquadMember[]>([])
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState("")
+  const [squads, setSquads] = useState<Squad[]>([])
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  const [members, setMembers] = useState<SquadMember[]>([])
+  const [messages, setMessages] = useState<SquadMessage[]>([])
+  const [events, setEvents] = useState<SquadEvent[]>([])
+  const [newMessage, setNewMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
   const [joinCode, setJoinCode] = useState("")
   const [newSquadName, setNewSquadName] = useState("")
   const [creating, setCreating] = useState(false)
   const [joining, setJoining] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [feedbackMsg, setFeedbackMsg] = useState("")
   const [availableSquads, setAvailableSquads] = useState<AvailableSquad[]>([])
   const [loadingAvailable, setLoadingAvailable] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [feedbackMsg, setFeedbackMsg] = useState("")
+
+  const [showEventForm, setShowEventForm] = useState(false)
+  const [eventForm, setEventForm] = useState({ title: "", type: "MEETING", scheduledAt: "", duration: 30 })
+  const [creatingEvent, setCreatingEvent] = useState(false)
+
+  const [mobileShowChat, setMobileShowChat] = useState(false)
+
+  const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
+
+  // ─── Data Loading ───────────────────────────────────────────────
+  const loadAvailableSquads = useCallback(async () => {
+    try {
+      setLoadingAvailable(true)
+      const { data } = await squadApi.getAvailable()
+      if (data.success) setAvailableSquads(data.data || [])
+    } catch {
+      // silent
+    } finally {
+      setLoadingAvailable(false)
+    }
+  }, [])
+
+  const selectSquad = useCallback(async (squadId: string) => {
+    setSelectedSquadId(squadId)
+    setMobileShowChat(true)
+    try {
+      const [membersRes, messagesRes, eventsRes] = await Promise.all([
+        squadApi.getMembers(squadId),
+        squadApi.getMessages(squadId),
+        squadApi.getEvents(squadId),
+      ])
+      if (membersRes.data?.data) setMembers(membersRes.data.data)
+      if (messagesRes.data?.data) setMessages(messagesRes.data.data)
+      if (eventsRes.data?.data) setEvents(eventsRes.data.data)
+    } catch {
+      // silent
+    }
+  }, [])
+
+  const loadInitial = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [meRes, squadsRes] = await Promise.all([
+        authApi.me(),
+        squadApi.getMySquads(),
+      ])
+      if (meRes.data?.data?.id) setCurrentUserId(meRes.data.data.id)
+
+      const mySquads = squadsRes.data?.data || squadsRes.data || []
+      const squadList = Array.isArray(mySquads) ? mySquads : [mySquads].filter(Boolean)
+      setSquads(squadList)
+
+      if (squadList.length > 0) {
+        selectSquad(squadList[0].id)
+      } else {
+        loadAvailableSquads()
+      }
+    } catch {
+      loadAvailableSquads()
+    } finally {
+      setLoading(false)
+    }
+  }, [selectSquad, loadAvailableSquads])
 
   useEffect(() => {
-    loadSquad()
-  }, [])
+    loadInitial()
+  }, [loadInitial])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const loadSquad = async () => {
-    try {
-      setLoading(true)
-      const { data } = await squadApi.getMySquad()
-      if (data.success && data.data) {
-        setSquad(data.data)
-        // Récupérer les membres et messages
-        await Promise.all([
-          loadMembers(data.data.id),
-          loadMessages(data.data.id)
-        ])
-      }
-    } catch (error: any) {
-      // 404 = pas de squad, c'est normal
-      if (error.response?.status !== 404) {
-        // erreur inattendue
-      } else {
-        loadAvailableSquads()
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadAvailableSquads = async () => {
-    try {
-      setLoadingAvailable(true)
-      const { data } = await squadApi.getAvailable()
-      if (data.success) {
-        setAvailableSquads(data.data || [])
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoadingAvailable(false)
-    }
-  }
-
-  const handleJoinSquad = async (squadId: string) => {
-    try {
-      setJoining(true)
-      await squadApi.joinById(squadId)
-      await loadSquad()
-    } catch (error: any) {
-      setFeedbackMsg(error.response?.data?.error?.message || "Impossible de rejoindre")
-      setTimeout(() => setFeedbackMsg(""), 3000)
-    } finally {
-      setJoining(false)
-    }
-  }
-
-  const loadMembers = async (squadId: string) => {
-    try {
-      const { data } = await squadApi.getMembers(squadId)
-      if (data.success) {
-        setMembers(data.data)
-        // Identifier l'utilisateur courant
-        const me = data.data.find((m: SquadMember) => m.role === 'champion') || data.data[0]
-        if (me) setCurrentUserId(me.userId)
-      }
-    } catch {
-      // handled by UI state
-    }
-  }
-
-  const loadMessages = async (squadId: string) => {
-    try {
-      const { data } = await squadApi.getMessages(squadId)
-      if (data.success) {
-        // Inverser pour avoir les plus anciens en premier
-        setMessages(data.data.reverse())
-      }
-    } catch {
-      // handled by UI state
-    }
-  }
-
+  // ─── Actions ────────────────────────────────────────────────────
   const handleSend = async () => {
-    if (!newMessage.trim() || !squad || sending) return
-
-    const messageContent = newMessage.trim()
+    if (!newMessage.trim() || !selectedSquadId || sending) return
+    const content = newMessage.trim()
     setNewMessage("")
     setSending(true)
-
     try {
-      const { data } = await squadApi.sendMessage(squad.id, messageContent)
-      if (data.success) {
-        setMessages(prev => [...prev, data.data])
-      }
+      const { data } = await squadApi.sendMessage(selectedSquadId, content)
+      if (data.success) setMessages(prev => [...prev, data.data])
     } catch {
-      setNewMessage(messageContent) // Restaurer le message
+      setNewMessage(content)
     } finally {
       setSending(false)
     }
@@ -203,65 +261,110 @@ export default function SquadPage() {
     try {
       const { data } = await squadApi.create({ name: newSquadName.trim() })
       if (data.success) {
-        setSquad(data.data)
-        setShowCreate(false)
         setNewSquadName("")
-        await loadMembers(data.data.id)
+        setShowCreate(false)
+        await loadInitial()
       }
     } catch {
-      // handled by UI state
+      // silent
     } finally {
       setCreating(false)
     }
   }
 
-  const handleJoin = async () => {
+  const handleJoinByCode = async () => {
     if (!joinCode.trim() || joining) return
     setJoining(true)
     try {
-      const { data } = await squadApi.join(joinCode.trim())
-      if (data.success) {
-        await loadSquad()
-        setJoinCode("")
-      }
-    } catch (error: any) {
-      setFeedbackMsg(error.response?.data?.message || "Code invalide")
+      await squadApi.join(joinCode.trim())
+      setJoinCode("")
+      await loadInitial()
+    } catch (err: any) {
+      setFeedbackMsg(err.response?.data?.error?.message || "Code invalide")
       setTimeout(() => setFeedbackMsg(""), 3000)
     } finally {
       setJoining(false)
     }
   }
 
-  const handleLeave = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir quitter cette squad ?")) return
+  const handleJoinSquad = async (squadId: string) => {
     try {
-      await squadApi.leave()
-      setSquad(null)
-      setMembers([])
-      setMessages([])
+      setJoining(true)
+      await squadApi.joinById(squadId)
+      await loadInitial()
+    } catch (err: any) {
+      setFeedbackMsg(err.response?.data?.error?.message || "Impossible de rejoindre")
+      setTimeout(() => setFeedbackMsg(""), 3000)
+    } finally {
+      setJoining(false)
+    }
+  }
+
+  const handleLeave = async (squadId: string) => {
+    if (!confirm("Quitter cette escouade ?")) return
+    try {
+      await squadApi.leave(squadId)
+      const remaining = squads.filter(s => s.id !== squadId)
+      setSquads(remaining)
+      if (selectedSquadId === squadId) {
+        if (remaining.length > 0) {
+          selectSquad(remaining[0].id)
+        } else {
+          setSelectedSquadId(null)
+          setMembers([])
+          setMessages([])
+          setEvents([])
+          setMobileShowChat(false)
+          loadAvailableSquads()
+        }
+      }
     } catch {
-      // handled by UI state
+      // silent
     }
   }
 
-  const copyCode = () => {
-    if (squad?.code) {
-      navigator.clipboard.writeText(squad.code)
+  const handleCreateEvent = async () => {
+    if (!eventForm.title || !eventForm.scheduledAt || !selectedSquadId || creatingEvent) return
+    setCreatingEvent(true)
+    try {
+      const { data } = await squadApi.createEvent(selectedSquadId, eventForm)
+      if (data.success) {
+        setEvents(prev => [...prev, data.data].sort(
+          (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+        ))
+        setShowEventForm(false)
+        setEventForm({ title: "", type: "MEETING", scheduledAt: "", duration: 30 })
+        const msgRes = await squadApi.getMessages(selectedSquadId)
+        if (msgRes.data?.data) setMessages(msgRes.data.data)
+      }
+    } catch {
+      // silent
+    } finally {
+      setCreatingEvent(false)
     }
   }
 
-  const getInitials = (profile?: { firstName: string; lastName: string }) => {
-    if (!profile) return "?"
-    return `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase()
+  const copyCode = (code?: string) => {
+    if (code) navigator.clipboard.writeText(code)
   }
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("fr-CA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+  function getLastMessage(sq: Squad): string {
+    const msgs = sq.messages
+    if (!msgs || msgs.length === 0) return "Aucun message"
+    const last = msgs[0] as any
+    const name = last.user?.candidateProfile?.firstName || ""
+    const text = last.content || ""
+    const preview = `${name}: ${text}`
+    return preview.length > 60 ? preview.substring(0, 60) + "…" : preview
   }
 
+  function getLastMessageTime(sq: Squad): string {
+    const msgs = sq.messages
+    if (!msgs || msgs.length === 0) return ""
+    return formatTime(msgs[0].createdAt)
+  }
+
+  // ─── Loading ────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -273,8 +376,8 @@ export default function SquadPage() {
     )
   }
 
-  // Pas de squad - afficher les options
-  if (!squad) {
+  // ─── No Squads View ─────────────────────────────────────────────
+  if (squads.length === 0 && !mobileShowChat) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)] p-4">
         <div className="max-w-md w-full space-y-6">
@@ -282,11 +385,15 @@ export default function SquadPage() {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Rejoindre une Squad</h1>
+            <h1 className="text-2xl font-bold mb-2">Rejoindre une Escouade</h1>
             <p className="text-muted-foreground">
-              Les Escouades sont des groupes de 3 à 10 personnes avec un objectif similaire qui se soutiennent dans leur recherche d&apos;emploi.
+              Les Escouades sont des groupes de recherche d&apos;emploi. Rejoignez jusqu&apos;à 5 escouades.
             </p>
           </div>
+
+          {feedbackMsg && (
+            <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg">{feedbackMsg}</div>
+          )}
 
           <Card>
             <CardContent className="p-6 space-y-4">
@@ -299,16 +406,14 @@ export default function SquadPage() {
                     placeholder="CODE123"
                     maxLength={10}
                   />
-                  <Button onClick={handleJoin} disabled={!joinCode.trim() || joining}>
+                  <Button onClick={handleJoinByCode} disabled={!joinCode.trim() || joining}>
                     {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
 
               <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">ou</span>
                 </div>
@@ -316,36 +421,24 @@ export default function SquadPage() {
 
               {showCreate ? (
                 <div className="space-y-4">
-                  <Input
-                    value={newSquadName}
-                    onChange={(e) => setNewSquadName(e.target.value)}
-                    placeholder="Nom de votre escouade"
-                    maxLength={50}
-                  />
+                  <Input value={newSquadName} onChange={(e) => setNewSquadName(e.target.value)} placeholder="Nom de votre escouade" maxLength={50} />
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowCreate(false)} className="flex-1">
-                      Annuler
-                    </Button>
+                    <Button variant="outline" onClick={() => setShowCreate(false)} className="flex-1">Annuler</Button>
                     <Button onClick={handleCreate} disabled={!newSquadName.trim() || creating} className="flex-1">
-                      {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Créer
+                      {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Créer
                     </Button>
                   </div>
                 </div>
               ) : (
                 <Button variant="outline" onClick={() => setShowCreate(true)} className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Créer une nouvelle Escouade
+                  <Plus className="w-4 h-4 mr-2" />Créer une Escouade
                 </Button>
               )}
             </CardContent>
           </Card>
 
-          {/* Escouades disponibles */}
           {loadingAvailable ? (
-            <div className="text-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
-            </div>
+            <div className="text-center py-4"><Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" /></div>
           ) : availableSquads.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-center">Escouades disponibles</h2>
@@ -357,25 +450,9 @@ export default function SquadPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground truncate">{sq.name}</h3>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            {sq._count.members}/{sq.maxMembers}
-                          </span>
-                          {sq.jobFamily && (
-                            <span className="flex items-center gap-1">
-                              <Target className="w-3 h-3" />
-                              {sq.jobFamily}
-                            </span>
-                          )}
-                          {sq.locationFilter && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {sq.locationFilter}
-                            </span>
-                          )}
-                          {sq.experienceLevel && (
-                            <span className="px-1.5 py-0.5 rounded bg-muted">{sq.experienceLevel}</span>
-                          )}
+                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{sq._count.members}/{sq.maxMembers}</span>
+                          {sq.jobFamily && <span className="flex items-center gap-1"><Target className="w-3 h-3" />{sq.jobFamily}</span>}
+                          {sq.locationFilter && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{sq.locationFilter}</span>}
                         </div>
                       </div>
                       <Button size="sm" onClick={() => handleJoinSquad(sq.id)} disabled={joining}>
@@ -392,188 +469,313 @@ export default function SquadPage() {
     )
   }
 
-  // Afficher la squad
+  // ─── Main Layout: Squad List + Chat + Members Sidebar ───────────
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
+    <div className="h-[calc(100vh-4rem)] flex">
       {feedbackMsg && (
-        <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg shrink-0">{feedbackMsg}</div>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg z-50">
+          {feedbackMsg}
+        </div>
       )}
-      <div className="flex-1 flex">
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
-        <div className="h-16 border-b border-border flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground">{squad.name}</h2>
-              <p className="text-xs text-muted-foreground">
-                {members.length} membre{members.length > 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={copyCode} title="Copier le code">
-              <Copy className="w-4 h-4 mr-2" />
-              {squad.code}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLeave} className="text-destructive">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
+
+      {/* ── Left Panel: Squad List (WhatsApp-style) ───────────── */}
+      <div className={`w-80 border-r border-border flex flex-col bg-background ${mobileShowChat ? "hidden lg:flex" : "flex"}`}>
+        <div className="h-16 border-b border-border flex items-center justify-between px-4 shrink-0">
+          <h2 className="font-semibold text-lg text-foreground">Escouades</h2>
+          <Button variant="ghost" size="icon" onClick={() => { setShowCreate(true); setSelectedSquadId(null); setMobileShowChat(false) }}>
+            <Plus className="w-5 h-5" />
+          </Button>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Users className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="font-semibold mb-2">Bienvenue dans votre Squad !</h3>
-              <p className="text-sm text-muted-foreground max-w-md">
-                Commencez à échanger avec vos coéquipiers. Partagez vos progrès, posez des questions, et soutenez-vous mutuellement.
-              </p>
-            </div>
-          ) : (
-            messages.map((message) => {
-              if (message.type === "system") {
-                return (
-                  <div key={message.id} className="flex justify-center">
-                    <div className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
-                      {message.content}
-                    </div>
-                  </div>
-                )
-              }
+        <div className="flex-1 overflow-y-auto">
+          {squads.map((sq) => {
+            const isActive = sq.id === selectedSquadId
+            const memberCount = sq._count?.members ?? sq.members?.length ?? 0
+            const onlineCount = sq.members ? countOnline(sq.members) : 0
 
-              const isOwn = message.userId === currentUserId
-              const initials = getInitials(message.user?.profile)
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}
-                >
-                  <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
-                    isOwn ? "bg-primary" : "bg-muted"
-                  }`}>
-                    <span className={`text-xs font-semibold ${
-                      isOwn ? "text-primary-foreground" : "text-muted-foreground"
-                    }`}>
-                      {initials}
-                    </span>
-                  </div>
-                  <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
-                    {!isOwn && message.user?.profile && (
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {message.user.profile.firstName} {message.user.profile.lastName}
-                      </p>
-                    )}
-                    <div className={`rounded-2xl px-4 py-2.5 ${
-                      isOwn
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
-                    }`}>
-                      <p className="text-sm leading-relaxed">{message.content}</p>
-                    </div>
-                    <p className={`text-xs text-muted-foreground mt-1 ${
-                      isOwn ? "text-right" : ""
-                    }`}>
-                      {formatTime(message.createdAt)}
-                    </p>
-                  </div>
+            return (
+              <button
+                key={sq.id}
+                onClick={() => selectSquad(sq.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
+                  isActive ? "bg-primary/5 border-l-2 border-primary" : ""
+                }`}
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5 text-primary" />
                 </div>
-              )
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm text-foreground truncate">{sq.name}</p>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-2">{getLastMessageTime(sq)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{getLastMessage(sq)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {memberCount} membre{memberCount > 1 ? "s" : ""}
+                    {onlineCount > 0 && <span className="text-green-500"> · {onlineCount} en ligne</span>}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
 
-        {/* Message Input */}
-        <div className="p-4 border-t border-border shrink-0">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSend()
-            }}
-            className="flex items-center gap-3"
-          >
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Écrivez un message..."
-              className="flex-1"
-              disabled={sending}
-            />
-            <Button type="submit" size="icon" disabled={!newMessage.trim() || sending}>
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
-          </form>
+          <div className="p-4 space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Code d'invitation..."
+                className="text-sm"
+                maxLength={10}
+              />
+              <Button size="sm" onClick={handleJoinByCode} disabled={!joinCode.trim() || joining}>
+                {joining ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right Sidebar */}
-      <div className="hidden lg:block w-80 border-l border-border overflow-y-auto">
-        <div className="p-6 space-y-6">
-          {/* Squad Members */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Membres ({members.length}/{squad?.maxMembers || 10})</h3>
-            <div className="space-y-3">
-              {members.map((member) => {
-                const isMe = member.userId === currentUserId
-                const initials = getInitials(member.user?.profile)
-                return (
-                  <div key={member.id} className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                      isMe ? "bg-primary" : "bg-muted"
-                    }`}>
-                      <span className={`text-xs font-semibold ${
-                        isMe ? "text-primary-foreground" : "text-muted-foreground"
-                      }`}>
-                        {initials}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {member.user?.profile?.firstName} {member.user?.profile?.lastName}
-                        {isMe && " (Vous)"}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {member.user?.profile?.title || member.role}
-                      </p>
-                    </div>
-                    {member.role === "champion" && (
-                      <Trophy className="w-4 h-4 text-warning shrink-0" />
-                    )}
-                  </div>
-                )
-              })}
+      {/* ── Center: Chat Area ─────────────────────────────────── */}
+      <div className={`flex-1 flex flex-col ${!mobileShowChat ? "hidden lg:flex" : "flex"}`}>
+        {!selectedSquad ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Users className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium">Sélectionnez une escouade</p>
+              <p className="text-sm mt-1">Choisissez une conversation dans la liste</p>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 shrink-0">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" onClick={() => setMobileShowChat(false)} className="lg:hidden">
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-foreground text-sm">{selectedSquad.name}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {members.length} membre{members.length > 1 ? "s" : ""}
+                    {countOnline(members) > 0 && ` · ${countOnline(members)} en ligne`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => { setShowEventForm(true); setEventForm(f => ({ ...f, type: "CALL" })) }} title="Planifier un appel">
+                  <Phone className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => { setShowEventForm(true); setEventForm(f => ({ ...f, type: "MEETING" })) }} title="Planifier une réunion">
+                  <Video className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowEventForm(true)} title="Planifier un événement">
+                  <Calendar className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => copyCode(selectedSquad.code)} title="Copier le code" className="hidden sm:flex">
+                  <Copy className="w-3 h-3 mr-1" />{selectedSquad.code}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleLeave(selectedSquad.id)} className="text-destructive hover:text-destructive" title="Quitter">
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
 
-          {/* Invite */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Inviter des membres</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">
-                Partagez ce code pour inviter des membres :
-              </p>
+            {/* Event Creation */}
+            {showEventForm && (
+              <div className="border-b border-border bg-muted/30 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm">
+                    {eventForm.type === "CALL" ? "Planifier un appel" : eventForm.type === "MEETING" ? "Planifier une réunion" : "Planifier un événement"}
+                  </h3>
+                  <Button variant="ghost" size="icon" onClick={() => setShowEventForm(false)} className="h-6 w-6">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input placeholder="Titre" value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} />
+                  <Input type="datetime-local" value={eventForm.scheduledAt} onChange={e => setEventForm({ ...eventForm, scheduledAt: e.target.value })} />
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={eventForm.type}
+                    onChange={e => setEventForm({ ...eventForm, type: e.target.value })}
+                  >
+                    <option value="MEETING">Réunion vidéo</option>
+                    <option value="CALL">Appel</option>
+                    <option value="REVIEW">Revue CV / Lettre</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <Input type="number" placeholder="Durée (min)" value={eventForm.duration} onChange={e => setEventForm({ ...eventForm, duration: parseInt(e.target.value) || 30 })} className="w-28" />
+                    <Button onClick={handleCreateEvent} disabled={!eventForm.title || !eventForm.scheduledAt || creatingEvent} className="flex-1">
+                      {creatingEvent ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
+                      Créer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Users className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                  <h3 className="font-semibold mb-2">Bienvenue dans votre Escouade !</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Commencez à échanger. Partagez vos progrès, posez des questions, et soutenez-vous mutuellement.
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  if (msg.type === "SYSTEM" || msg.type === "system") {
+                    return (
+                      <div key={msg.id} className="flex justify-center">
+                        <div className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground max-w-sm text-center">
+                          {msg.content}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const isOwn = msg.userId === currentUserId
+                  const profile = msg.user?.candidateProfile
+                  const initials = getInitials(profile)
+
+                  return (
+                    <div key={msg.id} className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}>
+                      <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
+                        isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}>
+                        {initials}
+                      </div>
+                      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
+                        {!isOwn && profile && (
+                          <p className="text-xs font-medium text-muted-foreground mb-1">{getFullName(profile)}</p>
+                        )}
+                        <div className={`rounded-2xl px-4 py-2.5 ${
+                          isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"
+                        }`}>
+                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                        </div>
+                        <p className={`text-[10px] text-muted-foreground mt-1 ${isOwn ? "text-right" : ""}`}>
+                          {formatTime(msg.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="p-3 border-t border-border shrink-0">
+              <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex items-center gap-2">
+                <Button type="button" variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
+                  <Mic className="w-5 h-5" />
+                </Button>
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Écrire un message..."
+                  className="flex-1"
+                  disabled={sending}
+                />
+                <Button type="submit" size="icon" disabled={!newMessage.trim() || sending} className="shrink-0">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Right Sidebar: Members + Events ───────────────────── */}
+      {selectedSquad && (
+        <div className="hidden xl:flex w-72 border-l border-border flex-col overflow-y-auto">
+          <div className="p-5 space-y-6">
+            {/* Members */}
+            <div>
+              <h3 className="font-semibold text-foreground text-sm mb-4">Membres</h3>
+              <div className="space-y-3">
+                {members.map((member) => {
+                  const isMe = member.userId === currentUserId
+                  const profile = member.user?.candidateProfile
+                  const initials = getInitials(profile)
+                  const status = getOnlineStatus(member.user?.lastActiveAt)
+
+                  return (
+                    <div key={member.id} className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold ${
+                          isMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        }`}>
+                          {initials}
+                        </div>
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background ${statusColor(status)}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {getFullName(profile)}{isMe && " (Vous)"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {profile?.title || (member.role === "LEADER" ? "Leader" : "Membre")}
+                        </p>
+                      </div>
+                      <div className={`w-2.5 h-2.5 rounded-full ${statusColor(status)}`}
+                        title={status === "online" ? "En ligne" : status === "away" ? "Absent" : "Hors ligne"}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Invite */}
+            <div>
+              <h3 className="font-semibold text-foreground text-sm mb-2">Inviter</h3>
               <div className="flex items-center gap-2">
-                <code className="flex-1 px-3 py-2 bg-muted rounded-md text-center font-mono">
-                  {squad.code}
-                </code>
-                <Button variant="outline" size="sm" onClick={copyCode}>
+                <code className="flex-1 px-3 py-2 bg-muted rounded-md text-center text-sm font-mono">{selectedSquad.code}</code>
+                <Button variant="outline" size="sm" onClick={() => copyCode(selectedSquad.code)}>
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Upcoming Events */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-foreground text-sm">Événements</h3>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowEventForm(true)}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {events.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Aucun événement planifié</p>
+              ) : (
+                <div className="space-y-2">
+                  {events.map((evt) => (
+                    <div key={evt.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/50">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        {evt.type === "CALL" ? <Phone className="w-4 h-4 text-primary" /> : evt.type === "REVIEW" ? <Target className="w-4 h-4 text-primary" /> : <Video className="w-4 h-4 text-primary" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{evt.title}</p>
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Clock className="w-3 h-3" />{formatDate(evt.scheduledAt)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -26,11 +26,11 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /squads/mine — Get current user's squad
+  // GET /squads/mine — Get current user's squads (multi-squad)
   fastify.get('/mine', async (request, reply) => {
     try {
-      const squad = await squadService.getMySquad(request.user.id);
-      return reply.send({ success: true, data: squad });
+      const squads = await squadService.getMySquads(request.user.id);
+      return reply.send({ success: true, data: squads });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
@@ -88,16 +88,22 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /squads/leave — Leave current squad
+  // POST /squads/leave — Leave a specific squad (body: { squadId })
   fastify.post('/leave', async (request, reply) => {
+    const { squadId } = request.body as { squadId?: string };
     try {
-      const squad = await squadService.getMySquad(request.user.id);
-      if (!squad) {
-        return reply.status(404).send({
-          success: false, error: { code: 'NO_SQUAD', message: 'Vous n\'êtes dans aucune escouade' },
-        });
+      if (squadId) {
+        await squadService.leaveSquad(request.user.id, squadId);
+      } else {
+        // Legacy: leave first squad
+        const squad = await squadService.getMySquad(request.user.id);
+        if (!squad) {
+          return reply.status(404).send({
+            success: false, error: { code: 'NO_SQUAD', message: 'Vous n\'êtes dans aucune escouade' },
+          });
+        }
+        await squadService.leaveSquad(request.user.id, squad.id);
       }
-      await squadService.leaveSquad(request.user.id, squad.id);
       return reply.send({ success: true, data: { message: 'Vous avez quitté l\'escouade' } });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -157,7 +163,6 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/members', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
-      // Verify the requesting user is a member of this squad
       const membership = await prisma.squadMember.findFirst({
         where: { squadId: id, userId: request.user.id, isActive: true },
       });
@@ -169,10 +174,46 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
 
       const members = await prisma.squadMember.findMany({
         where: { squadId: id, isActive: true },
-        include: { user: { select: { id: true, email: true } } },
+        include: { user: { select: { id: true, email: true, lastActiveAt: true, candidateProfile: { select: { firstName: true, lastName: true, title: true, avatarUrl: true } } } } },
         orderBy: { joinedAt: 'asc' },
       });
       return reply.send({ success: true, data: members });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // ─── Events ──────────────────────────────────────────────────────
+
+  // POST /squads/:id/events — Create an event
+  fastify.post('/:id/events', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { title?: string; type?: string; scheduledAt?: string; duration?: number; link?: string };
+    if (!body.title || !body.scheduledAt) {
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'title et scheduledAt requis' } });
+    }
+    try {
+      const event = await squadService.createEvent(request.user.id, id, {
+        title: body.title,
+        type: body.type || 'MEETING',
+        scheduledAt: body.scheduledAt,
+        duration: body.duration,
+        link: body.link,
+      });
+      return reply.status(201).send({ success: true, data: event });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // GET /squads/:id/events — List upcoming events
+  fastify.get('/:id/events', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const events = await squadService.getEvents(request.user.id, id);
+      return reply.send({ success: true, data: events });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;

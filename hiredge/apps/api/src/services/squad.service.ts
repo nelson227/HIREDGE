@@ -4,8 +4,21 @@ import { AppError } from './auth.service';
 import { SQUAD_LIMITS } from '@hiredge/shared';
 
 function generateSquadCode(): string {
-  return crypto.randomBytes(3).toString('hex').toUpperCase(); // e.g. "A3F2B1"
+  return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
+
+const MEMBER_SELECT = {
+  include: {
+    user: {
+      select: {
+        id: true,
+        email: true,
+        lastActiveAt: true,
+        candidateProfile: { select: { firstName: true, lastName: true, title: true, avatarUrl: true } },
+      },
+    },
+  },
+};
 
 export class SquadService {
   async createSquad(userId: string, data: {
@@ -17,12 +30,12 @@ export class SquadService {
     experienceLevel?: string;
     locationFilter?: string;
   }) {
-    // Check if user is already in a squad (FORMING or ACTIVE)
-    const existing = await prisma.squadMember.findFirst({
+    // Check multi-squad limit
+    const activeCount = await prisma.squadMember.count({
       where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
-    if (existing) {
-      throw new AppError('ALREADY_IN_SQUAD', 'Vous êtes déjà membre d\'une escouade active', 409);
+    if (activeCount >= SQUAD_LIMITS.MAX_SQUADS_PER_USER) {
+      throw new AppError('MAX_SQUADS_REACHED', `Vous êtes déjà dans ${SQUAD_LIMITS.MAX_SQUADS_PER_USER} escouades (limite max)`, 409);
     }
 
     // Generate a unique code (retry on collision)
@@ -52,19 +65,19 @@ export class SquadService {
           },
         },
       },
-      include: { members: { include: { user: { select: { id: true, email: true } } } } },
+      include: { members: { ...MEMBER_SELECT } },
     });
 
     return squad;
   }
 
   async joinSquad(userId: string, codeOrId: string) {
-    // Check if user is already in a squad (FORMING or ACTIVE)
-    const existingMembership = await prisma.squadMember.findFirst({
+    // Check multi-squad limit
+    const activeCount = await prisma.squadMember.count({
       where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
     });
-    if (existingMembership) {
-      throw new AppError('ALREADY_IN_SQUAD', 'Vous êtes déjà membre d\'une escouade', 409);
+    if (activeCount >= SQUAD_LIMITS.MAX_SQUADS_PER_USER) {
+      throw new AppError('MAX_SQUADS_REACHED', `Vous êtes déjà dans ${SQUAD_LIMITS.MAX_SQUADS_PER_USER} escouades (limite max)`, 409);
     }
 
     // Try to find by code first, then by id
@@ -141,15 +154,14 @@ export class SquadService {
       where: { id: squadId },
       include: {
         members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                candidateProfile: { select: { firstName: true, lastName: true, title: true, avatarUrl: true } },
-              },
-            },
-          },
+          where: { isActive: true },
+          ...MEMBER_SELECT,
+        },
+        events: {
+          where: { scheduledAt: { gte: new Date() } },
+          orderBy: { scheduledAt: 'asc' },
+          take: 5,
+          include: { createdBy: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } } },
         },
       },
     });
@@ -158,34 +170,39 @@ export class SquadService {
     return squad;
   }
 
-  async getMySquad(userId: string) {
-    const member = await prisma.squadMember.findFirst({
-      where: { userId, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
+  async getMySquads(userId: string) {
+    const memberships = await prisma.squadMember.findMany({
+      where: { userId, isActive: true, squad: { status: { in: ['FORMING', 'ACTIVE'] } } },
       include: {
         squad: {
           include: {
             members: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    email: true,
-                    candidateProfile: { select: { firstName: true, lastName: true, title: true, avatarUrl: true } },
-                  },
-                },
-              },
+              where: { isActive: true },
+              ...MEMBER_SELECT,
             },
+            messages: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: { user: { select: { candidateProfile: { select: { firstName: true } } } } },
+            },
+            _count: { select: { members: { where: { isActive: true } } } },
           },
         },
       },
+      orderBy: { joinedAt: 'desc' },
     });
 
-    if (!member) return null;
-    return member.squad;
+    return memberships.map((m) => m.squad);
+  }
+
+  // Keep legacy single-squad method for backwards compat
+  async getMySquad(userId: string) {
+    const squads = await this.getMySquads(userId);
+    return squads[0] || null;
   }
 
   async sendMessage(userId: string, squadId: string, data: { content: string; type?: string }) {
-    const member = await prisma.squadMember.findFirst({ where: { userId, squadId } });
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
     if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
 
     const message = await prisma.squadMessage.create({
@@ -209,7 +226,7 @@ export class SquadService {
   }
 
   async getMessages(userId: string, squadId: string, cursor?: string, limit: number = 50) {
-    const member = await prisma.squadMember.findFirst({ where: { userId, squadId } });
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
     if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
 
     const safeLimit = Math.min(limit, 100);
@@ -229,6 +246,44 @@ export class SquadService {
     });
 
     return messages.reverse();
+  }
+
+  // ─── Events ──────────────────────────────────────────────────────
+  async createEvent(userId: string, squadId: string, data: { title: string; type: string; scheduledAt: string; duration?: number; link?: string }) {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    const event = await prisma.squadEvent.create({
+      data: {
+        squadId,
+        createdById: userId,
+        title: data.title,
+        type: data.type || 'MEETING',
+        scheduledAt: new Date(data.scheduledAt),
+        duration: data.duration || 30,
+        link: data.link,
+      },
+      include: { createdBy: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } } },
+    });
+
+    // Also post a system message
+    await prisma.squadMessage.create({
+      data: { squadId, userId, content: `📅 ${data.title} — ${new Date(data.scheduledAt).toLocaleDateString('fr-CA')} à ${new Date(data.scheduledAt).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}`, type: 'SYSTEM' },
+    });
+
+    return event;
+  }
+
+  async getEvents(userId: string, squadId: string) {
+    const member = await prisma.squadMember.findFirst({ where: { userId, squadId, isActive: true } });
+    if (!member) throw new AppError('NOT_IN_SQUAD', 'Vous n\'êtes pas membre de cette escouade', 403);
+
+    return prisma.squadEvent.findMany({
+      where: { squadId, scheduledAt: { gte: new Date() } },
+      orderBy: { scheduledAt: 'asc' },
+      take: 10,
+      include: { createdBy: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } } },
+    });
   }
 
   async findAvailableSquads(userId: string, filters?: { industry?: string; jobFamily?: string; experienceLevel?: string }) {
