@@ -23,6 +23,9 @@ import {
   X,
 } from "lucide-react"
 import { squadApi, authApi } from "@/lib/api"
+import dynamic from "next/dynamic"
+
+const DailyCall = dynamic(() => import("@/components/daily-call"), { ssr: false })
 
 // ─── Types ───────────────────────────────────────────────────────
 interface MemberUser {
@@ -173,6 +176,10 @@ export default function SquadPage() {
   const [creatingEvent, setCreatingEvent] = useState(false)
 
   const [mobileShowChat, setMobileShowChat] = useState(false)
+
+  // Call state
+  const [activeCall, setActiveCall] = useState<{ url: string } | null>(null)
+  const [activeCallSquadId, setActiveCallSquadId] = useState<string | null>(null)
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
 
@@ -348,31 +355,51 @@ export default function SquadPage() {
     if (code) navigator.clipboard.writeText(code)
   }
 
-  // ─── Jitsi Calls ──────────────────────────────────────────────
+  // ─── Calls (Daily.co) ────────────────────────────────────────
   const startCall = async () => {
     if (!selectedSquadId || !selectedSquad) return
-    const ts = Date.now().toString(36)
-    const safeName = selectedSquad.name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 20)
-    const roomName = `hiredge-${safeName}-${selectedSquadId.substring(0, 8)}-${ts}`
-    const jitsiUrl = `https://meet.jit.si/${roomName}`
-
-    // Open call in new tab
-    window.open(jitsiUrl, "_blank", "noopener,noreferrer")
-
-    // Send system message so others can join
     try {
-      const { data } = await squadApi.sendMessage(
-        selectedSquadId,
-        `📞 Appel démarré — Rejoignez : ${jitsiUrl}`
-      )
-      if (data.success) setMessages(prev => [...prev, data.data])
+      const { data } = await squadApi.createCall(selectedSquadId)
+      if (!data.success) return
+
+      const roomUrl = data.data.url as string
+      setActiveCall({ url: roomUrl })
+      setActiveCallSquadId(selectedSquadId)
+
+      // Send system message so others can join
+      try {
+        const { data: msgData } = await squadApi.sendMessage(
+          selectedSquadId,
+          `📞 Appel démarré — Rejoignez : ${roomUrl}`
+        )
+        if (msgData.success) setMessages(prev => [...prev, msgData.data])
+      } catch {}
     } catch {
-      // call still works even if message fails
+      // Fallback: open Jitsi in new tab if Daily.co is not configured
+      const ts = Date.now().toString(36)
+      const safeName = selectedSquad.name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 20)
+      const roomName = `hiredge-${safeName}-${selectedSquadId.substring(0, 8)}-${ts}`
+      const fallbackUrl = `https://meet.jit.si/${roomName}`
+      window.open(fallbackUrl, "_blank", "noopener,noreferrer")
+      try {
+        const { data } = await squadApi.sendMessage(selectedSquadId, `📞 Appel démarré — Rejoignez : ${fallbackUrl}`)
+        if (data.success) setMessages(prev => [...prev, data.data])
+      } catch {}
     }
   }
 
-  const joinCallFromLink = (jitsiUrl: string) => {
-    window.open(jitsiUrl, "_blank", "noopener,noreferrer")
+  const endCall = () => {
+    setActiveCall(null)
+    setActiveCallSquadId(null)
+  }
+
+  const joinCallFromLink = (callUrl: string) => {
+    if (callUrl.includes("daily.co")) {
+      setActiveCall({ url: callUrl })
+      setActiveCallSquadId(selectedSquadId)
+    } else {
+      window.open(callUrl, "_blank", "noopener,noreferrer")
+    }
   }
 
   function getLastMessage(sq: Squad): string {
@@ -593,7 +620,7 @@ export default function SquadPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => startCall()} title="Démarrer un appel">
+                <Button variant="ghost" size="icon" onClick={() => startCall()} title="Démarrer un appel" disabled={!!activeCall}>
                   <Video className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowEventForm(true)} title="Planifier un événement">
@@ -642,6 +669,16 @@ export default function SquadPage() {
               </div>
             )}
 
+            {/* Active Call */}
+            {activeCall && activeCallSquadId === selectedSquadId && (
+              <div className="border-b border-border shrink-0">
+                <DailyCall
+                  roomUrl={activeCall.url}
+                  onClose={endCall}
+                />
+              </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3">
               {messages.length === 0 ? (
@@ -664,9 +701,8 @@ export default function SquadPage() {
                     )
                   }
 
-                  // Detect call messages with Jitsi link
-                  const jitsiMatch = msg.content.match(/https:\/\/meet\.jit\.si\/(\S+)/)
-                  if (jitsiMatch && msg.content.startsWith("📞")) {
+                  const callMatch = msg.content.match(/(https:\/\/[^\s]+daily\.co[^\s]+|https:\/\/meet\.jit\.si\/\S+)/)
+                  if (callMatch && msg.content.startsWith("📞")) {
                     return (
                       <div key={msg.id} className="flex justify-center">
                         <div className="px-4 py-3 rounded-xl bg-primary/5 border border-primary/20 max-w-sm text-center space-y-2">
@@ -674,9 +710,11 @@ export default function SquadPage() {
                             {msg.userId === currentUserId ? "Vous avez" : getFullName(msg.user?.candidateProfile) + " a"} démarré un appel
                           </p>
                           <p className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</p>
-                          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => joinCallFromLink(jitsiMatch[0])}>
-                            <PhoneIcon className="w-3.5 h-3.5" />Rejoindre l&apos;appel
-                          </Button>
+                          {!(activeCall && activeCallSquadId === selectedSquadId) && (
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => joinCallFromLink(callMatch[0])}>
+                              <PhoneIcon className="w-3.5 h-3.5" />Rejoindre l&apos;appel
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )
