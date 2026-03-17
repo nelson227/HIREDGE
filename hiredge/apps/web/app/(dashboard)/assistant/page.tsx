@@ -376,20 +376,29 @@ export default function AssistantPage() {
     if (downloadingFormat) return
     setDownloadingFormat("pdf")
     try {
-      const { jsPDF } = await import("jspdf")
-      const doc = new jsPDF()
-      const margin = 20
-      const contentWidth = doc.internal.pageSize.getWidth() - margin * 2
-      const content = action.data?.content || action.data?.text || "Aucun contenu"
-      doc.setFontSize(11)
-      const lines = doc.splitTextToSize(content, contentWidth)
-      let y = 25
-      for (const line of lines) {
-        if (y > 275) { doc.addPage(); y = 20 }
-        doc.text(line, margin, y)
-        y += 5.5
+      // Structured CV data → use full CV renderer
+      if (action.documentType === "cv" && action.data?.personalInfo) {
+        const { generatePDF } = await import("@/lib/document-generator")
+        const blob = await generatePDF(action.data)
+        const name = `${action.data.personalInfo.firstName ?? "cv"}-${action.data.personalInfo.lastName ?? "edge"}`.toLowerCase()
+        downloadBlob(blob, `${name}.pdf`)
+      } else {
+        // Plain text content (cover letters, etc.)
+        const { jsPDF } = await import("jspdf")
+        const doc = new jsPDF()
+        const margin = 20
+        const contentWidth = doc.internal.pageSize.getWidth() - margin * 2
+        const content = action.data?.content || action.data?.text || JSON.stringify(action.data, null, 2)
+        doc.setFontSize(11)
+        const lines = doc.splitTextToSize(content, contentWidth)
+        let y = 25
+        for (const line of lines) {
+          if (y > 275) { doc.addPage(); y = 20 }
+          doc.text(line, margin, y)
+          y += 5.5
+        }
+        downloadBlob(doc.output("blob"), "document-edge.pdf")
       }
-      downloadBlob(doc.output("blob"), "document-edge.pdf")
     } catch {
       setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Erreur lors de la génération du PDF.", createdAt: new Date().toISOString() }])
     } finally {
@@ -402,14 +411,23 @@ export default function AssistantPage() {
     if (downloadingFormat) return
     setDownloadingFormat("word")
     try {
-      const { Document, Packer, Paragraph, TextRun } = await import("docx")
-      const content = action.data?.content || action.data?.text || "Aucun contenu"
-      const paragraphs = content.split("\n").map(
-        (line: string) => new Paragraph({ children: [new TextRun({ text: line, size: 22, font: "Calibri" })], spacing: { after: 120 } })
-      )
-      const docFile = new Document({ sections: [{ children: paragraphs }] })
-      const blob = await Packer.toBlob(docFile)
-      downloadBlob(blob, "document-edge.docx")
+      // Structured CV data → use full CV renderer
+      if (action.documentType === "cv" && action.data?.personalInfo) {
+        const { generateWord } = await import("@/lib/document-generator")
+        const blob = await generateWord(action.data)
+        const name = `${action.data.personalInfo.firstName ?? "cv"}-${action.data.personalInfo.lastName ?? "edge"}`.toLowerCase()
+        downloadBlob(blob, `${name}.docx`)
+      } else {
+        // Plain text content (cover letters, etc.)
+        const { Document, Packer, Paragraph, TextRun } = await import("docx")
+        const content = action.data?.content || action.data?.text || JSON.stringify(action.data, null, 2)
+        const paragraphs = content.split("\n").map(
+          (line: string) => new Paragraph({ children: [new TextRun({ text: line, size: 22, font: "Calibri" })], spacing: { after: 120 } })
+        )
+        const docFile = new Document({ sections: [{ children: paragraphs }] })
+        const blob = await Packer.toBlob(docFile)
+        downloadBlob(blob, "document-edge.docx")
+      }
     } catch {
       setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Erreur lors de la génération du Word.", createdAt: new Date().toISOString() }])
     } finally {
