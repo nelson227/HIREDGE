@@ -4,7 +4,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api, { jobsApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 // ─── Types des filtres ──────────────────────────────────────────────────────
 interface Filters {
@@ -22,9 +23,9 @@ const EMPTY_FILTERS: Filters = {
 
 const CONTRACT_OPTIONS = ['CDI', 'CDD', 'freelance', 'stage', 'alternance'];
 const REMOTE_OPTIONS = [
-  { value: 'remote', label: '🌐 Remote' },
-  { value: 'hybrid', label: '🔀 Hybride' },
-  { value: 'onsite', label: '🏢 Présentiel' },
+  { value: 'remote', labelKey: 'jobsRemote' },
+  { value: 'hybrid', labelKey: 'jobsHybrid' },
+  { value: 'onsite', labelKey: 'jobsOnsite' },
 ];
 const SALARY_OPTIONS = [
   { value: 40000, label: '40k+' },
@@ -33,15 +34,15 @@ const SALARY_OPTIONS = [
   { value: 100000, label: '100k+' },
 ];
 const LEVEL_OPTIONS = [
-  { value: 'junior', label: 'Junior' },
-  { value: 'mid', label: 'Confirmé' },
-  { value: 'senior', label: 'Senior' },
-  { value: 'lead', label: 'Lead' },
+  { value: 'junior', labelKey: 'jobsJunior' },
+  { value: 'mid', labelKey: 'jobsMid' },
+  { value: 'senior', labelKey: 'jobsSenior' },
+  { value: 'lead', labelKey: 'jobsLead' },
 ];
 const POSTED_OPTIONS = [
-  { value: 'today', label: "Aujourd'hui" },
-  { value: 'week', label: 'Cette semaine' },
-  { value: 'month', label: 'Ce mois' },
+  { value: 'today', labelKey: 'dashboardToday' },
+  { value: 'week', labelKey: 'jobsThisWeek' },
+  { value: 'month', labelKey: 'jobsThisMonth' },
 ];
 
 function postedAfterDate(value: string): string {
@@ -56,8 +57,8 @@ function countActiveFilters(f: Filters): number {
   return [f.contract, f.remote, f.salaryMin, f.experienceLevel, f.postedAfter, f.location || null].filter(Boolean).length;
 }
 
-function getMatchColor(s: number) { return s >= 90 ? colors.success : s >= 75 ? colors.primary : colors.warning; }
-function getMatchBg(s: number) { return s >= 90 ? 'rgba(34,197,94,0.10)' : s >= 75 ? colors.primaryLight : 'rgba(245,158,11,0.10)'; }
+function getMatchColor(s: number, colors: any) { return s >= 90 ? colors.success : s >= 75 ? colors.primary : colors.warning; }
+function getMatchBg(s: number, colors: any) { return s >= 90 ? 'rgba(34,197,94,0.10)' : s >= 75 ? colors.primaryLight : 'rgba(245,158,11,0.10)'; }
 
 function fmt$(n: number) { return n >= 1000 ? `${Math.round(n / 1000)}k` : String(n); }
 function formatSalaryShort(min?: number, max?: number, cur?: string) {
@@ -68,17 +69,17 @@ function formatSalaryShort(min?: number, max?: number, cur?: string) {
   return '';
 }
 
-function formatLevel(l: string) {
-  return ({ junior: 'Junior', mid: 'Confirmé', senior: 'Senior', lead: 'Lead' } as any)[l] ?? l;
+function formatLevel(l: string, t: (key: string) => string) {
+  return ({ junior: t('jobsJunior'), mid: t('jobsMid'), senior: t('jobsSenior'), lead: t('jobsLead') } as any)[l] ?? l;
 }
 
-function formatDate(d: string) {
+function formatDate(d: string, t: (key: string) => string) {
   if (!d) return '';
   const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
-  if (diff < 1) return "Aujourd'hui";
-  if (diff === 1) return 'Hier';
-  if (diff < 7) return `${diff}j`;
-  return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (diff < 1) return t('dashboardToday');
+  if (diff === 1) return t('jobsYesterday');
+  if (diff < 7) return `${diff}${t('jobsDaysAgo')}`;
+  return new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
 // ─── Composant principal ─────────────────────────────────────────────────────
@@ -87,6 +88,8 @@ export default function JobsScreen() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [tempFilters, setTempFilters] = useState<Filters>(EMPTY_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
 
   const activeCount = countActiveFilters(filters);
 
@@ -123,7 +126,7 @@ export default function JobsScreen() {
   const renderJob = useCallback(({ item, index }: { item: any; index: number }) => {
     const skills = (item.requiredSkills ?? item.skills ?? []).slice(0, 4);
     const salary = formatSalaryShort(item.salaryMin, item.salaryMax, item.salaryCurrency);
-    const date = formatDate(item.postedAt);
+    const date = formatDate(item.postedAt, t);
     const isLast = index === jobs.length - 1;
 
     return (
@@ -154,9 +157,9 @@ export default function JobsScreen() {
           {item.matchScore != null && (
             <View style={{
               paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
-              backgroundColor: getMatchBg(item.matchScore),
+              backgroundColor: getMatchBg(item.matchScore, colors),
             }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: getMatchColor(item.matchScore) }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: getMatchColor(item.matchScore, colors) }}>
                 {item.matchScore}%
               </Text>
             </View>
@@ -188,7 +191,7 @@ export default function JobsScreen() {
           )}
           {item.experienceLevel && (
             <View style={{ backgroundColor: 'rgba(245,158,11,0.10)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-              <Text style={{ fontSize: 11, color: colors.warning, fontWeight: '600' }}>{formatLevel(item.experienceLevel)}</Text>
+              <Text style={{ fontSize: 11, color: colors.warning, fontWeight: '600' }}>{formatLevel(item.experienceLevel, t)}</Text>
             </View>
           )}
         </View>
@@ -220,7 +223,7 @@ export default function JobsScreen() {
       {/* ─── Sticky Header ─── */}
       <View style={{ backgroundColor: colors.background, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14 }}>
         <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground, marginBottom: 14 }}>
-          Offres d'emploi
+          {t('jobsTitle')}
         </Text>
 
         {/* Search row */}
@@ -233,7 +236,7 @@ export default function JobsScreen() {
             <Ionicons name="search" size={17} color={colors.mutedForeground} />
             <TextInput
               value={search} onChangeText={setSearch}
-              placeholder="Poste, compétence, entreprise..."
+              placeholder={t('jobsSearch')}
               placeholderTextColor={colors.mutedForeground}
               style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 8, fontSize: 14, color: colors.foreground }}
             />
@@ -270,14 +273,14 @@ export default function JobsScreen() {
         {/* Active filter bar */}
         {activeCount > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }} contentContainerStyle={{ gap: 6 }}>
-            {filters.contract && <ActiveTag label={filters.contract} onRemove={() => setFilters(f => ({ ...f, contract: null }))} />}
-            {filters.remote && <ActiveTag label={REMOTE_OPTIONS.find(r => r.value === filters.remote)?.label ?? filters.remote} onRemove={() => setFilters(f => ({ ...f, remote: null }))} />}
-            {filters.salaryMin && <ActiveTag label={`${filters.salaryMin / 1000}k+`} onRemove={() => setFilters(f => ({ ...f, salaryMin: null }))} />}
-            {filters.experienceLevel && <ActiveTag label={formatLevel(filters.experienceLevel)} onRemove={() => setFilters(f => ({ ...f, experienceLevel: null }))} />}
-            {filters.postedAfter && <ActiveTag label={POSTED_OPTIONS.find(p => p.value === filters.postedAfter)?.label ?? ''} onRemove={() => setFilters(f => ({ ...f, postedAfter: null }))} />}
-            {filters.location && <ActiveTag label={filters.location} onRemove={() => setFilters(f => ({ ...f, location: '' }))} />}
+            {filters.contract && <ActiveTag label={filters.contract} onRemove={() => setFilters(f => ({ ...f, contract: null }))} colors={colors} />}
+            {filters.remote && <ActiveTag label={REMOTE_OPTIONS.find(r => r.value === filters.remote)?.labelKey ? t(REMOTE_OPTIONS.find(r => r.value === filters.remote)!.labelKey) : filters.remote} onRemove={() => setFilters(f => ({ ...f, remote: null }))} colors={colors} />}
+            {filters.salaryMin && <ActiveTag label={`${filters.salaryMin / 1000}k+`} onRemove={() => setFilters(f => ({ ...f, salaryMin: null }))} colors={colors} />}
+            {filters.experienceLevel && <ActiveTag label={formatLevel(filters.experienceLevel, t)} onRemove={() => setFilters(f => ({ ...f, experienceLevel: null }))} colors={colors} />}
+            {filters.postedAfter && <ActiveTag label={POSTED_OPTIONS.find(p => p.value === filters.postedAfter)?.labelKey ? t(POSTED_OPTIONS.find(p => p.value === filters.postedAfter)!.labelKey) : ''} onRemove={() => setFilters(f => ({ ...f, postedAfter: null }))} colors={colors} />}
+            {filters.location && <ActiveTag label={filters.location} onRemove={() => setFilters(f => ({ ...f, location: '' }))} colors={colors} />}
             <TouchableOpacity onPress={() => setFilters({ ...EMPTY_FILTERS })} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(239,68,68,0.08)' }}>
-              <Text style={{ fontSize: 12, color: colors.destructive, fontWeight: '700' }}>Tout effacer</Text>
+              <Text style={{ fontSize: 12, color: colors.destructive, fontWeight: '700' }}>{t('jobsClearAll')}</Text>
             </TouchableOpacity>
           </ScrollView>
         )}
@@ -287,7 +290,7 @@ export default function JobsScreen() {
       {!isLoading && (
         <View style={{ paddingHorizontal: 20, paddingBottom: 6 }}>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, fontWeight: '500' }}>
-            {data?.pages[0]?.pagination?.total ?? jobs.length} offres
+            {data?.pages[0]?.pagination?.total ?? jobs.length} {t('jobsOffers')}
           </Text>
         </View>
       )}
@@ -343,8 +346,8 @@ export default function JobsScreen() {
               }}>
                 <Ionicons name="briefcase-outline" size={24} color={colors.mutedForeground} />
               </View>
-              <Text style={{ color: colors.foreground, fontSize: 16, fontWeight: '700' }}>Aucune offre trouvée</Text>
-              <Text style={{ color: colors.mutedForeground, marginTop: 6, fontSize: 13 }}>Essaie d'autres critères</Text>
+              <Text style={{ color: colors.foreground, fontSize: 16, fontWeight: '700' }}>{t('jobsNoResults')}</Text>
+              <Text style={{ color: colors.mutedForeground, marginTop: 6, fontSize: 13 }}>{t('jobsTryOther')}</Text>
             </View>
           }
         />
@@ -358,10 +361,10 @@ export default function JobsScreen() {
             paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16,
             borderBottomWidth: 1, borderColor: colors.border,
           }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>Filtres</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>{t('jobsFilters')}</Text>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <TouchableOpacity onPress={resetFilters}>
-                <Text style={{ fontSize: 14, color: colors.mutedForeground, fontWeight: '600' }}>Réinitialiser</Text>
+                <Text style={{ fontSize: 14, color: colors.mutedForeground, fontWeight: '600' }}>{t('jobsFilterReset')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowFilters(false)}>
                 <View style={{ width: 32, height: 32, borderRadius: 999, backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center' }}>
@@ -372,7 +375,7 @@ export default function JobsScreen() {
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 20, gap: 28 }} showsVerticalScrollIndicator={false}>
-            <FilterSection title="📍 Localisation">
+            <FilterSection title={`📍 ${t('jobsFilterLocation')}`} colors={colors}>
               <View style={{
                 flexDirection: 'row', alignItems: 'center',
                 backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 14,
@@ -382,49 +385,49 @@ export default function JobsScreen() {
                 <TextInput
                   value={tempFilters.location}
                   onChangeText={v => setTempFilters(f => ({ ...f, location: v }))}
-                  placeholder="Paris, Lyon, Montréal..."
+                  placeholder={t('jobsSearch')}
                   placeholderTextColor={colors.mutedForeground}
                   style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 8, fontSize: 14, color: colors.foreground }}
                 />
               </View>
             </FilterSection>
 
-            <FilterSection title="📄 Type de contrat">
+            <FilterSection title={`📄 ${t('jobsFilterContract')}`} colors={colors}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {CONTRACT_OPTIONS.map(c => (
-                  <FilterChip key={c} label={c} active={tempFilters.contract === c} onPress={() => setTempFilters(f => ({ ...f, contract: f.contract === c ? null : c }))} />
+                  <FilterChip key={c} label={c} active={tempFilters.contract === c} onPress={() => setTempFilters(f => ({ ...f, contract: f.contract === c ? null : c }))} colors={colors} />
                 ))}
               </View>
             </FilterSection>
 
-            <FilterSection title="🌐 Mode de travail">
+            <FilterSection title={`🌐 ${t('jobsFilterRemote')}`} colors={colors}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {REMOTE_OPTIONS.map(r => (
-                  <FilterChip key={r.value} label={r.label} active={tempFilters.remote === r.value} onPress={() => setTempFilters(f => ({ ...f, remote: f.remote === r.value ? null : r.value }))} />
+                  <FilterChip key={r.value} label={t(r.labelKey)} active={tempFilters.remote === r.value} onPress={() => setTempFilters(f => ({ ...f, remote: f.remote === r.value ? null : r.value }))} colors={colors} />
                 ))}
               </View>
             </FilterSection>
 
-            <FilterSection title="💰 Salaire minimum">
+            <FilterSection title={`💰 ${t('jobsFilterSalary')}`} colors={colors}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {SALARY_OPTIONS.map(s => (
-                  <FilterChip key={s.value} label={s.label} active={tempFilters.salaryMin === s.value} onPress={() => setTempFilters(f => ({ ...f, salaryMin: f.salaryMin === s.value ? null : s.value }))} />
+                  <FilterChip key={s.value} label={s.label} active={tempFilters.salaryMin === s.value} onPress={() => setTempFilters(f => ({ ...f, salaryMin: f.salaryMin === s.value ? null : s.value }))} colors={colors} />
                 ))}
               </View>
             </FilterSection>
 
-            <FilterSection title="📈 Niveau d'expérience">
+            <FilterSection title={`📈 ${t('jobsFilterLevel')}`} colors={colors}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {LEVEL_OPTIONS.map(l => (
-                  <FilterChip key={l.value} label={l.label} active={tempFilters.experienceLevel === l.value} onPress={() => setTempFilters(f => ({ ...f, experienceLevel: f.experienceLevel === l.value ? null : l.value }))} />
+                  <FilterChip key={l.value} label={t(l.labelKey)} active={tempFilters.experienceLevel === l.value} onPress={() => setTempFilters(f => ({ ...f, experienceLevel: f.experienceLevel === l.value ? null : l.value }))} colors={colors} />
                 ))}
               </View>
             </FilterSection>
 
-            <FilterSection title="🗓 Date de publication">
+            <FilterSection title={`🗃 ${t('jobsFilterPosted')}`} colors={colors}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {POSTED_OPTIONS.map(p => (
-                  <FilterChip key={p.value} label={p.label} active={tempFilters.postedAfter === p.value} onPress={() => setTempFilters(f => ({ ...f, postedAfter: f.postedAfter === p.value ? null : p.value }))} />
+                  <FilterChip key={p.value} label={t(p.labelKey)} active={tempFilters.postedAfter === p.value} onPress={() => setTempFilters(f => ({ ...f, postedAfter: f.postedAfter === p.value ? null : p.value }))} colors={colors} />
                 ))}
               </View>
             </FilterSection>
@@ -436,7 +439,7 @@ export default function JobsScreen() {
               style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
             >
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
-                Voir les offres {countActiveFilters(tempFilters) > 0 ? `(${countActiveFilters(tempFilters)} filtre${countActiveFilters(tempFilters) > 1 ? 's' : ''})` : ''}
+                {t('jobsFilterApply')} {countActiveFilters(tempFilters) > 0 ? `(${countActiveFilters(tempFilters)})` : ''}
               </Text>
             </TouchableOpacity>
           </View>
@@ -448,7 +451,7 @@ export default function JobsScreen() {
 
 // ─── Utilitaires ─────────────────────────────────────────────────────────────
 
-function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+function FilterSection({ title, children, colors }: { title: string; children: React.ReactNode; colors: any }) {
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground }}>{title}</Text>
@@ -457,7 +460,7 @@ function FilterSection({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function FilterChip({ label, active, onPress, colors }: { label: string; active: boolean; onPress: () => void; colors: any }) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -472,7 +475,7 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
   );
 }
 
-function ActiveTag({ label, onRemove }: { label: string; onRemove: () => void }) {
+function ActiveTag({ label, onRemove, colors }: { label: string; onRemove: () => void; colors: any }) {
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 4,

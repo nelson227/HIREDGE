@@ -29,21 +29,24 @@ import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { profileApi, authApi, notificationsApi, clearTokens } from "@/lib/api"
 import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket"
+import { useTranslation } from "@/lib/i18n"
 
-const sidebarItems = [
-  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Offres d'emploi", href: "/jobs", icon: Briefcase },
-  { label: "Candidatures", href: "/applications", icon: FileStack },
-  { label: "Assistant IA", href: "/assistant", icon: Bot },
-  { label: "Entretiens", href: "/interviews", icon: GraduationCap },
-  { label: "Escouade", href: "/squad", icon: Users },
-  { label: "Éclaireurs", href: "/scouts", icon: Building2 },
-  { label: "Analytiques", href: "/analytics", icon: BarChart3 },
+type NavItem = { labelKey: string; href: string; icon: any }
+
+const sidebarItemKeys: NavItem[] = [
+  { labelKey: "navDashboard", href: "/dashboard", icon: LayoutDashboard },
+  { labelKey: "navJobOffers", href: "/jobs", icon: Briefcase },
+  { labelKey: "navApplications", href: "/applications", icon: FileStack },
+  { labelKey: "navAssistant", href: "/assistant", icon: Bot },
+  { labelKey: "navInterviews", href: "/interviews", icon: GraduationCap },
+  { labelKey: "navSquad", href: "/squad", icon: Users },
+  { labelKey: "navScouts", href: "/scouts", icon: Building2 },
+  { labelKey: "navAnalytics", href: "/analytics", icon: BarChart3 },
 ]
 
-const bottomItems = [
-  { label: "Profil", href: "/profile", icon: User },
-  { label: "Paramètres", href: "/settings", icon: Settings },
+const bottomItemKeys: NavItem[] = [
+  { labelKey: "navProfile", href: "/profile", icon: User },
+  { labelKey: "navSettings", href: "/settings", icon: Settings },
 ]
 
 export default function DashboardLayout({
@@ -54,6 +57,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string; avatarUrl?: string | null; role?: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -131,8 +135,8 @@ export default function DashboardLayout({
     ? `${userInfo.firstName?.[0] || ''}${userInfo.lastName?.[0] || ''}`.toUpperCase() || 'U'
     : 'U'
   const userName = userInfo 
-    ? `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'Utilisateur'
-    : 'Chargement...'
+    ? `${userInfo.firstName} ${userInfo.lastName}`.trim() || t('dashboardUser')
+    : t('loading')
   const userEmail = userInfo?.email || ''
 
   const handleSearch = (e: React.FormEvent) => {
@@ -156,7 +160,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Sparkles className="w-10 h-10 text-primary animate-pulse" />
-          <p className="text-sm text-muted-foreground">Chargement...</p>
+          <p className="text-sm text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     )
@@ -189,7 +193,7 @@ export default function DashboardLayout({
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden text-sidebar-foreground"
-              aria-label="Fermer la barre latérale"
+              aria-label={t('dashboardCloseSidebar')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -198,7 +202,7 @@ export default function DashboardLayout({
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4">
             <ul className="space-y-1">
-              {sidebarItems.map((item) => {
+              {sidebarItemKeys.map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <li key={item.href}>
@@ -212,7 +216,7 @@ export default function DashboardLayout({
                       )}
                     >
                       <item.icon className="w-5 h-5" />
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   </li>
                 )
@@ -224,9 +228,7 @@ export default function DashboardLayout({
               <div className="mt-4 pt-4 border-t border-sidebar-border/50">
                 <p className="px-3 mb-2 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Admin</p>
                 <ul className="space-y-1">
-                  {[
-                    { label: "Administration", href: "/admin", icon: Shield },
-                  ].map((item) => {
+                  {[{ label: t('adminTitle'), href: "/admin", icon: Shield }].map((item) => {
                     const isActive = pathname.startsWith(item.href)
                     return (
                       <li key={item.href}>
@@ -253,7 +255,7 @@ export default function DashboardLayout({
           {/* Bottom Items */}
           <div className="p-4 border-t border-sidebar-border">
             <ul className="space-y-1">
-              {bottomItems.map((item) => {
+              {bottomItemKeys.map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <li key={item.href}>
@@ -267,7 +269,7 @@ export default function DashboardLayout({
                       )}
                     >
                       <item.icon className="w-5 h-5" />
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   </li>
                 )
@@ -288,7 +290,7 @@ export default function DashboardLayout({
                   <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
                   <p className="text-xs text-sidebar-foreground/60 truncate">{userEmail}</p>
                 </div>
-                <button onClick={handleLogout} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title="Se déconnecter">
+                <button onClick={handleLogout} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title={t('logout')}>
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
@@ -306,7 +308,7 @@ export default function DashboardLayout({
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden text-foreground"
-                aria-label="Ouvrir la barre latérale"
+                aria-label={t('dashboardOpenSidebar')}
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -315,7 +317,7 @@ export default function DashboardLayout({
               <form onSubmit={handleSearch} className="hidden sm:block relative w-64 lg:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Chercher offres, entreprises..."
+                  placeholder={t('dashboardSearchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 bg-muted/50 border-transparent focus:border-border"
@@ -338,7 +340,7 @@ export default function DashboardLayout({
               <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                 <Link href="/assistant">
                   <Bot className="w-4 h-4 mr-2" />
-                  Demander à EDGE
+                  {t('homeAskEdge')}
                 </Link>
               </Button>
             </div>

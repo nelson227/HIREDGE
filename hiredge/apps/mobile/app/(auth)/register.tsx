@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, P
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth.store';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -12,18 +13,20 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const register = useAuthStore((s) => s.register);
+  const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const handleRegister = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Erreur', 'Remplis tous les champs');
+      Alert.alert(t('authError'), t('authFillAllFields'));
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      Alert.alert(t('authError'), t('authPasswordsMismatch'));
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 8 caractères');
+      Alert.alert(t('authError'), t('authPasswordTooShort'));
       return;
     }
     setLoading(true);
@@ -32,9 +35,9 @@ export default function RegisterScreen() {
       router.replace('/(tabs)');
     } catch (err: any) {
       const msg = err.code === 'ECONNABORTED'
-        ? 'Le serveur met du temps à répondre. Réessaie dans quelques secondes.'
-        : err.response?.data?.error?.message ?? err.message ?? 'Impossible de créer le compte';
-      Alert.alert('Erreur', msg);
+        ? t('authServerSlow')
+        : err.response?.data?.error?.message ?? err.message ?? t('authCannotRegister');
+      Alert.alert(t('authError'), msg);
     } finally {
       setLoading(false);
     }
@@ -54,9 +57,9 @@ export default function RegisterScreen() {
           }}>
             <Ionicons name="sparkles" size={24} color={colors.primaryForeground} />
           </View>
-          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>Créer un compte</Text>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>{t('authCreateAccount')}</Text>
           <Text style={{ fontSize: 14, color: colors.mutedForeground, marginTop: 4 }}>
-            Commence ta recherche avec HIREDGE
+            {t('authRegisterSubtitle')}
           </Text>
         </View>
 
@@ -64,7 +67,7 @@ export default function RegisterScreen() {
         <View style={{ gap: 14, marginBottom: 20 }}>
           {/* Email */}
           <View>
-            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Email</Text>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>{t('authEmail')}</Text>
             <TextInput
               value={email} onChangeText={setEmail}
               placeholder="ton@email.com" placeholderTextColor={colors.mutedForeground}
@@ -79,14 +82,14 @@ export default function RegisterScreen() {
 
           {/* Password */}
           <View>
-            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Mot de passe</Text>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>{t('authPassword')}</Text>
             <View style={{
               flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
               borderRadius: 8, backgroundColor: colors.card, paddingHorizontal: 14, height: 44,
             }}>
               <TextInput
                 value={password} onChangeText={setPassword}
-                placeholder="Min. 8 caractères" placeholderTextColor={colors.mutedForeground}
+                placeholder={t('authMinChars')} placeholderTextColor={colors.mutedForeground}
                 secureTextEntry={!showPw}
                 style={{ flex: 1, fontSize: 14, color: colors.foreground }}
               />
@@ -98,14 +101,14 @@ export default function RegisterScreen() {
 
           {/* Confirm Password */}
           <View>
-            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Confirmer</Text>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>{t('authConfirmPassword')}</Text>
             <View style={{
               flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
               borderRadius: 8, backgroundColor: colors.card, paddingHorizontal: 14, height: 44,
             }}>
               <TextInput
                 value={confirmPassword} onChangeText={setConfirmPassword}
-                placeholder="Retape ton mot de passe" placeholderTextColor={colors.mutedForeground}
+                placeholder={t('authRetypePassword')} placeholderTextColor={colors.mutedForeground}
                 secureTextEntry={!showPw}
                 style={{ flex: 1, fontSize: 14, color: colors.foreground }}
               />
@@ -125,7 +128,7 @@ export default function RegisterScreen() {
         >
           {loading && <Ionicons name="sync" size={16} color={colors.primaryForeground} />}
           <Text style={{ color: colors.primaryForeground, fontSize: 15, fontWeight: '600' }}>
-            {loading ? 'Création...' : 'Créer mon compte'}
+            {loading ? t('authCreating') : t('authCreateMyAccount')}
           </Text>
         </TouchableOpacity>
 
@@ -134,8 +137,8 @@ export default function RegisterScreen() {
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
               <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
-                Déjà un compte ?{' '}
-                <Text style={{ fontWeight: '600', color: colors.primary }}>Se connecter</Text>
+                {t('authAlreadyHaveAccount')}{' '}
+                <Text style={{ fontWeight: '600', color: colors.primary }}>{t('authLogin')}</Text>
               </Text>
             </TouchableOpacity>
           </Link>

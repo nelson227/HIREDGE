@@ -4,9 +4,11 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, Eye, EyeOff, Loader2 } from "lucide-react"
 import { adminApi } from "@/lib/api"
+import { useTranslation } from "@/lib/i18n"
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -24,10 +26,10 @@ export default function AdminLoginPage() {
         sessionStorage.setItem("adminToken", data.data.adminToken)
         router.replace("/admin")
       } else {
-        setError("Identifiants invalides")
+        setError(t('dashboardInvalidCredentials'))
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.error?.message || "Identifiants invalides"
+      const msg = err?.response?.data?.error?.message || t('dashboardInvalidCredentials')
       setError(msg)
     } finally {
       setLoading(false)
@@ -43,9 +45,9 @@ export default function AdminLoginPage() {
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
               <Shield className="w-8 h-8 text-red-500" />
             </div>
-            <h1 className="text-2xl font-bold">Administration</h1>
+            <h1 className="text-2xl font-bold">{t('adminTitle')}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Connectez-vous pour accéder au panneau d'administration
+              {t('adminLoginDesc')}
             </p>
           </div>
 
@@ -60,7 +62,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="admin-email" className="block text-sm font-medium mb-1.5">
-                Email administrateur
+                {t('dashboardAdminEmail')}
               </label>
               <input
                 id="admin-email"
@@ -76,7 +78,7 @@ export default function AdminLoginPage() {
 
             <div>
               <label htmlFor="admin-password" className="block text-sm font-medium mb-1.5">
-                Mot de passe
+                {t('dashboardPassword')}
               </label>
               <div className="relative">
                 <input
@@ -93,7 +95,7 @@ export default function AdminLoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  aria-label={showPassword ? t('dashboardHidePassword') : t('dashboardShowPassword')}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -108,12 +110,12 @@ export default function AdminLoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Vérification...
+                  {t('dashboardVerification')}
                 </>
               ) : (
                 <>
                   <Shield className="w-4 h-4" />
-                  Accéder à l'administration
+                  {t('dashboardAccessAdmin')}
                 </>
               )}
             </button>

@@ -4,9 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { scoutsApi } from '../lib/api';
-import { colors } from '../lib/theme';
+import { useThemeColors } from '../lib/theme';
+import { useTranslation } from '../lib/i18n';
 
 export default function ScoutsScreen() {
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'discover' | 'conversations'>('discover');
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export default function ScoutsScreen() {
         refetchConversations();
       }
     },
-    onError: () => Alert.alert('Erreur', 'Impossible d\'envoyer la question'),
+    onError: () => Alert.alert(t('profileError'), t('scoutsErrorSend')),
   });
 
   const onRefresh = useCallback(async () => {
@@ -79,10 +82,10 @@ export default function ScoutsScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color={colors.foreground} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground, flex: 1 }}>Éclaireurs</Text>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground, flex: 1 }}>{t('scoutsTitle')}</Text>
         </View>
         <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
-          Discutez anonymement avec des employés d'entreprises
+          {t('scoutsSubtitle')}
         </Text>
       </View>
 
@@ -99,7 +102,7 @@ export default function ScoutsScreen() {
           }}
         >
           <Text style={{ fontWeight: '700', fontSize: 12, color: tab === 'discover' ? colors.foreground : colors.mutedForeground }}>
-            Découvrir
+            {t('scoutsDiscover')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -111,7 +114,7 @@ export default function ScoutsScreen() {
           }}
         >
           <Text style={{ fontWeight: '700', fontSize: 12, color: tab === 'conversations' ? colors.foreground : colors.mutedForeground }}>
-            Messages
+            {t('scoutsMessages')}
           </Text>
           {unreadCount > 0 && (
             <View style={{ backgroundColor: colors.primary, borderRadius: 8, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center' }}>
@@ -132,7 +135,7 @@ export default function ScoutsScreen() {
               <Ionicons name="search" size={16} color={colors.mutedForeground} />
               <TextInput
                 value={search} onChangeText={setSearch}
-                placeholder="Rechercher entreprise ou rôle..."
+                placeholder={t('scoutsSearchPlaceholder')}
                 placeholderTextColor={colors.mutedForeground}
                 style={{ flex: 1, paddingVertical: 10, fontSize: 13, color: colors.foreground }}
               />
@@ -154,7 +157,7 @@ export default function ScoutsScreen() {
                   backgroundColor: !companyFilter ? colors.primary : colors.muted,
                 }}
               >
-                <Text style={{ fontSize: 11, fontWeight: '600', color: !companyFilter ? '#fff' : colors.mutedForeground }}>Toutes</Text>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: !companyFilter ? '#fff' : colors.mutedForeground }}>{t('scoutsAll')}</Text>
               </TouchableOpacity>
               {companies.map((c: string) => (
                 <TouchableOpacity
@@ -191,10 +194,10 @@ export default function ScoutsScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>
-                      {item.anonymousName ?? 'Éclaireur anonyme'}
+                      {item.anonymousName ?? t('scoutsAnonymous')}
                     </Text>
                     <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }}>
-                      {item.role ?? 'Employé'} · {item.company?.name ?? 'Entreprise'}
+                      {item.role ?? t('scoutsEmployee')} · {item.company?.name ?? t('scoutsCompany')}
                     </Text>
                   </View>
                 </View>
@@ -222,13 +225,13 @@ export default function ScoutsScreen() {
                   {item.responseCount != null && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.muted, borderRadius: 8 }}>
                       <Ionicons name="chatbubble" size={10} color={colors.mutedForeground} />
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.mutedForeground }}>{item.responseCount} rép.</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.mutedForeground }}>{item.responseCount} {t('scoutsReplies')}</Text>
                     </View>
                   )}
                   {item.hiredAt && (
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.muted, borderRadius: 8 }}>
                       <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
-                        Depuis {formatRelativeShort(item.hiredAt)}
+                        {t('scoutsSince').replace('{time}', formatRelativeShort(item.hiredAt, t))}
                       </Text>
                     </View>
                   )}
@@ -261,7 +264,7 @@ export default function ScoutsScreen() {
                   }}
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={14} color="#fff" />
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Poser une question</Text>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{t('scoutsAskQuestion')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -269,10 +272,10 @@ export default function ScoutsScreen() {
               <View style={{ alignItems: 'center', paddingTop: 60 }}>
                 <Ionicons name="telescope-outline" size={36} color={colors.mutedForeground} />
                 <Text style={{ color: colors.mutedForeground, marginTop: 10, fontSize: 14, fontWeight: '600' }}>
-                  Aucun éclaireur trouvé
+                  {t('scoutsNoneFound')}
                 </Text>
                 <Text style={{ color: colors.border, marginTop: 4, fontSize: 12, textAlign: 'center', paddingHorizontal: 40 }}>
-                  {search ? 'Essaie un autre terme de recherche' : 'De nouveaux éclaireurs rejoignent régulièrement'}
+                  {search ? t('scoutsSearchHint') : t('scoutsJoining')}
                 </Text>
               </View>
             }
@@ -302,7 +305,7 @@ export default function ScoutsScreen() {
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>
-                    Éclaireur · {item.scout?.company?.name ?? 'Entreprise'}
+                    {t('scoutsScoutAt').replace('{company}', item.scout?.company?.name ?? t('scoutsCompany'))}
                   </Text>
                   {item.unreadCount > 0 && (
                     <View style={{ backgroundColor: colors.primary, borderRadius: 8, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center' }}>
@@ -311,11 +314,11 @@ export default function ScoutsScreen() {
                   )}
                 </View>
                 <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }} numberOfLines={1}>
-                  {item.lastMessage ?? 'Nouvelle conversation'}
+                  {item.lastMessage ?? t('scoutsNewConversation')}
                 </Text>
                 {item.updatedAt && (
                   <Text style={{ fontSize: 10, color: colors.border, marginTop: 3 }}>
-                    {formatRelativeTime(item.updatedAt)}
+                    {formatRelativeTime(item.updatedAt, t)}
                   </Text>
                 )}
               </View>
@@ -326,10 +329,10 @@ export default function ScoutsScreen() {
             <View style={{ alignItems: 'center', paddingTop: 60 }}>
               <Ionicons name="chatbubbles-outline" size={36} color={colors.mutedForeground} />
               <Text style={{ color: colors.mutedForeground, marginTop: 10, fontSize: 14, fontWeight: '600' }}>
-                Aucune conversation
+                {t('scoutsNoConversation')}
               </Text>
               <TouchableOpacity onPress={() => setTab('discover')} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 12 }}>Découvrir des éclaireurs</Text>
+                <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 12 }}>{t('scoutsDiscoverScouts')}</Text>
                 <Ionicons name="arrow-forward" size={12} color={colors.primary} />
               </TouchableOpacity>
             </View>
@@ -342,7 +345,7 @@ export default function ScoutsScreen() {
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>Poser une question</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>{t('scoutsAskQuestion')}</Text>
               <TouchableOpacity onPress={() => { setAskModal(null); setQuestion(''); }}>
                 <Ionicons name="close" size={22} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -354,7 +357,7 @@ export default function ScoutsScreen() {
                   <Ionicons name="telescope" size={16} color={colors.primary} />
                 </View>
                 <View>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }}>{askModal.anonymousName ?? 'Éclaireur'}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }}>{askModal.anonymousName ?? t('scoutsAnonymous')}</Text>
                   <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{askModal.company?.name ?? ''}</Text>
                 </View>
               </View>
@@ -362,7 +365,7 @@ export default function ScoutsScreen() {
 
             <TextInput
               value={question} onChangeText={setQuestion}
-              placeholder="Ex: Comment se passe le processus de recrutement ?"
+              placeholder={t('scoutsAskPlaceholder')}
               placeholderTextColor={colors.mutedForeground}
               multiline
               style={{
@@ -380,7 +383,7 @@ export default function ScoutsScreen() {
               }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-                {askMut.isPending ? 'Envoi...' : 'Envoyer'}
+                {askMut.isPending ? t('scoutsSending') : t('scoutsSend')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -390,21 +393,21 @@ export default function ScoutsScreen() {
   );
 }
 
-function formatRelativeTime(date: string): string {
+function formatRelativeTime(date: string, t: (key: string) => string): string {
   const n = Date.now() - new Date(date).getTime();
   const m = Math.floor(n / 60000);
-  if (m < 1) return "À l'instant";
-  if (m < 60) return `Il y a ${m}min`;
+  if (m < 1) return t('notificationsJustNow');
+  if (m < 60) return t('notificationsMinAgo').replace('{n}', String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `Il y a ${h}h`;
+  if (h < 24) return t('notificationsHourAgo').replace('{n}', String(h));
   const d = Math.floor(h / 24);
-  if (d < 7) return `Il y a ${d}j`;
-  return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (d < 7) return t('notificationsDayAgo').replace('{n}', String(d));
+  return new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
-function formatRelativeShort(date: string): string {
+function formatRelativeShort(date: string, t: (key: string) => string): string {
   const months = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24 * 30));
-  if (months < 1) return 'récemment';
-  if (months === 1) return '1 mois';
-  return `${months} mois`;
+  if (months < 1) return t('scoutsRecently');
+  if (months === 1) return t('scoutsOneMonth');
+  return t('scoutsMonths').replace('{n}', String(months));
 }

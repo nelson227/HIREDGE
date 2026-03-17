@@ -4,17 +4,12 @@ import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api, { profileApi } from '../lib/api';
-import { colors } from '../lib/theme';
+import { useThemeColors } from '../lib/theme';
+import { useTranslation } from '../lib/i18n';
 
 const { width } = Dimensions.get('window');
 
-const STEPS = [
-  { key: 'welcome', title: 'Bienvenue', subtitle: "L'IA qui booste ta recherche d'emploi" },
-  { key: 'profile', title: 'Ton profil', subtitle: 'Parle-nous de toi' },
-  { key: 'skills', title: 'Compétences', subtitle: 'Tes super-pouvoirs' },
-  { key: 'preferences', title: 'Préférences', subtitle: 'Ce que tu recherches' },
-  { key: 'ready', title: 'Prêt !', subtitle: 'EDGE est activé' },
-];
+const STEPS_COUNT = 5;
 
 const POPULAR_SKILLS = [
   'JavaScript', 'Python', 'React', 'Node.js', 'Java', 'SQL', 'TypeScript',
@@ -23,6 +18,8 @@ const POPULAR_SKILLS = [
 ];
 
 export default function OnboardingScreen() {
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -53,7 +50,7 @@ export default function OnboardingScreen() {
   });
 
   const goNext = () => {
-    if (step < STEPS.length - 1) {
+    if (step < STEPS_COUNT - 1) {
       const next = step + 1;
       setStep(next);
       scrollRef.current?.scrollTo({ x: next * width, animated: true });
@@ -91,7 +88,7 @@ export default function OnboardingScreen() {
       {/* Progress Bar */}
       <View style={{ paddingTop: 56, paddingHorizontal: 24 }}>
         <View style={{ flexDirection: 'row', gap: 4 }}>
-          {STEPS.map((_, i) => (
+          {Array.from({ length: STEPS_COUNT }).map((_, i) => (
             <View key={i} style={{
               flex: 1, height: 3, borderRadius: 2,
               backgroundColor: i <= step ? colors.primary : colors.border,
@@ -99,7 +96,7 @@ export default function OnboardingScreen() {
           ))}
         </View>
         <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 8, textAlign: 'center' }}>
-          Étape {step + 1} sur {STEPS.length}
+          {t('onboardingStepOf').replace('{current}', String(step + 1)).replace('{total}', String(STEPS_COUNT))}
         </Text>
       </View>
 
@@ -120,56 +117,57 @@ export default function OnboardingScreen() {
             <Ionicons name="sparkles" size={26} color={colors.primaryForeground} />
           </View>
           <Text style={{ fontSize: 26, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
-            Bienvenue sur{'\n'}HIREDGE
+            {t('onboardingWelcomeTitle')}
           </Text>
           <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 10, lineHeight: 20 }}>
-            Ton compagnon IA pour trouver le job idéal.{'\n'}
-            EDGE va analyser ton profil, matcher les offres,{'\n'}
-            et t'accompagner à chaque étape.
+            {t('onboardingWelcomeSubtitle')}
           </Text>
           <View style={{
             marginTop: 32, backgroundColor: colors.card, borderRadius: 12,
             borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
           }}>
-            <FeatureRow icon="sparkles-outline" text="Matching intelligent des offres" border />
-            <FeatureRow icon="chatbubble-outline" text="Coach IA conversationnel" border />
-            <FeatureRow icon="people-outline" text="Escouades de motivation" border />
-            <FeatureRow icon="telescope-outline" text="Éclaireurs en entreprise" />
+            <FeatureRow icon="sparkles-outline" text={t('onboardingFeature1')} border colors={colors} />
+            <FeatureRow icon="chatbubble-outline" text={t('onboardingFeature2')} border colors={colors} />
+            <FeatureRow icon="people-outline" text={t('onboardingFeature3')} border colors={colors} />
+            <FeatureRow icon="telescope-outline" text={t('onboardingFeature4')} colors={colors} />
           </View>
         </View>
 
         {/* Step 1: Profile */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Parle-nous de toi</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{t('onboardingProfileTitle')}</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
-            Ces infos aident EDGE à personnaliser tes recommandations
+            {t('onboardingProfileSubtitle')}
           </Text>
-          <Label text="Titre professionnel" />
-          <Input
-            placeholder="ex: Développeur Full-Stack"
+          <Label text={t('onboardingJobTitle')} colors={colors} />
+          <StyledInput
+            placeholder={t('onboardingJobTitlePlaceholder')}
             value={form.title}
-            onChangeText={(t: string) => setForm(p => ({ ...p, title: t }))}
+            onChangeText={(val: string) => setForm(p => ({ ...p, title: val }))}
+            colors={colors}
           />
-          <Label text="Bio courte" />
-          <Input
-            placeholder="Décris-toi en quelques mots..."
+          <Label text={t('onboardingBio')} colors={colors} />
+          <StyledInput
+            placeholder={t('onboardingBioPlaceholder')}
             value={form.bio}
-            onChangeText={(t: string) => setForm(p => ({ ...p, bio: t }))}
+            onChangeText={(val: string) => setForm(p => ({ ...p, bio: val }))}
             multiline
+            colors={colors}
           />
-          <Label text="Villes recherchées (séparées par des virgules)" />
-          <Input
-            placeholder="ex: Paris, Lyon, Remote"
+          <Label text={t('onboardingCities')} colors={colors} />
+          <StyledInput
+            placeholder={t('onboardingCitiesPlaceholder')}
             value={form.locations.join(', ')}
-            onChangeText={(t: string) => setForm(p => ({ ...p, locations: t.split(',').map(s => s.trim()).filter(Boolean) }))}
+            onChangeText={(val: string) => setForm(p => ({ ...p, locations: val.split(',').map(s => s.trim()).filter(Boolean) }))}
+            colors={colors}
           />
         </View>
 
         {/* Step 2: Skills */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Tes compétences</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{t('onboardingSkillsTitle')}</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
-            Sélectionne celles qui te correspondent ({form.skills.length} sélectionnées)
+            {t('onboardingSkillsSubtitle')} ({t('onboardingSkillsSelected').replace('{n}', String(form.skills.length))})
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {POPULAR_SKILLS.map(s => {
@@ -193,12 +191,12 @@ export default function OnboardingScreen() {
 
         {/* Step 3: Preferences */}
         <View style={{ width, paddingHorizontal: 28, paddingTop: 32 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>Tes préférences</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{t('onboardingPrefsTitle')}</Text>
           <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4, marginBottom: 20 }}>
-            Pour te proposer les meilleures offres
+            {t('onboardingPrefsSubtitle')}
           </Text>
 
-          <Label text="Type de contrat" />
+          <Label text={t('onboardingContractType')} colors={colors} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
             {['CDI', 'CDD', 'FREELANCE', 'STAGE', 'ALTERNANCE'].map(c => {
               const sel = form.contractTypes.includes(c);
@@ -218,12 +216,13 @@ export default function OnboardingScreen() {
             })}
           </View>
 
-          <Label text="Salaire annuel minimum (€)" />
-          <Input
-            placeholder="ex: 35000"
+          <Label text={t('onboardingSalaryMin')} colors={colors} />
+          <StyledInput
+            placeholder={t('onboardingSalaryPlaceholder')}
             value={form.salaryMin}
-            onChangeText={(t: string) => setForm(p => ({ ...p, salaryMin: t.replace(/\D/g, '') }))}
+            onChangeText={(val: string) => setForm(p => ({ ...p, salaryMin: val.replace(/\D/g, '') }))}
             keyboardType="numeric"
+            colors={colors}
           />
 
           <TouchableOpacity
@@ -236,7 +235,7 @@ export default function OnboardingScreen() {
             }}
           >
             <Ionicons name={form.remote ? 'checkbox' : 'square-outline'} size={20} color={form.remote ? colors.primary : colors.mutedForeground} />
-            <Text style={{ fontSize: 13, color: colors.foreground, fontWeight: '500' }}>Remote uniquement</Text>
+            <Text style={{ fontSize: 13, color: colors.foreground, fontWeight: '500' }}>{t('onboardingRemoteOnly')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -249,12 +248,10 @@ export default function OnboardingScreen() {
             <Ionicons name="checkmark-circle" size={44} color={colors.success} />
           </View>
           <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
-            Tu es prêt !
+            {t('onboardingReadyTitle')}
           </Text>
           <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 10, lineHeight: 20 }}>
-            EDGE va commencer à chercher des offres{'\n'}
-            correspondant à ton profil.{'\n\n'}
-            Tu peux toujours modifier tes préférences plus tard.
+            {t('onboardingReadySubtitle')}
           </Text>
         </View>
       </ScrollView>
@@ -268,11 +265,11 @@ export default function OnboardingScreen() {
         {step > 0 ? (
           <TouchableOpacity onPress={goBack} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Ionicons name="chevron-back" size={16} color={colors.mutedForeground} />
-            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Retour</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>{t('onboardingBack')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Passer</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>{t('onboardingSkip')}</Text>
           </TouchableOpacity>
         )}
 
@@ -285,16 +282,16 @@ export default function OnboardingScreen() {
           }}
         >
           <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
-            {step === STEPS.length - 1 ? (saveMutation.isPending ? 'Enregistrement...' : "C'est parti !") : 'Suivant'}
+            {step === STEPS_COUNT - 1 ? (saveMutation.isPending ? t('onboardingSaving') : t('onboardingStart')) : t('onboardingNext')}
           </Text>
-          {step < STEPS.length - 1 && <Ionicons name="chevron-forward" size={16} color="#fff" />}
+          {step < STEPS_COUNT - 1 && <Ionicons name="chevron-forward" size={16} color="#fff" />}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function FeatureRow({ icon, text, border }: { icon: string; text: string; border?: boolean }) {
+function FeatureRow({ icon, text, border, colors }: { icon: string; text: string; border?: boolean; colors: any }) {
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16,
@@ -311,11 +308,11 @@ function FeatureRow({ icon, text, border }: { icon: string; text: string; border
   );
 }
 
-function Label({ text }: { text: string }) {
+function Label({ text, colors }: { text: string; colors: any }) {
   return <Text style={{ fontSize: 12, fontWeight: '600', color: colors.foreground, marginBottom: 6 }}>{text}</Text>;
 }
 
-function Input({ multiline, ...props }: any) {
+function StyledInput({ multiline, colors, ...props }: any) {
   return (
     <TextInput
       {...props}

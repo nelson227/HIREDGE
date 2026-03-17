@@ -8,11 +8,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'react-native';
 import { useAuthStore } from '../../stores/auth.store';
 import { profileApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '@hiredge/shared';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const queryClient = useQueryClient();
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   // Upload states
@@ -49,9 +52,9 @@ export default function ProfileScreen() {
   }, []);
 
   const handleLogout = () => {
-    Alert.alert('Déconnexion', 'Veux-tu vraiment te déconnecter ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Déconnexion', style: 'destructive', onPress: () => logout() },
+    Alert.alert(t('profileLogout'), t('profileLogoutConfirm'), [
+      { text: t('profileCancel'), style: 'cancel' },
+      { text: t('profileLogoutButton'), style: 'destructive', onPress: () => logout() },
     ]);
   };
 
@@ -76,7 +79,7 @@ export default function ProfileScreen() {
       await profileApi.uploadAvatar(formData);
       await refetch();
     } catch {
-      Alert.alert('Erreur', "Impossible de mettre à jour l'avatar");
+      Alert.alert(t('profileError'), t('profileAvatarError'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -92,7 +95,7 @@ export default function ProfileScreen() {
       if (result.canceled || !result.assets?.[0]) return;
       const file = result.assets[0];
       if (file.size && file.size > 5 * 1024 * 1024) {
-        Alert.alert('Erreur', 'Le fichier est trop volumineux (max 5 Mo)');
+        Alert.alert(t('profileError'), t('profileCvTooBig'));
         return;
       }
       setUploadingCv(true);
@@ -104,9 +107,9 @@ export default function ProfileScreen() {
       } as any);
       await profileApi.uploadCv(formData);
       await refetch();
-      Alert.alert('CV importé', 'Ton CV a été analysé et ton profil mis à jour !');
+      Alert.alert(t('profileCvImported'), t('profileCvImportedDesc'));
     } catch {
-      Alert.alert('Erreur', "Impossible d'importer le CV");
+      Alert.alert(t('profileError'), t('profileCvError'));
     } finally {
       setUploadingCv(false);
     }
@@ -122,19 +125,19 @@ export default function ProfileScreen() {
       setShowAddSkill(false);
       await refetch();
     } catch {
-      Alert.alert('Erreur', "Impossible d'ajouter la compétence");
+      Alert.alert(t('profileError'), t('profileSkillError'));
     } finally {
       setAddingSkill(false);
     }
   };
 
   const handleRemoveSkill = (skillId: string, name: string) => {
-    Alert.alert('Supprimer', `Retirer "${name}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('profileDelete'), `${t('profileSkillRemove')} "${name}" ?`, [
+      { text: t('profileCancel'), style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive', onPress: async () => {
+        text: t('profileDelete'), style: 'destructive', onPress: async () => {
           try { await profileApi.removeSkill(skillId); await refetch(); }
-          catch { Alert.alert('Erreur', 'Impossible de supprimer'); }
+          catch { Alert.alert(t('profileError'), t('profileSkillDeleteError')); }
         },
       },
     ]);
@@ -143,7 +146,7 @@ export default function ProfileScreen() {
   // ─── Experiences ───
   const handleAddExperience = async () => {
     if (!newExp.title || !newExp.company || !newExp.startDate) {
-      Alert.alert('Champs requis', 'Titre, entreprise et date de début sont obligatoires');
+      Alert.alert(t('profileExpRequired'), t('profileExpRequiredDesc'));
       return;
     }
     setAddingExp(true);
@@ -153,19 +156,19 @@ export default function ProfileScreen() {
       setShowAddExp(false);
       await refetch();
     } catch {
-      Alert.alert('Erreur', "Impossible d'ajouter l'expérience");
+      Alert.alert(t('profileError'), t('profileExpError'));
     } finally {
       setAddingExp(false);
     }
   };
 
   const handleRemoveExperience = (expId: string) => {
-    Alert.alert('Supprimer', 'Retirer cette expérience ?', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('profileDelete'), t('profileExpRemove'), [
+      { text: t('profileCancel'), style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive', onPress: async () => {
+        text: t('profileDelete'), style: 'destructive', onPress: async () => {
           try { await profileApi.removeExperience(expId); await refetch(); }
-          catch { Alert.alert('Erreur', 'Impossible de supprimer'); }
+          catch { Alert.alert(t('profileError'), t('profileExpDeleteError')); }
         },
       },
     ]);
@@ -174,7 +177,7 @@ export default function ProfileScreen() {
   // ─── Educations ───
   const handleAddEducation = async () => {
     if (!newEdu.degree || !newEdu.institution || !newEdu.startDate) {
-      Alert.alert('Champs requis', 'Diplôme, établissement et date de début sont obligatoires');
+      Alert.alert(t('profileEduRequired'), t('profileEduRequiredDesc'));
       return;
     }
     setAddingEdu(true);
@@ -184,19 +187,19 @@ export default function ProfileScreen() {
       setShowAddEdu(false);
       await refetch();
     } catch {
-      Alert.alert('Erreur', "Impossible d'ajouter la formation");
+      Alert.alert(t('profileError'), t('profileEduError'));
     } finally {
       setAddingEdu(false);
     }
   };
 
   const handleRemoveEducation = (eduId: string) => {
-    Alert.alert('Supprimer', 'Retirer cette formation ?', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('profileDelete'), t('profileEduRemove'), [
+      { text: t('profileCancel'), style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive', onPress: async () => {
+        text: t('profileDelete'), style: 'destructive', onPress: async () => {
           try { await profileApi.removeEducation(eduId); await refetch(); }
-          catch { Alert.alert('Erreur', 'Impossible de supprimer'); }
+          catch { Alert.alert(t('profileError'), t('profileEduDeleteError')); }
         },
       },
     ]);
@@ -237,7 +240,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>
-          {user?.fullName ?? 'Utilisateur'}
+          {user?.fullName ?? t('profileNotSpecified')}
         </Text>
         <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>{user?.email}</Text>
 
@@ -253,9 +256,9 @@ export default function ProfileScreen() {
             </Text>
           </View>
           <View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>Profil {completion >= 80 ? 'complet' : 'à compléter'}</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{t('profileTitle')} {completion >= 80 ? t('profileComplete') : t('profileToComplete')}</Text>
             <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
-              {completion < 80 ? 'Ajoute CV et compétences pour un meilleur matching' : 'Ton profil est bien optimisé !'}
+              {completion < 80 ? t('profileOptimizeHint') : t('profileOptimized')}
             </Text>
           </View>
         </View>
@@ -270,14 +273,14 @@ export default function ProfileScreen() {
             }}
           >
             <Ionicons name="create-outline" size={18} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Modifier</Text>
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>{t('profileEdit')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleCvUpload}
             disabled={uploadingCv}
             style={{
               flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-              backgroundColor: '#fff', paddingVertical: 12, borderRadius: 12,
+              backgroundColor: colors.card, paddingVertical: 12, borderRadius: 12,
               borderWidth: 1, borderColor: colors.border,
             }}
           >
@@ -286,7 +289,7 @@ export default function ProfileScreen() {
             ) : (
               <>
                 <Ionicons name="document-attach-outline" size={18} color={colors.primary} />
-                <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Importer CV</Text>
+                <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>{t('profileImportCv')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -299,17 +302,17 @@ export default function ProfileScreen() {
           flexDirection: 'row', backgroundColor: colors.card, borderRadius: 12,
           borderWidth: 1, borderColor: colors.border, marginBottom: 16, overflow: 'hidden',
         }}>
-          <MiniStat label="Candidatures" value={profile?.stats?.applications ?? 0} color={colors.primary} />
+          <MiniStat label={t('profileApplications')} value={profile?.stats?.applications ?? 0} color={colors.primary} colors={colors} />
           <View style={{ width: 1, backgroundColor: colors.border }} />
-          <MiniStat label="Entretiens" value={profile?.stats?.interviews ?? 0} color={colors.success} />
+          <MiniStat label={t('profileInterviews')} value={profile?.stats?.interviews ?? 0} color={colors.success} colors={colors} />
           <View style={{ width: 1, backgroundColor: colors.border }} />
-          <MiniStat label="Simulations" value={profile?.stats?.simulations ?? 0} color={colors.chart5} />
+          <MiniStat label={t('profileSimulations')} value={profile?.stats?.simulations ?? 0} color={colors.chart5} colors={colors} />
         </View>
 
         {/* ─── Title + Bio ─── */}
-        <SectionCard title="Titre professionnel" icon="briefcase-outline">
+        <SectionCard title={t('profileJobTitleSection')} icon="briefcase-outline" colors={colors}>
           <Text style={{ fontSize: 14, color: profile?.title ? colors.foreground : colors.mutedForeground, fontWeight: profile?.title ? '600' : '400' }}>
-            {profile?.title || 'Non renseigné'}
+            {profile?.title || t('profileNotSpecified')}
           </Text>
           {profile?.bio && (
             <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 6, lineHeight: 19 }}>{profile.bio}</Text>
@@ -317,7 +320,7 @@ export default function ProfileScreen() {
         </SectionCard>
 
         {/* ─── Skills (with add/remove) ─── */}
-        <SectionCard title="Compétences" icon="code-slash-outline" onAdd={() => setShowAddSkill(true)}>
+        <SectionCard title={t('profileSkills')} icon="code-slash-outline" onAdd={() => setShowAddSkill(true)} colors={colors}>
           {profile?.skills?.length > 0 ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {profile.skills.map((skill: any) => (
@@ -344,13 +347,13 @@ export default function ProfileScreen() {
               ))}
             </View>
           ) : (
-            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute tes compétences</Text>
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{t('profileSkillEmpty')}</Text>
           )}
-          <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 8 }}>Appui long pour supprimer</Text>
+          <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 8 }}>{t('profileSkillLongPress')}</Text>
         </SectionCard>
 
         {/* ─── Experiences (with add/remove) ─── */}
-        <SectionCard title="Expériences" icon="business-outline" onAdd={() => setShowAddExp(true)}>
+        <SectionCard title={t('profileExperience')} icon="business-outline" onAdd={() => setShowAddExp(true)} colors={colors}>
           {profile?.experiences?.length > 0 ? (
             <View>
               {profile.experiences.map((exp: any, i: number) => (
@@ -365,7 +368,7 @@ export default function ProfileScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{exp.title}</Text>
                       <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', marginTop: 2 }}>{exp.company}</Text>
                       <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                        {formatPeriod(exp.startDate, exp.endDate)}
+                        {formatPeriod(exp.startDate, exp.endDate, t)}
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={{ padding: 4 }}>
@@ -381,12 +384,12 @@ export default function ProfileScreen() {
               ))}
             </View>
           ) : (
-            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute tes expériences</Text>
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{t('profileExpEmpty')}</Text>
           )}
         </SectionCard>
 
         {/* ─── Education (with add/remove) ─── */}
-        <SectionCard title="Formation" icon="school-outline" onAdd={() => setShowAddEdu(true)}>
+        <SectionCard title={t('profileEducation')} icon="school-outline" onAdd={() => setShowAddEdu(true)} colors={colors}>
           {profile?.educations?.length > 0 ? (
             <View>
               {profile.educations.map((edu: any, i: number) => (
@@ -401,7 +404,7 @@ export default function ProfileScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{edu.degree}</Text>
                       <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>{edu.school ?? edu.institution}</Text>
                       <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
-                        {edu.fieldOfStudy ?? edu.field} · {new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : 'En cours'}
+                        {edu.fieldOfStudy ?? edu.field} · {new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : t('profileEduOngoing')}
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={{ padding: 4 }}>
@@ -412,7 +415,7 @@ export default function ProfileScreen() {
               ))}
             </View>
           ) : (
-            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>Ajoute ta formation</Text>
+            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{t('profileEduEmpty')}</Text>
           )}
         </SectionCard>
 
@@ -424,8 +427,8 @@ export default function ProfileScreen() {
           }}>
             <Ionicons name="document-text" size={20} color="#00B894" />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#00B894' }}>CV importé</Text>
-              <Text style={{ fontSize: 12, color: '#2D3436' }}>Ton CV a été analysé pour enrichir ton profil</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#00B894' }}>{t('profileCvImported')}</Text>
+              <Text style={{ fontSize: 12, color: colors.foreground }}>{t('profileCvAnalyzed')}</Text>
             </View>
             <TouchableOpacity onPress={handleCvUpload}>
               <Ionicons name="refresh-outline" size={18} color="#00B894" />
@@ -434,14 +437,14 @@ export default function ProfileScreen() {
         )}
 
         {/* ─── Preferences ─── */}
-        <SectionCard title="Préférences" icon="options-outline">
-          <PrefRow label="Localisations" value={profile?.preferredLocations?.join(', ') || '—'} />
+        <SectionCard title={t('profilePreferences')} icon="options-outline" colors={colors}>
+          <PrefRow label={t('profileLocations')} value={profile?.preferredLocations?.join(', ') || '—'} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
-          <PrefRow label="Contrat" value={profile?.contractPreferences?.join(', ') || '—'} />
+          <PrefRow label={t('profileContract')} value={profile?.contractPreferences?.join(', ') || '—'} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
-          <PrefRow label="Salaire" value={profile?.salaryExpectation ? `${profile.salaryExpectation.toLocaleString()} €/an` : '—'} />
+          <PrefRow label={t('profileSalary')} value={profile?.salaryExpectation ? `${profile.salaryExpectation.toLocaleString()} €/an` : '—'} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
-          <PrefRow label="Télétravail" value={profile?.remotePreference ? 'Oui' : '—'} />
+          <PrefRow label={t('profileRemoteWork')} value={profile?.remotePreference ? t('profileYes') : '—'} colors={colors} />
         </SectionCard>
 
         {/* ─── Actions ─── */}
@@ -449,13 +452,13 @@ export default function ProfileScreen() {
           backgroundColor: colors.card, borderRadius: 12,
           borderWidth: 1, borderColor: colors.border, marginBottom: 12, overflow: 'hidden',
         }}>
-          <ActionRow icon="settings-outline" label="Paramètres" onPress={() => router.push('/settings')} />
+          <ActionRow icon="settings-outline" label={t('profileSettings')} onPress={() => router.push('/settings')} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <ActionRow icon="notifications-outline" label="Notifications" onPress={() => router.push('/notifications')} />
+          <ActionRow icon="notifications-outline" label={t('profileNotifications')} onPress={() => router.push('/notifications')} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <ActionRow icon="shield-checkmark-outline" label="Confidentialité" onPress={() => {}} />
+          <ActionRow icon="shield-checkmark-outline" label={t('profilePrivacy')} onPress={() => {}} colors={colors} />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <ActionRow icon="help-circle-outline" label="Aide & Support" onPress={() => {}} />
+          <ActionRow icon="help-circle-outline" label={t('profileHelp')} onPress={() => {}} colors={colors} />
         </View>
 
         {/* Logout */}
@@ -468,7 +471,7 @@ export default function ProfileScreen() {
           }}
         >
           <Ionicons name="log-out-outline" size={18} color={colors.destructive} />
-          <Text style={{ color: colors.destructive, fontWeight: '700', fontSize: 14 }}>Se déconnecter</Text>
+          <Text style={{ color: colors.destructive, fontWeight: '700', fontSize: 14 }}>{t('profileLogout')}</Text>
         </TouchableOpacity>
 
         <Text style={{ textAlign: 'center', color: colors.border, fontSize: 11, marginTop: 4, marginBottom: 40 }}>
@@ -479,29 +482,29 @@ export default function ProfileScreen() {
       {/* ═══ Modal: Add Skill ═══ */}
       <Modal visible={showAddSkill} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000050' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 16 }}>Ajouter une compétence</Text>
+          <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginBottom: 16 }}>{t('profileSkillAdd')}</Text>
             <TextInput
               value={newSkillName}
               onChangeText={setNewSkillName}
-              placeholder="Ex: React, Python, Figma..."
-              placeholderTextColor="#ADB5BD"
+              placeholder={t('profileModalSkillPlaceholder')}
+              placeholderTextColor={colors.mutedForeground}
               style={{
-                borderWidth: 1, borderColor: '#E9ECEF', borderRadius: 12, padding: 14,
-                fontSize: 15, color: '#2D3436', marginBottom: 16,
+                borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14,
+                fontSize: 15, color: colors.foreground, marginBottom: 16,
               }}
               autoFocus
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity onPress={() => setShowAddSkill(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', alignItems: 'center' }}>
-                <Text style={{ fontWeight: '600', color: '#868E96' }}>Annuler</Text>
+              <TouchableOpacity onPress={() => setShowAddSkill(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+                <Text style={{ fontWeight: '600', color: colors.mutedForeground }}>{t('profileCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleAddSkill}
                 disabled={addingSkill || !newSkillName.trim()}
                 style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', opacity: addingSkill || !newSkillName.trim() ? 0.5 : 1 }}
               >
-                {addingSkill ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>Ajouter</Text>}
+                {addingSkill ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>{t('profileSkillAdd')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -511,27 +514,27 @@ export default function ProfileScreen() {
       {/* ═══ Modal: Add Experience ═══ */}
       <Modal visible={showAddExp} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000050' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 16 }}>Ajouter une expérience</Text>
+          <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginBottom: 16 }}>{t('profileExperience')}</Text>
             <View style={{ gap: 12 }}>
-              <ModalInput label="Poste *" value={newExp.title} onChange={(v) => setNewExp({ ...newExp, title: v })} placeholder="Ex: Développeur Full-Stack" />
-              <ModalInput label="Entreprise *" value={newExp.company} onChange={(v) => setNewExp({ ...newExp, company: v })} placeholder="Ex: Google" />
-              <ModalInput label="Description" value={newExp.description} onChange={(v) => setNewExp({ ...newExp, description: v })} placeholder="Tes missions..." multiline />
+              <ModalInput label={t('profileModalPosition')} value={newExp.title} onChange={(v) => setNewExp({ ...newExp, title: v })} placeholder={t('profileModalPositionPlaceholder')} colors={colors} />
+              <ModalInput label={t('profileModalCompany')} value={newExp.company} onChange={(v) => setNewExp({ ...newExp, company: v })} placeholder={t('profileModalCompanyPlaceholder')} colors={colors} />
+              <ModalInput label={t('profileModalDescription')} value={newExp.description} onChange={(v) => setNewExp({ ...newExp, description: v })} placeholder={t('profileModalMissions')} multiline colors={colors} />
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <ModalInput label="Début * (YYYY-MM)" value={newExp.startDate} onChange={(v) => setNewExp({ ...newExp, startDate: v })} placeholder="2022-01" style={{ flex: 1 }} />
-                <ModalInput label="Fin (YYYY-MM)" value={newExp.endDate} onChange={(v) => setNewExp({ ...newExp, endDate: v })} placeholder="2024-06" style={{ flex: 1 }} />
+                <ModalInput label={t('profileModalStartDate')} value={newExp.startDate} onChange={(v) => setNewExp({ ...newExp, startDate: v })} placeholder="2022-01" style={{ flex: 1 }} colors={colors} />
+                <ModalInput label={t('profileModalEndDate')} value={newExp.endDate} onChange={(v) => setNewExp({ ...newExp, endDate: v })} placeholder="2024-06" style={{ flex: 1 }} colors={colors} />
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-              <TouchableOpacity onPress={() => setShowAddExp(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', alignItems: 'center' }}>
-                <Text style={{ fontWeight: '600', color: '#868E96' }}>Annuler</Text>
+              <TouchableOpacity onPress={() => setShowAddExp(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+                <Text style={{ fontWeight: '600', color: colors.mutedForeground }}>{t('profileCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleAddExperience}
                 disabled={addingExp}
                 style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', opacity: addingExp ? 0.5 : 1 }}
               >
-                {addingExp ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>Ajouter</Text>}
+                {addingExp ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>{t('profileSkillAdd')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -541,27 +544,27 @@ export default function ProfileScreen() {
       {/* ═══ Modal: Add Education ═══ */}
       <Modal visible={showAddEdu} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000050' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436', marginBottom: 16 }}>Ajouter une formation</Text>
+          <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginBottom: 16 }}>{t('profileEducation')}</Text>
             <View style={{ gap: 12 }}>
-              <ModalInput label="Diplôme *" value={newEdu.degree} onChange={(v) => setNewEdu({ ...newEdu, degree: v })} placeholder="Ex: Master Informatique" />
-              <ModalInput label="Établissement *" value={newEdu.institution} onChange={(v) => setNewEdu({ ...newEdu, institution: v })} placeholder="Ex: Université Paris-Saclay" />
-              <ModalInput label="Spécialité" value={newEdu.field} onChange={(v) => setNewEdu({ ...newEdu, field: v })} placeholder="Ex: Intelligence Artificielle" />
+              <ModalInput label={t('profileModalDegree')} value={newEdu.degree} onChange={(v) => setNewEdu({ ...newEdu, degree: v })} placeholder={t('profileModalDegreePlaceholder')} colors={colors} />
+              <ModalInput label={t('profileModalInstitution')} value={newEdu.institution} onChange={(v) => setNewEdu({ ...newEdu, institution: v })} placeholder={t('profileModalInstitutionPlaceholder')} colors={colors} />
+              <ModalInput label={t('profileModalField')} value={newEdu.field} onChange={(v) => setNewEdu({ ...newEdu, field: v })} placeholder={t('profileModalFieldPlaceholder')} colors={colors} />
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <ModalInput label="Début * (YYYY-MM)" value={newEdu.startDate} onChange={(v) => setNewEdu({ ...newEdu, startDate: v })} placeholder="2019-09" style={{ flex: 1 }} />
-                <ModalInput label="Fin (YYYY-MM)" value={newEdu.endDate} onChange={(v) => setNewEdu({ ...newEdu, endDate: v })} placeholder="2022-06" style={{ flex: 1 }} />
+                <ModalInput label={t('profileModalStartDate')} value={newEdu.startDate} onChange={(v) => setNewEdu({ ...newEdu, startDate: v })} placeholder="2019-09" style={{ flex: 1 }} colors={colors} />
+                <ModalInput label={t('profileModalEndDate')} value={newEdu.endDate} onChange={(v) => setNewEdu({ ...newEdu, endDate: v })} placeholder="2022-06" style={{ flex: 1 }} colors={colors} />
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-              <TouchableOpacity onPress={() => setShowAddEdu(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', alignItems: 'center' }}>
-                <Text style={{ fontWeight: '600', color: '#868E96' }}>Annuler</Text>
+              <TouchableOpacity onPress={() => setShowAddEdu(false)} style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+                <Text style={{ fontWeight: '600', color: colors.mutedForeground }}>{t('profileCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleAddEducation}
                 disabled={addingEdu}
                 style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', opacity: addingEdu ? 0.5 : 1 }}
               >
-                {addingEdu ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>Ajouter</Text>}
+                {addingEdu ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '600', color: '#fff' }}>{t('profileSkillAdd')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -573,7 +576,7 @@ export default function ProfileScreen() {
 
 // ─── Sub-components ───
 
-function SectionCard({ title, icon, children, onAdd }: { title: string; icon: string; children: React.ReactNode; onAdd?: () => void }) {
+function SectionCard({ title, icon, children, onAdd, colors }: { title: string; icon: string; children: React.ReactNode; onAdd?: () => void; colors: any }) {
   return (
     <View style={{
       backgroundColor: colors.card, borderRadius: 12, padding: 16,
@@ -603,7 +606,7 @@ function SectionCard({ title, icon, children, onAdd }: { title: string; icon: st
   );
 }
 
-function MiniStat({ label, value, color }: { label: string; value: number; color: string }) {
+function MiniStat({ label, value, color, colors }: { label: string; value: number; color: string; colors: any }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', paddingVertical: 18 }}>
       <Text style={{ fontSize: 22, fontWeight: '800', color }}>{value}</Text>
@@ -612,7 +615,7 @@ function MiniStat({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function PrefRow({ label, value }: { label: string; value: string }) {
+function PrefRow({ label, value, colors }: { label: string; value: string; colors: any }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{label}</Text>
@@ -621,7 +624,7 @@ function PrefRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ActionRow({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+function ActionRow({ icon, label, onPress, colors }: { icon: string; label: string; onPress: () => void; colors: any }) {
   return (
     <TouchableOpacity
       onPress={onPress} activeOpacity={0.7}
@@ -636,18 +639,18 @@ function ActionRow({ icon, label, onPress }: { icon: string; label: string; onPr
   );
 }
 
-function ModalInput({ label, value, onChange, placeholder, multiline, style }: {
+function ModalInput({ label, value, onChange, placeholder, multiline, style, colors }: {
   label: string; value: string; onChange: (v: string) => void; placeholder: string;
-  multiline?: boolean; style?: any;
+  multiline?: boolean; style?: any; colors: any;
 }) {
   return (
     <View style={style}>
-      <Text style={{ fontSize: 13, fontWeight: '600', color: '#2D3436', marginBottom: 4 }}>{label}</Text>
+      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground, marginBottom: 4 }}>{label}</Text>
       <TextInput
-        value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#ADB5BD"
+        value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.mutedForeground}
         multiline={multiline}
         style={{
-          borderWidth: 1, borderColor: '#E9ECEF', borderRadius: 10, padding: 12, fontSize: 14, color: '#2D3436',
+          borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 14, color: colors.foreground,
           ...(multiline ? { height: 70, textAlignVertical: 'top' as const } : {}),
         }}
       />
@@ -655,10 +658,10 @@ function ModalInput({ label, value, onChange, placeholder, multiline, style }: {
   );
 }
 
-function formatPeriod(start: string, end?: string): string {
+function formatPeriod(start: string, end: string | undefined, t: (key: string) => string): string {
   const s = new Date(start);
-  const startStr = s.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
-  if (!end) return `${startStr} - Présent`;
+  const startStr = s.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  if (!end) return `${startStr} - ${t('profilePresent')}`;
   const e = new Date(end);
-  return `${startStr} - ${e.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}`;
+  return `${startStr} - ${e.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`;
 }

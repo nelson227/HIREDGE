@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, P
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth.store';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -11,10 +12,12 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const login = useAuthStore((s) => s.login);
+  const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Erreur', 'Remplis tous les champs');
+      Alert.alert(t('authError'), t('authFillAllFields'));
       return;
     }
     setLoading(true);
@@ -23,9 +26,9 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } catch (err: any) {
       const msg = err.code === 'ECONNABORTED'
-        ? 'Le serveur met du temps à répondre. Réessaie dans quelques secondes.'
-        : err.response?.data?.error?.message ?? err.message ?? 'Impossible de se connecter';
-      Alert.alert('Erreur', msg);
+        ? t('authServerSlow')
+        : err.response?.data?.error?.message ?? err.message ?? t('authCannotLogin');
+      Alert.alert(t('authError'), msg);
     } finally {
       setLoading(false);
     }
@@ -45,9 +48,9 @@ export default function LoginScreen() {
           }}>
             <Ionicons name="sparkles" size={24} color={colors.primaryForeground} />
           </View>
-          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>Bon retour</Text>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>{t('authWelcomeBack')}</Text>
           <Text style={{ fontSize: 14, color: colors.mutedForeground, marginTop: 4 }}>
-            Connecte-toi à ton compte HIREDGE
+            {t('authLoginSubtitle')}
           </Text>
         </View>
 
@@ -55,7 +58,7 @@ export default function LoginScreen() {
         <View style={{ gap: 16, marginBottom: 20 }}>
           {/* Email */}
           <View>
-            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Email</Text>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>{t('authEmail')}</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
@@ -74,7 +77,7 @@ export default function LoginScreen() {
 
           {/* Password */}
           <View>
-            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>Mot de passe</Text>
+            <Text style={{ fontSize: 13, fontWeight: '500', color: colors.foreground, marginBottom: 6 }}>{t('authPassword')}</Text>
             <View style={{
               flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
               borderRadius: 8, backgroundColor: colors.card, paddingHorizontal: 14, height: 44,
@@ -107,7 +110,7 @@ export default function LoginScreen() {
         >
           {loading && <Ionicons name="sync" size={16} color={colors.primaryForeground} />}
           <Text style={{ color: colors.primaryForeground, fontSize: 15, fontWeight: '600' }}>
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? t('authLoggingIn') : t('authLogin')}
           </Text>
         </TouchableOpacity>
 
@@ -116,8 +119,8 @@ export default function LoginScreen() {
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
               <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
-                Pas encore de compte ?{' '}
-                <Text style={{ fontWeight: '600', color: colors.primary }}>S'inscrire</Text>
+                {t('authNoAccount')}{' '}
+                <Text style={{ fontWeight: '600', color: colors.primary }}>{t('authRegister')}</Text>
               </Text>
             </TouchableOpacity>
           </Link>

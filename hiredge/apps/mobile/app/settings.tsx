@@ -4,10 +4,20 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth.store';
 import { profileApi, authApi } from '../lib/api';
-import { colors } from '../lib/theme';
+import { useThemeColors, type ThemeMode } from '../lib/theme';
+import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from '../lib/i18n';
+
+const LOCALES: Locale[] = ['fr', 'en', 'de', 'es'];
+const THEME_OPTIONS: { id: ThemeMode; icon: string }[] = [
+  { id: 'light', icon: 'sunny-outline' },
+  { id: 'dark', icon: 'moon-outline' },
+  { id: 'system', icon: 'phone-portrait-outline' },
+];
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
+  const { colors, mode, setMode, isDark } = useThemeColors();
+  const { t, locale, setLocale } = useTranslation();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
@@ -45,12 +55,12 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Supprimer mon compte',
-      'Cette action est irréversible. Toutes vos données seront supprimées conformément au RGPD.',
+      t('settingsDeleteAccount'),
+      t('settingsDeleteConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -58,7 +68,7 @@ export default function SettingsScreen() {
               logout();
               router.replace('/(auth)/login');
             } catch {
-              Alert.alert('Erreur', 'Impossible de supprimer le compte. Réessayez plus tard.');
+              Alert.alert(t('error'), t('settingsDeleteError'));
             }
           },
         },
@@ -70,40 +80,40 @@ export default function SettingsScreen() {
     try {
       const { data } = await profileApi.get();
       if (data.success) {
-        Alert.alert('Export demandé', 'Vos données ont été préparées. Vous recevrez un email sous peu.');
+        Alert.alert(t('success'), t('settingsExportData'));
       }
     } catch {
-      Alert.alert('Erreur', 'Impossible d\'exporter vos données. Réessayez plus tard.');
+      Alert.alert(t('error'), t('settingsSaveError'));
     }
   };
 
   const handleChangePassword = () => {
     Alert.prompt(
-      'Changer le mot de passe',
-      'Entrez votre mot de passe actuel',
+      t('settingsChangePassword'),
+      t('settingsCurrentPassword'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Suivant',
+          text: t('next'),
           onPress: (currentPw) => {
             if (!currentPw) return;
             Alert.prompt(
-              'Nouveau mot de passe',
-              'Entrez votre nouveau mot de passe (min. 8 caractères)',
+              t('settingsNewPassword'),
+              t('settingsPasswordMinLength'),
               [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                  text: 'Confirmer',
+                  text: t('confirm'),
                   onPress: async (newPw) => {
                     if (!newPw || newPw.length < 8) {
-                      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 8 caractères');
+                      Alert.alert(t('error'), t('settingsPasswordMinLength'));
                       return;
                     }
                     try {
                       await authApi.changePassword(currentPw, newPw);
-                      Alert.alert('Succès', 'Mot de passe modifié avec succès');
+                      Alert.alert(t('success'), t('settingsPasswordChanged'));
                     } catch (err: any) {
-                      Alert.alert('Erreur', err.response?.data?.error?.message || 'Impossible de modifier le mot de passe');
+                      Alert.alert(t('error'), err.response?.data?.error?.message || t('settingsPasswordError'));
                     }
                   },
                 },
@@ -118,7 +128,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={{
         backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
@@ -128,108 +138,161 @@ export default function SettingsScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>Paramètres</Text>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>{t('settingsTitle')}</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+        {/* Language */}
+        <SectionTitle title={t('settingsLanguage')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <View style={{ padding: 12 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {LOCALES.map((loc) => (
+                <TouchableOpacity
+                  key={loc}
+                  onPress={() => setLocale(loc)}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: locale === loc ? colors.primary : colors.border,
+                    backgroundColor: locale === loc ? colors.primaryLight : 'transparent',
+                  }}
+                >
+                  <Text style={{ fontSize: 16 }}>{LOCALE_FLAGS[loc]}</Text>
+                  <Text style={{
+                    fontSize: 13, fontWeight: locale === loc ? '700' : '500',
+                    color: locale === loc ? colors.primary : colors.foreground,
+                  }}>{LOCALE_LABELS[loc]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </SettingCard>
+
+        {/* Theme */}
+        <SectionTitle title={t('settingsAppearance')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <View style={{ flexDirection: 'row', padding: 12, gap: 8 }}>
+            {THEME_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.id}
+                onPress={() => setMode(opt.id)}
+                style={{
+                  flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 10,
+                  borderWidth: 1.5,
+                  borderColor: mode === opt.id ? colors.primary : colors.border,
+                  backgroundColor: mode === opt.id ? colors.primaryLight : 'transparent',
+                }}
+              >
+                <Ionicons name={opt.icon as any} size={22} color={mode === opt.id ? colors.primary : colors.mutedForeground} />
+                <Text style={{
+                  marginTop: 4, fontSize: 12, fontWeight: mode === opt.id ? '700' : '500',
+                  color: mode === opt.id ? colors.primary : colors.foreground,
+                }}>
+                  {opt.id === 'light' ? t('settingsThemeLight') : opt.id === 'dark' ? t('settingsThemeDark') : t('settingsThemeSystem')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </SettingCard>
+
         {/* Notifications */}
-        <SectionTitle title="Notifications" />
-        <SettingCard>
-          <ToggleRow icon="notifications-outline" label="Notifications push" value={pushEnabled} onToggle={togglePush} />
-          <Divider />
-          <ToggleRow icon="mail-outline" label="Notifications email" value={emailEnabled} onToggle={toggleEmail} />
-          <Divider />
-          <ToggleRow icon="briefcase-outline" label="Alertes offres d'emploi" value={jobAlerts} onToggle={toggleJobAlerts} />
-          <Divider />
-          <ToggleRow icon="people-outline" label="Messages escouade" value={squadNotifs} onToggle={toggleSquadNotifs} />
+        <SectionTitle title={t('settingsNotifications')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <ToggleRow icon="notifications-outline" label={t('notifNewMatches')} value={pushEnabled} onToggle={togglePush} colors={colors} />
+          <Divider color={colors.border} />
+          <ToggleRow icon="mail-outline" label={t('notifApplicationUpdates')} value={emailEnabled} onToggle={toggleEmail} colors={colors} />
+          <Divider color={colors.border} />
+          <ToggleRow icon="briefcase-outline" label={t('notifInterviewReminders')} value={jobAlerts} onToggle={toggleJobAlerts} colors={colors} />
+          <Divider color={colors.border} />
+          <ToggleRow icon="people-outline" label={t('notifSquadActivity')} value={squadNotifs} onToggle={toggleSquadNotifs} colors={colors} />
         </SettingCard>
 
         {/* Compte */}
-        <SectionTitle title="Compte" />
-        <SettingCard>
-          <ActionRow icon="person-outline" label="Email" value={user?.email ?? ''} />
-          <Divider />
-          <ActionRow icon="lock-closed-outline" label="Changer le mot de passe" onPress={handleChangePassword} chevron />
-          <Divider />
-          <ActionRow icon="language-outline" label="Langue" value="Français" />
+        <SectionTitle title={t('settingsAccount')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <ActionRow icon="person-outline" label={t('email')} value={user?.email ?? ''} colors={colors} />
+          <Divider color={colors.border} />
+          <ActionRow icon="lock-closed-outline" label={t('settingsChangePassword')} onPress={handleChangePassword} chevron colors={colors} />
         </SettingCard>
 
         {/* Données & Confidentialité */}
-        <SectionTitle title="Données & confidentialité" />
-        <SettingCard>
-          <ActionRow icon="download-outline" label="Exporter mes données" onPress={handleExportData} chevron />
-          <Divider />
-          <ActionRow icon="document-text-outline" label="Politique de confidentialité" onPress={() => Linking.openURL('https://hiredge.app/privacy')} chevron />
-          <Divider />
-          <ActionRow icon="shield-outline" label="Conditions d'utilisation" onPress={() => Linking.openURL('https://hiredge.app/terms')} chevron />
+        <SectionTitle title={t('settingsPrivacy')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <ActionRow icon="download-outline" label={t('settingsExportData')} onPress={handleExportData} chevron colors={colors} />
+          <Divider color={colors.border} />
+          <ActionRow icon="document-text-outline" label={t('settingsPrivacyPolicy')} onPress={() => Linking.openURL('https://hiredge.app/privacy')} chevron colors={colors} />
+          <Divider color={colors.border} />
+          <ActionRow icon="shield-outline" label={t('settingsTerms')} onPress={() => Linking.openURL('https://hiredge.app/terms')} chevron colors={colors} />
         </SettingCard>
 
         {/* À propos */}
-        <SectionTitle title="À propos" />
-        <SettingCard>
-          <ActionRow icon="information-circle-outline" label="Version" value="1.0.0 (build 1)" />
-          <Divider />
-          <ActionRow icon="chatbubble-outline" label="Nous contacter" onPress={() => Linking.openURL('mailto:support@hiredge.app')} chevron />
+        <SectionTitle title={t('settingsAbout')} color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          <ActionRow icon="information-circle-outline" label={t('settingsVersion')} value="1.0.0 (build 1)" colors={colors} />
+          <Divider color={colors.border} />
+          <ActionRow icon="chatbubble-outline" label={t('settingsContact')} onPress={() => Linking.openURL('mailto:support@hiredge.app')} chevron colors={colors} />
         </SettingCard>
 
         {/* Danger Zone */}
         <TouchableOpacity
           onPress={handleDeleteAccount}
           style={{
-            backgroundColor: '#FF767510', borderRadius: 12, padding: 16,
+            backgroundColor: colors.destructiveLight, borderRadius: 12, padding: 16,
             marginTop: 24, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
           }}
         >
-          <Ionicons name="trash-outline" size={18} color="#FF7675" />
-          <Text style={{ color: '#FF7675', fontWeight: '600' }}>Supprimer mon compte</Text>
+          <Ionicons name="trash-outline" size={18} color={colors.destructive} />
+          <Text style={{ color: colors.destructive, fontWeight: '600' }}>{t('settingsDeleteAccount')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-function SectionTitle({ title }: { title: string }) {
-  return <Text style={{ fontSize: 13, fontWeight: '700', color: '#868E96', marginTop: 20, marginBottom: 8, marginLeft: 4 }}>{title}</Text>;
+function SectionTitle({ title, color }: { title: string; color: string }) {
+  return <Text style={{ fontSize: 13, fontWeight: '700', color, marginTop: 20, marginBottom: 8, marginLeft: 4 }}>{title}</Text>;
 }
 
-function SettingCard({ children }: { children: React.ReactNode }) {
+function SettingCard({ children, bg, border }: { children: React.ReactNode; bg: string; border: string }) {
   return (
-    <View style={{ backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#E9ECEF' }}>
+    <View style={{ backgroundColor: bg, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: border }}>
       {children}
     </View>
   );
 }
 
-function ToggleRow({ icon, label, value, onToggle }: { icon: string; label: string; value: boolean; onToggle: (v: boolean) => void }) {
+function ToggleRow({ icon, label, value, onToggle, colors: c }: { icon: string; label: string; value: boolean; onToggle: (v: boolean) => void; colors: any }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-      <Ionicons name={icon as any} size={20} color={colors.primary} />
-      <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: '#2D3436' }}>{label}</Text>
+      <Ionicons name={icon as any} size={20} color={c.primary} />
+      <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: c.foreground }}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: '#DEE2E6', true: colors.primaryMedium }}
-        thumbColor={value ? colors.primary : '#fff'}
+        trackColor={{ false: c.border, true: c.primaryMedium }}
+        thumbColor={value ? c.primary : c.card}
       />
     </View>
   );
 }
 
-function ActionRow({ icon, label, value, onPress, chevron }: {
-  icon: string; label: string; value?: string; onPress?: () => void; chevron?: boolean;
+function ActionRow({ icon, label, value, onPress, chevron, colors: c }: {
+  icon: string; label: string; value?: string; onPress?: () => void; chevron?: boolean; colors: any;
 }) {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 }}>
-      <Ionicons name={icon as any} size={20} color={colors.primary} />
-      <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: '#2D3436' }}>{label}</Text>
-      {value && <Text style={{ fontSize: 13, color: '#ADB5BD', marginRight: 4 }}>{value}</Text>}
-      {chevron && <Ionicons name="chevron-forward" size={16} color="#CED4DA" />}
+      <Ionicons name={icon as any} size={20} color={c.primary} />
+      <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: c.foreground }}>{label}</Text>
+      {value && <Text style={{ fontSize: 13, color: c.mutedForeground, marginRight: 4 }}>{value}</Text>}
+      {chevron && <Ionicons name="chevron-forward" size={16} color={c.mutedForeground} />}
     </Wrapper>
   );
 }
 
-function Divider() {
-  return <View style={{ height: 1, backgroundColor: '#F1F3F5', marginLeft: 48 }} />;
+function Divider({ color }: { color: string }) {
+  return <View style={{ height: 1, backgroundColor: color, marginLeft: 48 }} />;
 }

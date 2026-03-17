@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { scoutsApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 import { connectSocket, getSocket } from '../../lib/socket';
 
 export default function ScoutConversationScreen() {
@@ -12,6 +13,8 @@ export default function ScoutConversationScreen() {
   const [message, setMessage] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
+  const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const { data: conversation } = useQuery({
     queryKey: ['scoutConversation', id],
@@ -110,10 +113,10 @@ export default function ScoutConversationScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>
-            {scout?.anonymousName ?? 'Éclaireur anonyme'}
+            {scout?.anonymousName ?? t('scoutConvAnonymousScout')}
           </Text>
           <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
-            {scout?.role ? `${scout.role} · ` : ''}{conversation?.scout?.company?.name ?? 'Entreprise'}
+            {scout?.role ? `${scout.role} · ` : ''}{conversation?.scout?.company?.name ?? t('scoutConvCompany')}
           </Text>
         </View>
         {scout?.trustScore != null && (
@@ -135,7 +138,7 @@ export default function ScoutConversationScreen() {
       }}>
         <Ionicons name="shield-checkmark-outline" size={12} color="#92700C" />
         <Text style={{ fontSize: 10, color: '#92700C', flex: 1 }}>
-          Conversation anonymisée — l'identité de l'éclaireur est protégée
+          {t('scoutConvDisclaimer')}
         </Text>
       </View>
 
@@ -170,7 +173,7 @@ export default function ScoutConversationScreen() {
                 fontSize: 10, color: colors.border, marginTop: 3,
                 textAlign: isMe ? 'right' : 'left',
               }}>
-                {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {new Date(item.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
           );
@@ -179,7 +182,7 @@ export default function ScoutConversationScreen() {
           <View style={{ alignItems: 'center', paddingTop: 40 }}>
             <Ionicons name="chatbubbles-outline" size={28} color={colors.mutedForeground} />
             <Text style={{ color: colors.mutedForeground, fontSize: 12, textAlign: 'center', paddingHorizontal: 40, marginTop: 10 }}>
-              Posez vos questions sur la culture d'entreprise, les process de recrutement, l'ambiance...
+              {t('scoutConvEmptyHint')}
             </Text>
           </View>
         }
@@ -193,7 +196,7 @@ export default function ScoutConversationScreen() {
         <TextInput
           value={message}
           onChangeText={setMessage}
-          placeholder="Votre question..."
+          placeholder={t('scoutConvPlaceholder')}
           placeholderTextColor={colors.mutedForeground}
           multiline
           style={{

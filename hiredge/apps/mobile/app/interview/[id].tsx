@@ -4,12 +4,15 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { interviewsApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 export default function InterviewSessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [input, setInput] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const { data: simulation, isLoading, refetch } = useQuery({
     queryKey: ['simulation', id],
@@ -44,9 +47,9 @@ export default function InterviewSessionScreen() {
   };
 
   const handleEnd = () => {
-    Alert.alert('Terminer l\'entretien', 'Es-tu sûr de vouloir terminer cette simulation ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Terminer', style: 'destructive', onPress: () => endMutation.mutate() },
+    Alert.alert(t('interviewEndTitle'), t('interviewEndConfirm'), [
+      { text: t('interviewEndCancel'), style: 'cancel' },
+      { text: t('interviewEndConfirmBtn'), style: 'destructive', onPress: () => endMutation.mutate() },
     ]);
   };
 
@@ -60,7 +63,7 @@ export default function InterviewSessionScreen() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.mutedForeground, marginTop: 12 }}>Préparation de l'entretien...</Text>
+        <Text style={{ color: colors.mutedForeground, marginTop: 12 }}>{t('interviewLoading')}</Text>
       </View>
     );
   }
@@ -91,7 +94,7 @@ export default function InterviewSessionScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
-            {character?.name ?? 'Recruteur'}
+            {character?.name ?? t('interviewRecruiter')}
           </Text>
           <Text style={{ color: colors.border, fontSize: 11 }}>
             {character?.role ?? simulation.type} {simulation.company ? `· ${simulation.company}` : ''}
@@ -103,7 +106,7 @@ export default function InterviewSessionScreen() {
           </TouchableOpacity>
         )}
         <View style={{
-          backgroundColor: getPhaseColor(simulation.phase),
+          backgroundColor: getPhaseColor(simulation.phase, colors),
           paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
         }}>
           <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{simulation.phase}</Text>
@@ -151,11 +154,11 @@ export default function InterviewSessionScreen() {
                   flexDirection: 'row', gap: 4, marginTop: 4, flexWrap: 'wrap',
                   justifyContent: isUser ? 'flex-end' : 'flex-start',
                 }}>
-                  <ScoreBadge label="Pertinence" score={item.evaluation.relevance} />
-                  <ScoreBadge label="Profondeur" score={item.evaluation.depth} />
-                  <ScoreBadge label="Structure" score={item.evaluation.structure} />
+                  <ScoreBadge label={t('interviewRelevance')} score={item.evaluation.relevance} colors={colors} />
+                  <ScoreBadge label={t('interviewDepth')} score={item.evaluation.depth} colors={colors} />
+                  <ScoreBadge label={t('interviewStructure')} score={item.evaluation.structure} colors={colors} />
                   {item.evaluation.specificity != null && (
-                    <ScoreBadge label="Précision" score={item.evaluation.specificity} />
+                    <ScoreBadge label={t('interviewSpecificity')} score={item.evaluation.specificity} colors={colors} />
                   )}
                 </View>
               )}
@@ -171,7 +174,7 @@ export default function InterviewSessionScreen() {
             backgroundColor: colors.card, alignSelf: 'flex-start', borderRadius: 14, borderBottomLeftRadius: 4,
             paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: colors.border,
           }}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Le recruteur réfléchit...</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{t('interviewThinking')}</Text>
           </View>
         </View>
       )}
@@ -183,14 +186,14 @@ export default function InterviewSessionScreen() {
           borderWidth: 1, borderColor: colors.border,
         }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground, marginBottom: 8 }}>
-            📊 Rapport de simulation
+            📊 {t('interviewReport')}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12 }}>
-            <ScoreCircle label="Global" score={simulation.analysis.overallScore} />
+            <ScoreCircle label={t('interviewGlobal')} score={simulation.analysis.overallScore} colors={colors} />
           </View>
           {simulation.analysis.strengths?.length > 0 && (
             <View style={{ marginBottom: 8 }}>
-              <Text style={{ fontWeight: '600', color: colors.success, marginBottom: 4 }}>✅ Points forts</Text>
+              <Text style={{ fontWeight: '600', color: colors.success, marginBottom: 4 }}>✅ {t('interviewStrengths')}</Text>
               {simulation.analysis.strengths.map((s: string, i: number) => (
                 <Text key={i} style={{ color: colors.mutedForeground, fontSize: 13, marginLeft: 8, lineHeight: 20 }}>• {s}</Text>
               ))}
@@ -198,7 +201,7 @@ export default function InterviewSessionScreen() {
           )}
           {simulation.analysis.improvements?.length > 0 && (
             <View>
-              <Text style={{ fontWeight: '600', color: colors.destructive, marginBottom: 4 }}>📌 À améliorer</Text>
+              <Text style={{ fontWeight: '600', color: colors.destructive, marginBottom: 4 }}>📌 {t('interviewImprovements')}</Text>
               {simulation.analysis.improvements.map((s: string, i: number) => (
                 <Text key={i} style={{ color: colors.mutedForeground, fontSize: 13, marginLeft: 8, lineHeight: 20 }}>• {s}</Text>
               ))}
@@ -206,7 +209,7 @@ export default function InterviewSessionScreen() {
           )}
           {simulation.analysis.advice && (
             <View style={{ marginTop: 10, backgroundColor: colors.primaryLight, borderRadius: 10, padding: 12 }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary, marginBottom: 4 }}>💡 Conseil</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary, marginBottom: 4 }}>💡 {t('interviewAdvice')}</Text>
               <Text style={{ fontSize: 12, color: colors.foreground, lineHeight: 18 }}>{simulation.analysis.advice}</Text>
             </View>
           )}
@@ -222,7 +225,7 @@ export default function InterviewSessionScreen() {
               backgroundColor: colors.primary, borderRadius: 12, padding: 14, alignItems: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Retour aux simulations</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t('interviewBackToSims')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -233,7 +236,7 @@ export default function InterviewSessionScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Votre réponse..."
+            placeholder={t('interviewAnswerPlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             multiline
             style={{
@@ -257,7 +260,7 @@ export default function InterviewSessionScreen() {
   );
 }
 
-function ScoreBadge({ label, score }: { label: string; score: number }) {
+function ScoreBadge({ label, score, colors }: { label: string; score: number; colors: any }) {
   const color = score >= 4 ? '#22C55E' : score >= 3 ? colors.primary : '#EF4444';
   return (
     <View style={{ backgroundColor: color + '15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
@@ -266,7 +269,7 @@ function ScoreBadge({ label, score }: { label: string; score: number }) {
   );
 }
 
-function ScoreCircle({ label, score }: { label: string; score: number }) {
+function ScoreCircle({ label, score, colors }: { label: string; score: number; colors: any }) {
   const color = score >= 4 ? '#22C55E' : score >= 3 ? colors.primary : '#EF4444';
   return (
     <View style={{ alignItems: 'center' }}>
@@ -282,7 +285,7 @@ function ScoreCircle({ label, score }: { label: string; score: number }) {
   );
 }
 
-function getPhaseColor(phase: string): string {
+function getPhaseColor(phase: string, colors: any): string {
   switch (phase) {
     case 'WARMUP': return '#00CEC9';
     case 'CORE': return colors.primary;

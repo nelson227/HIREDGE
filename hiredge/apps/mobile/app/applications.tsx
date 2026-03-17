@@ -4,16 +4,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api, { applicationsApi } from '../lib/api';
+import { useThemeColors } from '../lib/theme';
+import { useTranslation } from '../lib/i18n';
 
-const STATUS_FILTERS = ['Tous', 'DRAFT', 'APPLIED', 'VIEWED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED'];
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Brouillon',
-  APPLIED: 'Envoyée',
-  VIEWED: 'Consultée',
-  INTERVIEW_SCHEDULED: 'Entretien',
-  OFFERED: 'Offre reçue',
-  REJECTED: 'Refusée',
-  ACCEPTED: 'Acceptée',
+const STATUS_FILTERS = ['ALL', 'DRAFT', 'APPLIED', 'VIEWED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED'];
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  ALL: 'applicationAll',
+  DRAFT: 'applicationDraft',
+  APPLIED: 'applicationSent',
+  VIEWED: 'applicationConsulted',
+  INTERVIEW_SCHEDULED: 'applicationInterview',
+  OFFERED: 'applicationOffer',
+  REJECTED: 'applicationRejected',
+  ACCEPTED: 'applicationAccepted',
 };
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: '#ADB5BD',
@@ -26,7 +29,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ApplicationsScreen() {
-  const [filter, setFilter] = useState('Tous');
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
+  const [filter, setFilter] = useState('ALL');
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -34,7 +39,7 @@ export default function ApplicationsScreen() {
     queryKey: ['applications', filter],
     queryFn: async () => {
       const params: Record<string, string> = { limit: '50' };
-      if (filter !== 'Tous') params.status = filter;
+      if (filter !== 'ALL') params.status = filter;
       const { data } = await applicationsApi.list(params);
       return data.data;
     },
@@ -57,16 +62,16 @@ export default function ApplicationsScreen() {
   const applications = data?.items ?? [];
 
   const handleWithdraw = (appId: string, jobTitle?: string) => {
-    Alert.alert('Retirer', `Retirer la candidature pour "${jobTitle ?? 'ce poste'}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('applicationWithdrawTitle'), t('applicationWithdrawConfirm').replace('{title}', jobTitle ?? t('applicationPosition')), [
+      { text: t('applicationCancel'), style: 'cancel' },
       {
-        text: 'Retirer', style: 'destructive', onPress: async () => {
+        text: t('applicationWithdrawBtn'), style: 'destructive', onPress: async () => {
           try {
             await applicationsApi.withdraw(appId);
             await refetch();
             queryClient.invalidateQueries({ queryKey: ['applicationStats'] });
           } catch {
-            Alert.alert('Erreur', 'Impossible de retirer la candidature');
+            Alert.alert(t('applicationError'), t('applicationWithdrawError'));
           }
         },
       },
@@ -74,25 +79,25 @@ export default function ApplicationsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
+        backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
         borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>Mes candidatures</Text>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>{t('applicationsTitle')}</Text>
         </View>
 
         {/* Mini Stats */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <MiniStat label="Total" value={stats?.total ?? 0} />
-          <MiniStat label="En cours" value={(stats?.byStatus?.APPLIED ?? 0) + (stats?.byStatus?.VIEWED ?? 0)} />
-          <MiniStat label="Entretiens" value={stats?.byStatus?.INTERVIEW_SCHEDULED ?? 0} />
-          <MiniStat label="Offres" value={stats?.byStatus?.OFFERED ?? 0} />
+          <MiniStat label={t('applicationTotal')} value={stats?.total ?? 0} />
+          <MiniStat label={t('applicationInProgress')} value={(stats?.byStatus?.APPLIED ?? 0) + (stats?.byStatus?.VIEWED ?? 0)} />
+          <MiniStat label={t('applicationInterviews')} value={stats?.byStatus?.INTERVIEW_SCHEDULED ?? 0} />
+          <MiniStat label={t('applicationOffers')} value={stats?.byStatus?.OFFERED ?? 0} />
         </View>
       </View>
 
@@ -108,15 +113,15 @@ export default function ApplicationsScreen() {
             onPress={() => setFilter(item)}
             style={{
               paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-              backgroundColor: filter === item ? '#6C5CE7' : '#fff',
-              borderWidth: 1, borderColor: filter === item ? '#6C5CE7' : '#E9ECEF',
+              backgroundColor: filter === item ? colors.primary : colors.card,
+              borderWidth: 1, borderColor: filter === item ? colors.primary : colors.border,
             }}
           >
             <Text style={{
               fontSize: 12, fontWeight: '600',
-              color: filter === item ? '#fff' : '#495057',
+              color: filter === item ? '#fff' : colors.foreground,
             }}>
-              {item === 'Tous' ? 'Tous' : STATUS_LABELS[item] ?? item}
+              {t(STATUS_LABEL_KEYS[item] ?? 'applicationAll')}
             </Text>
           </TouchableOpacity>
         )}
@@ -127,23 +132,23 @@ export default function ApplicationsScreen() {
         data={applications}
         keyExtractor={(item: any) => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6C5CE7" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         renderItem={({ item }: { item: any }) => (
           <TouchableOpacity
             onPress={() => router.push(`/application/${item.id}`)}
             style={{
-              backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 8,
-              borderWidth: 1, borderColor: '#E9ECEF', borderLeftWidth: 4,
+              backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 8,
+              borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4,
               borderLeftColor: STATUS_COLORS[item.status] ?? '#ADB5BD',
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1, marginRight: 12 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#2D3436' }} numberOfLines={1}>
-                  {item.job?.title ?? 'Poste'}
+                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>
+                  {item.job?.title ?? t('applicationPosition')}
                 </Text>
-                <Text style={{ fontSize: 13, color: '#868E96', marginTop: 2 }}>
-                  {item.job?.company?.name ?? 'Entreprise'}
+                <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>
+                  {item.job?.company?.name ?? t('applicationCompany')}
                 </Text>
               </View>
               <View style={{
@@ -154,7 +159,7 @@ export default function ApplicationsScreen() {
                   fontSize: 11, fontWeight: '700',
                   color: STATUS_COLORS[item.status] ?? '#ADB5BD',
                 }}>
-                  {STATUS_LABELS[item.status] ?? item.status}
+                  {t(STATUS_LABEL_KEYS[item.status] ?? 'applicationAll')}
                 </Text>
               </View>
             </View>
@@ -166,18 +171,18 @@ export default function ApplicationsScreen() {
               }}>
                 <Ionicons name="calendar" size={12} color="#E67700" />
                 <Text style={{ fontSize: 11, fontWeight: '600', color: '#E67700' }}>
-                  Entretien le {new Date(item.interview.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  {t('applicationInterviewOn')} {new Date(item.interview.scheduledAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <Text style={{ fontSize: 11, color: '#CED4DA' }}>
+              <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
                 {formatDate(item.createdAt)}
               </Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 {item.job?.id && (
                   <TouchableOpacity onPress={() => router.push(`/job/${item.job.id}`)} hitSlop={8}>
-                    <Ionicons name="eye-outline" size={16} color="#868E96" />
+                    <Ionicons name="eye-outline" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 )}
                 {!['REJECTED', 'ACCEPTED', 'OFFERED'].includes(item.status) && (
@@ -191,8 +196,8 @@ export default function ApplicationsScreen() {
         )}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', paddingTop: 60 }}>
-            <Ionicons name="document-text-outline" size={48} color="#DEE2E6" />
-            <Text style={{ color: '#ADB5BD', marginTop: 12, fontSize: 15 }}>Aucune candidature</Text>
+            <Ionicons name="document-text-outline" size={48} color={colors.border} />
+            <Text style={{ color: colors.mutedForeground, marginTop: 12, fontSize: 15 }}>{t('applicationNoApps')}</Text>
           </View>
         }
       />
@@ -212,5 +217,5 @@ function MiniStat({ label, value }: { label: string; value: number }) {
 }
 
 function formatDate(d: string): string {
-  return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }

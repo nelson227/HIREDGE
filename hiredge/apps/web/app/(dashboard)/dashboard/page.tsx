@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { jobsApi, applicationsApi, interviewsApi, squadApi, profileApi } from "@/lib/api"
 import { connectSocket } from "@/lib/socket"
+import { useTranslation } from "@/lib/i18n"
 
 interface Job {
   id: string
@@ -68,50 +69,51 @@ interface UserProfile {
   lastName?: string
 }
 
-function getCompanyName(company: Job['company']): string {
+function getCompanyName(company: Job['company'], fallback: string): string {
   if (typeof company === 'string') return company
-  return company?.name || 'Entreprise'
+  return company?.name || fallback
 }
 
-function formatSalary(job: Job): string {
+function formatSalary(job: Job, t: (k: string) => string): string {
   if (job.salary) return job.salary
   if (job.salaryMin && job.salaryMax) {
     return `${job.salaryMin.toLocaleString()}€ - ${job.salaryMax.toLocaleString()}€`
   }
-  if (job.salaryMin) return `À partir de ${job.salaryMin.toLocaleString()}€`
-  return "Non précisé"
+  if (job.salaryMin) return `${t('dashboardSalaryFrom')} ${job.salaryMin.toLocaleString()}€`
+  return t('dashboardNotSpecified')
 }
 
-function formatPostedAt(dateStr: string): string {
+function formatPostedAt(dateStr: string, t: (k: string) => string): string {
   const date = new Date(dateStr)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffHours < 1) return "À l'instant"
-  if (diffHours < 24) return `Il y a ${diffHours}h`
-  if (diffDays < 7) return `Il y a ${diffDays}j`
-  return date.toLocaleDateString('fr-FR')
+  if (diffHours < 1) return t('dashboardJustNow')
+  if (diffHours < 24) return t('dashboardHoursAgo').replace('{n}', String(diffHours))
+  if (diffDays < 7) return t('dashboardDaysAgo').replace('{n}', String(diffDays))
+  return date.toLocaleDateString()
 }
 
-function formatEventDate(dateStr?: string): string {
-  if (!dateStr) return "Date non définie"
+function formatEventDate(dateStr: string | undefined, t: (k: string) => string): string {
+  if (!dateStr) return t('dashboardDateNotDefined')
   const date = new Date(dateStr)
   const now = new Date()
   const tomorrow = new Date(now)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
   if (date.toDateString() === now.toDateString()) {
-    return `Aujourd'hui, ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+    return `${t('dashboardToday')}, ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
   }
   if (date.toDateString() === tomorrow.toDateString()) {
-    return `Demain, ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+    return `${t('dashboardTomorrow')}, ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
   }
-  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(true)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
@@ -201,7 +203,7 @@ export default function DashboardPage() {
     ? Math.round((respondedApplications / applications.length) * 100) 
     : 0
 
-  const userName = profile?.firstName || "Utilisateur"
+  const userName = profile?.firstName || t('dashboardUser')
 
   // Get recent squad activity (last messages)
   const recentSquadActivity = squad?.messages?.slice(0, 3) || []
@@ -220,16 +222,16 @@ export default function DashboardPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-            Bonjour, {userName} 👋
+            {t('dashboardWelcome').replace('{name}', userName)} 👋
           </h1>
           <p className="text-muted-foreground mt-1">
-            Voici un résumé de ta recherche d'emploi aujourd'hui.
+            {t('dashboardSummary')}
           </p>
         </div>
         <Button asChild>
           <Link href="/assistant">
             <Bot className="w-4 h-4 mr-2" />
-            Parler à EDGE
+            {t('dashboardTalkEdge')}
           </Link>
         </Button>
       </div>
@@ -242,18 +244,18 @@ export default function DashboardPage() {
               <Sparkles className="w-7 h-7 text-primary-foreground" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">EDGE Insights</h3>
+              <h3 className="font-semibold text-foreground mb-1">{t('dashboardEdgeInsights')}</h3>
               <p className="text-muted-foreground">
                 {totalJobs > 0
-                  ? `J'ai trouvé ${totalJobs} offres qui correspondent à ton profil ! ${upcomingInterviews.length > 0 ? `Tu as ${upcomingInterviews.length} entretien(s) à venir.` : "Continue à postuler pour décrocher des entretiens."}`
+                  ? `${t('dashboardEdgeFoundJobs').replace('{n}', String(totalJobs))} ${upcomingInterviews.length > 0 ? t('dashboardEdgeUpcoming').replace('{n}', String(upcomingInterviews.length)) : t('dashboardEdgeContinueApply')}`
                   : applications.length > 0
-                  ? `Tu as ${applications.length} candidature(s) en cours. Je continue à chercher des offres pour toi.`
-                  : "Je n'ai pas encore trouvé d'offres. Complète ton profil pour que je puisse mieux te recommander des postes !"}
+                  ? t('dashboardEdgeApplications').replace('{n}', String(applications.length))
+                  : t('dashboardEdgeNoJobs')}
               </p>
             </div>
             <Button variant="secondary" asChild className="shrink-0">
               <Link href="/jobs">
-                Voir les offres
+                {t('dashboardViewJobs')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
@@ -271,7 +273,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{totalJobs}</p>
-                <p className="text-sm text-muted-foreground">Offres trouvées</p>
+                <p className="text-sm text-muted-foreground">{t('dashboardJobsFound')}</p>
               </div>
             </div>
           </CardContent>
@@ -284,7 +286,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{activeApplications}</p>
-                <p className="text-sm text-muted-foreground">Candidatures</p>
+                <p className="text-sm text-muted-foreground">{t('dashboardApplications')}</p>
               </div>
             </div>
           </CardContent>
@@ -297,7 +299,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{upcomingInterviews.length}</p>
-                <p className="text-sm text-muted-foreground">Entretiens</p>
+                <p className="text-sm text-muted-foreground">{t('dashboardInterviews')}</p>
               </div>
             </div>
           </CardContent>
@@ -310,7 +312,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{responseRate}%</p>
-                <p className="text-sm text-muted-foreground">Taux de réponse</p>
+                <p className="text-sm text-muted-foreground">{t('dashboardResponseRate')}</p>
               </div>
             </div>
           </CardContent>
@@ -323,10 +325,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg font-semibold">Offres recommandées</CardTitle>
+              <CardTitle className="text-lg font-semibold">{t('dashboardRecommended')}</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/jobs">
-                  Voir tout
+                  {t('dashboardViewAll')}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
               </Button>
@@ -335,8 +337,8 @@ export default function DashboardPage() {
               {jobs.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune offre recommandée pour le moment.</p>
-                  <p className="text-sm mt-2">Complète ton profil pour recevoir des recommandations personnalisées.</p>
+                  <p>{t('dashboardNoJobs')}</p>
+                  <p className="text-sm mt-2">{t('dashboardCompleteProfile')}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
@@ -353,7 +355,7 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h4 className="font-semibold text-foreground truncate">{job.title}</h4>
-                            <p className="text-sm text-muted-foreground">{getCompanyName(job.company)}</p>
+                            <p className="text-sm text-muted-foreground">{getCompanyName(job.company, t('dashboardCompany'))}</p>
                           </div>
                           {(job.match || job.matchScore) && (
                             <div className="px-2.5 py-1 rounded-full bg-success/10 text-success text-xs font-semibold shrink-0">
@@ -364,13 +366,13 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {job.location || "Non précisé"}
-                            {job.remote && " (Télétravail)"}
+                            {job.location || t('dashboardNotSpecified')}
+                            {job.remote && ` (${t('dashboardRemote')})`}
                           </span>
-                          <span>{formatSalary(job)}</span>
+                          <span>{formatSalary(job, t)}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {formatPostedAt(job.postedAt)}
+                            {formatPostedAt(job.postedAt, t)}
                           </span>
                         </div>
                       </div>
@@ -387,13 +389,13 @@ export default function DashboardPage() {
           {/* Upcoming Events */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">À venir</CardTitle>
+              <CardTitle className="text-lg font-semibold">{t('dashboardUpcoming')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {upcomingInterviews.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground">
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Aucun entretien planifié</p>
+                  <p className="text-sm">{t('dashboardNoInterviews')}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
@@ -405,12 +407,12 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <h4 className="font-medium text-foreground">
-                            Entretien {interview.type === 'TECHNICAL' ? 'technique' : interview.type === 'HR' ? 'RH' : ''}
+                            {t('dashboardInterviewLabel')} {interview.type === 'TECHNICAL' ? t('dashboardInterviewTechnical').toLowerCase() : interview.type === 'HR' ? t('dashboardInterviewHR') : ''}
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            {interview.application?.job?.company?.name || interview.application?.job?.title || "Entreprise"}
+                            {interview.application?.job?.company?.name || interview.application?.job?.title || t('dashboardCompany')}
                           </p>
-                          <p className="text-xs text-primary mt-1">{formatEventDate(interview.scheduledAt)}</p>
+                          <p className="text-xs text-primary mt-1">{formatEventDate(interview.scheduledAt, t)}</p>
                         </div>
                       </div>
                     </div>
@@ -423,24 +425,24 @@ export default function DashboardPage() {
           {/* Squad Activity */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg font-semibold">Activité Escouade</CardTitle>
+              <CardTitle className="text-lg font-semibold">{t('dashboardSquadActivity')}</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/squad">Voir l'escouade</Link>
+                <Link href="/squad">{t('dashboardViewSquad')}</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               {!squad ? (
                 <div className="p-6 text-center text-muted-foreground">
                   <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Tu n'as pas encore d'escouade</p>
+                  <p className="text-sm">{t('dashboardNoSquad')}</p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <Link href="/squad">Rejoindre une escouade</Link>
+                    <Link href="/squad">{t('dashboardJoinSquad')}</Link>
                   </Button>
                 </div>
               ) : recentSquadActivity.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground">
                   <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Aucune activité récente</p>
+                  <p className="text-sm">{t('dashboardNoActivity')}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
@@ -448,7 +450,7 @@ export default function DashboardPage() {
                     <div key={message.id} className="p-4">
                       <p className="text-sm text-foreground">
                         <span className="font-medium">
-                          {message.sender?.candidateProfile?.firstName || "Membre"}
+                          {message.sender?.candidateProfile?.firstName || t('dashboardMember')}
                         </span>{" "}
                         <span className="text-muted-foreground">
                           {message.content.length > 50 
@@ -457,7 +459,7 @@ export default function DashboardPage() {
                         </span>
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatPostedAt(message.createdAt)}
+                        {formatPostedAt(message.createdAt, t)}
                       </p>
                     </div>
                   ))}

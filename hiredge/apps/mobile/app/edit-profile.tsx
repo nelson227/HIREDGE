@@ -4,8 +4,12 @@ import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { profileApi } from '../lib/api';
+import { useThemeColors } from '../lib/theme';
+import { useTranslation } from '../lib/i18n';
 
 export default function EditProfileScreen() {
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: profile } = useQuery({
@@ -50,7 +54,7 @@ export default function EditProfileScreen() {
       router.back();
     },
     onError: () => {
-      Alert.alert('Erreur', 'Impossible de mettre à jour le profil');
+      Alert.alert(t('profileError'), t('editProfileError'));
     },
   });
 
@@ -63,39 +67,39 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F8F9FA' }} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
+        backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
         flexDirection: 'row', alignItems: 'center', gap: 12,
       }}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', flex: 1 }}>Modifier le profil</Text>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', flex: 1 }}>{t('profileEditProfile')}</Text>
         <TouchableOpacity onPress={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
           <Text style={{ color: '#00CEC9', fontWeight: '700', fontSize: 16 }}>
-            {updateMutation.isPending ? '...' : 'Sauver'}
+            {updateMutation.isPending ? '...' : t('editProfileSave')}
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ padding: 16, gap: 16 }}>
-        <Field label="Titre professionnel" placeholder="ex: Développeur Full-Stack" value={title} onChange={setTitle} />
-        <Field label="Bio" placeholder="Décris-toi en quelques lignes..." value={bio} onChange={setBio} multiline />
-        <Field label="Localisations souhaitées" placeholder="Paris, Lyon, Remote..." value={locations} onChange={setLocations} hint="Sépare par des virgules" />
-        <Field label="Salaire annuel souhaité (€)" placeholder="45000" value={salary} onChange={setSalary} keyboardType="numeric" />
+        <Field label={t('editProfileTitle')} placeholder={t('editProfileTitlePlaceholder')} value={title} onChange={setTitle} colors={colors} />
+        <Field label={t('editProfileBio')} placeholder={t('editProfileBioPlaceholder')} value={bio} onChange={setBio} multiline colors={colors} />
+        <Field label={t('editProfileLocations')} placeholder={t('editProfileLocationsPlaceholder')} value={locations} onChange={setLocations} hint={t('editProfileLocationsHint')} colors={colors} />
+        <Field label={t('editProfileSalary')} placeholder={t('editProfileSalaryPlaceholder')} value={salary} onChange={setSalary} keyboardType="numeric" colors={colors} />
 
         {/* Remote */}
-        <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
+        <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border }}>
           <TouchableOpacity
             onPress={() => setRemote(!remote)}
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#2D3436' }}>Ouvert au télétravail</Text>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground }}>{t('editProfileRemote')}</Text>
             <View style={{
               width: 48, height: 28, borderRadius: 14, justifyContent: 'center',
-              backgroundColor: remote ? '#6C5CE7' : '#DEE2E6',
+              backgroundColor: remote ? colors.primary : colors.border,
               paddingHorizontal: 2,
             }}>
               <View style={{
@@ -107,9 +111,9 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Contract Preferences */}
-        <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: '#2D3436', marginBottom: 10 }}>
-            Types de contrat recherchés
+        <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground, marginBottom: 10 }}>
+            {t('editProfileContractTypes')}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {CONTRACT_OPTIONS.map((c) => (
@@ -118,13 +122,13 @@ export default function EditProfileScreen() {
                 onPress={() => toggleContract(c)}
                 style={{
                   paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                  backgroundColor: contracts.includes(c) ? '#6C5CE7' : '#F1F3F5',
-                  borderWidth: 1, borderColor: contracts.includes(c) ? '#6C5CE7' : '#E9ECEF',
+                  backgroundColor: contracts.includes(c) ? colors.primary : colors.muted,
+                  borderWidth: 1, borderColor: contracts.includes(c) ? colors.primary : colors.border,
                 }}
               >
                 <Text style={{
                   fontWeight: '600', fontSize: 13,
-                  color: contracts.includes(c) ? '#fff' : '#495057',
+                  color: contracts.includes(c) ? '#fff' : colors.mutedForeground,
                 }}>
                   {c}
                 </Text>
@@ -138,28 +142,29 @@ export default function EditProfileScreen() {
 }
 
 function Field({
-  label, placeholder, value, onChange, multiline, keyboardType, hint,
+  label, placeholder, value, onChange, multiline, keyboardType, hint, colors,
 }: {
   label: string; placeholder: string; value: string; onChange: (v: string) => void;
   multiline?: boolean; keyboardType?: 'numeric' | 'default'; hint?: string;
+  colors: any;
 }) {
   return (
-    <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-      <Text style={{ fontSize: 15, fontWeight: '600', color: '#2D3436', marginBottom: 8 }}>{label}</Text>
+    <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+      <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground, marginBottom: 8 }}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#ADB5BD"
+        placeholderTextColor={colors.mutedForeground}
         multiline={multiline}
         keyboardType={keyboardType}
         style={{
-          borderWidth: 1, borderColor: '#E9ECEF', borderRadius: 8, padding: 12,
-          fontSize: 15, color: '#2D3436',
+          borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12,
+          fontSize: 15, color: colors.foreground,
           ...(multiline ? { height: 90, textAlignVertical: 'top' } : {}),
         }}
       />
-      {hint && <Text style={{ fontSize: 11, color: '#ADB5BD', marginTop: 4 }}>{hint}</Text>}
+      {hint && <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 4 }}>{hint}</Text>}
     </View>
   );
 }

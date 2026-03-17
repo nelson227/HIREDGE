@@ -4,6 +4,7 @@ import { View, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName: any; focused: boolean; color: string }) {
   return (
@@ -22,6 +23,7 @@ function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -62,7 +64,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Accueil',
+          title: t('navHome'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="home-outline" focusedName="home" focused={focused} color={color} />
           ),
@@ -71,7 +73,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="jobs"
         options={{
-          title: 'Offres',
+          title: t('navJobs'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="briefcase-outline" focusedName="briefcase" focused={focused} color={color} />
           ),
@@ -89,7 +91,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="squad"
         options={{
-          title: 'Escouade',
+          title: t('navSquad'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="people-outline" focusedName="people" focused={focused} color={color} />
           ),
@@ -98,7 +100,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: t('navProfile'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="person-outline" focusedName="person" focused={focused} color={color} />
           ),

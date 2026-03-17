@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -22,84 +23,21 @@ import {
   LogOut,
   Check,
   Loader2,
+  Languages,
+  Monitor,
 } from "lucide-react"
 import { profileApi, authApi } from "@/lib/api"
+import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n"
 
-const notificationSettings = [
-  {
-    id: "new_matches",
-    label: "Nouvelles offres compatibles",
-    description: "Soyez notifié quand EDGE trouve des offres correspondant à votre profil",
-    enabled: true,
-  },
-  {
-    id: "application_updates",
-    label: "Mises à jour de candidatures",
-    description: "Changements de statut et réponses des employeurs",
-    enabled: true,
-  },
-  {
-    id: "squad_activity",
-    label: "Activité de l'escouade",
-    description: "Messages et mises à jour de votre escouade",
-    enabled: true,
-  },
-  {
-    id: "interview_reminders",
-    label: "Rappels d'entretiens",
-    description: "Rappels avant vos entretiens programmés",
-    enabled: true,
-  },
-  {
-    id: "weekly_digest",
-    label: "Résumé hebdomadaire",
-    description: "Récapitulatif de votre progression dans la recherche d'emploi",
-    enabled: false,
-  },
-  {
-    id: "marketing",
-    label: "Nouveautés produit",
-    description: "Nouvelles fonctionnalités et améliorations d'HIREDGE",
-    enabled: false,
-  },
-]
-
-const privacySettings = [
-  {
-    id: "profile_visibility",
-    label: "Visibilité du profil",
-    description: "Permettre aux éclaireurs et membres d'escouade de voir votre profil",
-    enabled: true,
-  },
-  {
-    id: "anonymous_mode",
-    label: "Mode anonyme",
-    description: "Masquer votre identité lors de la consultation des infos entreprises",
-    enabled: false,
-  },
-  {
-    id: "data_sharing",
-    label: "Partage de données",
-    description: "Aider à améliorer EDGE en partageant des données d'utilisation anonymisées",
-    enabled: true,
-  },
-]
-
-const settingsSections = [
-  { id: "account", label: "Compte", icon: User },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "privacy", label: "Confidentialité", icon: Shield },
-  { id: "preferences", label: "Préférences", icon: Globe },
-  { id: "billing", label: "Abonnement", icon: CreditCard },
-  { id: "security", label: "Sécurité", icon: Lock },
-]
+const LOCALES: Locale[] = ['fr', 'en', 'de', 'es']
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { theme: currentTheme, setTheme: setNextTheme } = useTheme()
+  const { t, locale, setLocale } = useTranslation()
   const [activeSection, setActiveSection] = useState("account")
-  const [notifications, setNotifications] = useState(notificationSettings)
-  const [privacy, setPrivacy] = useState(privacySettings)
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system")
+  const [notifications, setNotifications] = useState<Array<{ id: string; labelKey: string; descKey: string; enabled: boolean }>>([])
+  const [privacy, setPrivacy] = useState<Array<{ id: string; labelKey: string; descKey: string; enabled: boolean }>>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [accountForm, setAccountForm] = useState({ firstName: "", lastName: "", email: "", phone: "" })
@@ -107,6 +45,31 @@ export default function SettingsPage() {
   const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" })
   const [message, setMessage] = useState("")
   const [pwLoading, setPwLoading] = useState(false)
+
+  useEffect(() => {
+    setNotifications([
+      { id: "new_matches", labelKey: "notifNewMatches", descKey: "notifNewMatchesDesc", enabled: true },
+      { id: "application_updates", labelKey: "notifApplicationUpdates", descKey: "notifApplicationUpdatesDesc", enabled: true },
+      { id: "squad_activity", labelKey: "notifSquadActivity", descKey: "notifSquadActivityDesc", enabled: true },
+      { id: "interview_reminders", labelKey: "notifInterviewReminders", descKey: "notifInterviewRemindersDesc", enabled: true },
+      { id: "weekly_digest", labelKey: "notifWeeklyDigest", descKey: "notifWeeklyDigestDesc", enabled: false },
+      { id: "marketing", labelKey: "notifMarketing", descKey: "notifMarketingDesc", enabled: false },
+    ])
+    setPrivacy([
+      { id: "profile_visibility", labelKey: "privacyProfileVisibility", descKey: "privacyProfileVisibilityDesc", enabled: true },
+      { id: "anonymous_mode", labelKey: "privacyAnonymousMode", descKey: "privacyAnonymousModeDesc", enabled: false },
+      { id: "data_sharing", labelKey: "privacyDataSharing", descKey: "privacyDataSharingDesc", enabled: true },
+    ])
+  }, [])
+
+  const settingsSections = [
+    { id: "account", label: t('settingsAccount'), icon: User },
+    { id: "notifications", label: t('settingsNotifications'), icon: Bell },
+    { id: "privacy", label: t('settingsPrivacy'), icon: Shield },
+    { id: "preferences", label: t('settingsPreferences'), icon: Globe },
+    { id: "billing", label: t('settingsBilling'), icon: CreditCard },
+    { id: "security", label: t('settingsSecurity'), icon: Lock },
+  ]
 
   useEffect(() => {
     loadProfile()
@@ -159,7 +122,7 @@ export default function SettingsPage() {
       })
       setMessage("Modifications sauvegardées !")
       setTimeout(() => setMessage(""), 3000)
-    } catch { setMessage("Erreur lors de la sauvegarde") }
+    } catch { setMessage(t('settingsSaveError')) }
     finally { setSaving(false) }
   }
 
@@ -175,7 +138,7 @@ export default function SettingsPage() {
       })
       setMessage("Préférences sauvegardées !")
       setTimeout(() => setMessage(""), 3000)
-    } catch { setMessage("Erreur lors de la sauvegarde") }
+    } catch { setMessage(t('settingsSaveError')) }
     finally { setSaving(false) }
   }
 
@@ -186,7 +149,7 @@ export default function SettingsPage() {
       await authApi.deleteAccount()
       router.push("/login")
     } catch {
-      setMessage("Erreur lors de la suppression du compte. Contactez le support.")
+      setMessage(t('settingsDeleteError'))
     }
   }
 
@@ -198,7 +161,7 @@ export default function SettingsPage() {
 
   const handleChangePassword = async () => {
     if (!pwForm.current || !pwForm.newPw) {
-      setMessage("Veuillez remplir tous les champs")
+      setMessage(t('settingsFillAllFields'))
       return
     }
     if (pwForm.newPw.length < 8) {
@@ -206,7 +169,7 @@ export default function SettingsPage() {
       return
     }
     if (pwForm.newPw !== pwForm.confirm) {
-      setMessage("Les mots de passe ne correspondent pas")
+      setMessage(t('settingsPasswordMismatch'))
       return
     }
     setPwLoading(true)
@@ -217,7 +180,7 @@ export default function SettingsPage() {
       setPwForm({ current: "", newPw: "", confirm: "" })
       setTimeout(() => setMessage(""), 3000)
     } catch (err: any) {
-      const msg = err?.response?.data?.error?.message || "Erreur lors du changement de mot de passe"
+      const msg = err?.response?.data?.error?.message || t('settingsPasswordError')
       setMessage(msg)
     } finally {
       setPwLoading(false)
@@ -254,10 +217,10 @@ export default function SettingsPage() {
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Paramètres</h1>
-        <p className="text-muted-foreground mt-1">Gérez votre compte et vos préférences</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('settingsTitle')}</h1>
+        <p className="text-muted-foreground mt-1">{t('settingsSubtitle')}</p>
         {message && (
-          <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes("Erreur") ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+          <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes("Erreur") || message.includes("Error") ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
             {message}
           </div>
         )}
@@ -295,8 +258,8 @@ export default function SettingsPage() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Informations du compte</CardTitle>
-                  <CardDescription>Modifiez vos informations personnelles</CardDescription>
+                  <CardTitle>{t('settingsAccountInfo')}</CardTitle>
+                  <CardDescription>{t('settingsAccountDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {loading ? (
@@ -305,26 +268,26 @@ export default function SettingsPage() {
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-foreground">Prénom</label>
+                          <label className="text-sm font-medium text-foreground">{t('profileFirstName')}</label>
                           <Input value={accountForm.firstName} onChange={(e) => setAccountForm({...accountForm, firstName: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-foreground">Nom</label>
+                          <label className="text-sm font-medium text-foreground">{t('profileLastName')}</label>
                           <Input value={accountForm.lastName} onChange={(e) => setAccountForm({...accountForm, lastName: e.target.value})} />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Email</label>
+                        <label className="text-sm font-medium text-foreground">{t('email')}</label>
                         <Input type="email" value={accountForm.email} disabled className="opacity-60" />
-                        <p className="text-xs text-muted-foreground">L&apos;email ne peut pas être modifié</p>
+                        <p className="text-xs text-muted-foreground">{t('settingsEmailNotEditable')}</p>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Téléphone</label>
+                        <label className="text-sm font-medium text-foreground">{t('profilePhone')}</label>
                         <Input type="tel" value={accountForm.phone} onChange={(e) => setAccountForm({...accountForm, phone: e.target.value})} />
                       </div>
                       <Button onClick={saveAccount} disabled={saving}>
                         {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                        Sauvegarder
+                        {t('save')}
                       </Button>
                     </>
                   )}
@@ -333,26 +296,26 @@ export default function SettingsPage() {
 
               <Card className="border-destructive/50">
                 <CardHeader>
-                  <CardTitle className="text-destructive">Zone dangereuse</CardTitle>
-                  <CardDescription>Actions irréversibles</CardDescription>
+                  <CardTitle className="text-destructive">{t('settingsDangerZone')}</CardTitle>
+                  <CardDescription>{t('settingsDangerZoneDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5">
                     <div>
-                      <p className="font-medium text-foreground">Supprimer le compte</p>
-                      <p className="text-sm text-muted-foreground">Supprime définitivement votre compte et toutes vos données</p>
+                      <p className="font-medium text-foreground">{t('settingsDeleteAccount')}</p>
+                      <p className="text-sm text-muted-foreground">{t('settingsDeleteAccountDesc')}</p>
                     </div>
                     <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
-                      <Trash2 className="w-4 h-4 mr-2" />Supprimer
+                      <Trash2 className="w-4 h-4 mr-2" />{t('delete')}
                     </Button>
                   </div>
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
                     <div>
-                      <p className="font-medium text-foreground">Se déconnecter</p>
-                      <p className="text-sm text-muted-foreground">Déconnectez-vous de votre session</p>
+                      <p className="font-medium text-foreground">{t('logout')}</p>
+                      <p className="text-sm text-muted-foreground">{t('settingsLogoutSession')}</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleLogout}>
-                      <LogOut className="w-4 h-4 mr-2" />Déconnexion
+                      <LogOut className="w-4 h-4 mr-2" />{t('logout')}
                     </Button>
                   </div>
                 </CardContent>
@@ -364,8 +327,8 @@ export default function SettingsPage() {
           {activeSection === "notifications" && (
             <Card>
               <CardHeader>
-                <CardTitle>Préférences de notifications</CardTitle>
-                <CardDescription>Choisissez les mises à jour que vous souhaitez recevoir</CardDescription>
+                <CardTitle>{t('settingsNotifications')}</CardTitle>
+                <CardDescription>{t('settingsNotificationsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
@@ -381,8 +344,8 @@ export default function SettingsPage() {
                           {notification.id.includes("marketing") && <Globe className="w-5 h-5 text-primary" />}
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">{notification.label}</p>
-                          <p className="text-sm text-muted-foreground">{notification.description}</p>
+                          <p className="font-medium text-foreground">{t(notification.labelKey as any)}</p>
+                          <p className="text-sm text-muted-foreground">{t(notification.descKey as any)}</p>
                         </div>
                       </div>
                       <button
@@ -408,8 +371,8 @@ export default function SettingsPage() {
           {activeSection === "privacy" && (
             <Card>
               <CardHeader>
-                <CardTitle>Paramètres de confidentialité</CardTitle>
-                <CardDescription>Contrôlez comment vos données sont utilisées et partagées</CardDescription>
+                <CardTitle>{t('settingsPrivacy')}</CardTitle>
+                <CardDescription>{t('settingsPrivacyDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
@@ -420,8 +383,8 @@ export default function SettingsPage() {
                           <Shield className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">{setting.label}</p>
-                          <p className="text-sm text-muted-foreground">{setting.description}</p>
+                          <p className="font-medium text-foreground">{t(setting.labelKey as any)}</p>
+                          <p className="text-sm text-muted-foreground">{t(setting.descKey as any)}</p>
                         </div>
                       </div>
                       <button
@@ -446,32 +409,64 @@ export default function SettingsPage() {
           {/* Preferences Section */}
           {activeSection === "preferences" && (
             <>
+              {/* Language */}
               <Card>
                 <CardHeader>
-                <CardTitle>Apparence</CardTitle>
-                <CardDescription>Personnalisez l'apparence d'HIREDGE</CardDescription>
+                  <CardTitle>{t('settingsLanguage')}</CardTitle>
+                  <CardDescription>{t('settingsLanguageDesc')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {LOCALES.map((loc) => (
+                      <button
+                        key={loc}
+                        onClick={() => setLocale(loc)}
+                        className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${
+                          locale === loc
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="text-xl">{LOCALE_FLAGS[loc]}</span>
+                        <span className={`text-sm font-medium ${
+                          locale === loc ? "text-primary" : "text-foreground"
+                        }`}>
+                          {LOCALE_LABELS[loc]}
+                        </span>
+                        {locale === loc && <Check className="w-4 h-4 text-primary ml-auto" />}
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Theme */}
+              <Card>
+                <CardHeader>
+                <CardTitle>{t('settingsAppearance')}</CardTitle>
+                <CardDescription>{t('settingsAppearanceDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
                     {[
-                      { id: "light", label: "Clair", icon: Sun },
-                      { id: "dark", label: "Sombre", icon: Moon },
-                      { id: "system", label: "Système", icon: Globe },
+                      { id: "light", label: t('settingsThemeLight'), icon: Sun },
+                      { id: "dark", label: t('settingsThemeDark'), icon: Moon },
+                      { id: "system", label: t('settingsThemeSystem'), icon: Monitor },
                     ].map((option) => (
                       <button
                         key={option.id}
-                        onClick={() => setTheme(option.id as "light" | "dark" | "system")}
+                        onClick={() => setNextTheme(option.id)}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
-                          theme === option.id
+                          currentTheme === option.id
                             ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         }`}
                       >
                         <option.icon className={`w-6 h-6 ${
-                          theme === option.id ? "text-primary" : "text-muted-foreground"
+                          currentTheme === option.id ? "text-primary" : "text-muted-foreground"
                         }`} />
                         <span className={`text-sm font-medium ${
-                          theme === option.id ? "text-primary" : "text-foreground"
+                          currentTheme === option.id ? "text-primary" : "text-foreground"
                         }`}>
                           {option.label}
                         </span>
@@ -483,33 +478,33 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Préférences d&apos;emploi</CardTitle>
-                  <CardDescription>Aidez EDGE à trouver les meilleures offres</CardDescription>
+                  <CardTitle>{t('settingsJobPreferences')}</CardTitle>
+                  <CardDescription>{t('settingsJobPreferencesDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Ville préférée</label>
-                      <Input value={prefForm.city} onChange={(e) => setPrefForm({...prefForm, city: e.target.value})} placeholder="Ex: Paris" />
+                      <label className="text-sm font-medium text-foreground">{t('settingsPreferredCity')}</label>
+                      <Input value={prefForm.city} onChange={(e) => setPrefForm({...prefForm, city: e.target.value})} placeholder={t('settingsPreferredCity')} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Pays</label>
-                      <Input value={prefForm.country} onChange={(e) => setPrefForm({...prefForm, country: e.target.value})} placeholder="Ex: France" />
+                      <label className="text-sm font-medium text-foreground">{t('settingsCountry')}</label>
+                      <Input value={prefForm.country} onChange={(e) => setPrefForm({...prefForm, country: e.target.value})} placeholder={t('settingsCountry')} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Salaire min (€/an)</label>
+                      <label className="text-sm font-medium text-foreground">{t('settingsSalaryMin')}</label>
                       <Input type="number" value={prefForm.salaryMin} onChange={(e) => setPrefForm({...prefForm, salaryMin: e.target.value})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Salaire max (€/an)</label>
+                      <label className="text-sm font-medium text-foreground">{t('settingsSalaryMax')}</label>
                       <Input type="number" value={prefForm.salaryMax} onChange={(e) => setPrefForm({...prefForm, salaryMax: e.target.value})} />
                     </div>
                   </div>
                   <Button onClick={savePreferences} disabled={saving}>
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Sauvegarder les préférences
+                    {t('settingsSavePreferences')}
                   </Button>
                 </CardContent>
               </Card>
@@ -520,16 +515,15 @@ export default function SettingsPage() {
           {activeSection === "billing" && (
             <Card>
               <CardHeader>
-                <CardTitle>Abonnement</CardTitle>
-                <CardDescription>Gérez votre abonnement</CardDescription>
+                <CardTitle>{t('settingsBilling')}</CardTitle>
+                <CardDescription>{t('settingsBillingDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
                   <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">Bientôt disponible</h3>
+                  <h3 className="font-semibold text-foreground mb-2">{t('comingSoon')}</h3>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    La gestion des abonnements et paiements sera disponible prochainement.
-                    Vous bénéficiez actuellement d&apos;un accès gratuit.
+                    {t('settingsBillingComingSoon')}
                   </p>
                 </div>
               </CardContent>
@@ -541,33 +535,33 @@ export default function SettingsPage() {
             <>
               <Card>
                 <CardHeader>
-                <CardTitle>Mot de passe</CardTitle>
-                <CardDescription>Modifier votre mot de passe</CardDescription>
+                <CardTitle>{t('settingsPassword')}</CardTitle>
+                <CardDescription>{t('settingsPasswordDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Mot de passe actuel</label>
+                    <label className="text-sm font-medium text-foreground">{t('settingsCurrentPassword')}</label>
                     <Input type="password" value={pwForm.current} onChange={(e) => setPwForm({...pwForm, current: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Nouveau mot de passe</label>
+                    <label className="text-sm font-medium text-foreground">{t('settingsNewPassword')}</label>
                     <Input type="password" value={pwForm.newPw} onChange={(e) => setPwForm({...pwForm, newPw: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Confirmer le nouveau mot de passe</label>
+                    <label className="text-sm font-medium text-foreground">{t('settingsConfirmPassword')}</label>
                     <Input type="password" value={pwForm.confirm} onChange={(e) => setPwForm({...pwForm, confirm: e.target.value})} />
                   </div>
                   <Button onClick={handleChangePassword} disabled={pwLoading}>
                     {pwLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Modifier le mot de passe
+                    {t('settingsChangePassword')}
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Authentification à deux facteurs</CardTitle>
-                  <CardDescription>Bientôt disponible</CardDescription>
+                  <CardTitle>{t('settings2FA')}</CardTitle>
+                  <CardDescription>{t('comingSoon')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between p-4 rounded-xl border border-border">
@@ -576,8 +570,8 @@ export default function SettingsPage() {
                         <Shield className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">2FA</p>
-                        <p className="text-sm text-muted-foreground">Sera disponible prochainement</p>
+                        <p className="font-medium text-foreground">{t('settings2FA')}</p>
+                        <p className="text-sm text-muted-foreground">{t('comingSoon')}</p>
                       </div>
                     </div>
                   </div>

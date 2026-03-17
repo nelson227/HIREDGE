@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api, { edgeApi } from '../../lib/api';
 import { type CVData } from '../../lib/document-generator';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 // Load PDF.js from CDN at runtime (avoids Metro bundler issues)
 let pdfjsLib: any = null;
@@ -65,6 +66,8 @@ interface Conversation {
 declare var window: any;
 
 export default function EdgeScreen() {
+  const { colors } = useThemeColors();
+  const { t, locale } = useTranslation();
   const [input, setInput] = useState('');
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -222,7 +225,7 @@ export default function EdgeScreen() {
     if ((!text && !attachment) || sendMutation.isPending) return;
     setInput('');
     setAttachment(null);
-    sendMutation.mutate({ message: text || (attachment ? `Analyse ce fichier : ${attachment.name}` : ''), attachment: attachment ?? undefined });
+    sendMutation.mutate({ message: text || (attachment ? `${t('edgeAnalyzeFile')} ${attachment.name}` : ''), attachment: attachment ?? undefined });
   };
 
   const handleSuggestion = (text: string) => {
@@ -235,7 +238,7 @@ export default function EdgeScreen() {
     if (!Platform.OS === undefined && typeof window === 'undefined') return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      alert('Reconnaissance vocale non supportée. Utilise Chrome ou Edge.');
+      alert(t('edgeVoiceNotSupported'));
       return;
     }
     if (isRecording) {
@@ -245,7 +248,7 @@ export default function EdgeScreen() {
     }
     const recognition = new SR();
     recognitionRef.current = recognition;
-    recognition.lang = 'fr-FR';
+    recognition.lang = locale === 'fr' ? 'fr-FR' : locale === 'de' ? 'de-DE' : locale === 'es' ? 'es-ES' : 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.onresult = (e: any) => {
@@ -286,7 +289,7 @@ export default function EdgeScreen() {
         dlBlob(doc.output('blob'), 'Lettre_de_motivation.pdf');
       }
     } catch (err) {
-      alert('Erreur lors de la génération du PDF. Réessaie.');
+      alert(t('edgePdfError'));
     } finally {
       setDownloadingFormat(null);
     }
@@ -313,7 +316,7 @@ export default function EdgeScreen() {
         dlBlob2(blob, 'Lettre_de_motivation.docx');
       }
     } catch (err) {
-      alert('Erreur lors de la génération du Word. Réessaie.');
+      alert(t('edgeWordError'));
     } finally {
       setDownloadingFormat(null);
     }
@@ -356,18 +359,18 @@ export default function EdgeScreen() {
       try {
         const text = await extractPdfText(file);
         if (!text.trim()) {
-          alert('Ce PDF ne contient pas de texte extractible (peut-être un scan/image).');
+          alert(t('edgePdfNoText'));
           setIsProcessingFile(false);
           return;
         }
         setAttachment({ type: 'document', name: file.name, content: text.slice(0, 12000) });
       } catch {
-        alert('Impossible de lire ce PDF. Essaie un autre fichier.');
+        alert(t('edgePdfReadError'));
       } finally {
         setIsProcessingFile(false);
       }
     } else if (isDocx) {
-      alert('Les fichiers .doc/.docx ne sont pas encore supportés. Convertis-le en PDF ou .txt.');
+      alert(t('edgeDocxNotSupported'));
     } else {
       // Text-based files: .txt, .md, .json, .csv
       const reader = new FileReader();
@@ -383,7 +386,7 @@ export default function EdgeScreen() {
   const handleExport = () => {
     if (typeof window === 'undefined') return;
     const lines = messages.map((m) =>
-      `[${formatTime(m.createdAt)}] ${m.role === 'user' ? 'Moi' : 'EDGE'} :\n${m.content}`
+      `[${formatTime(m.createdAt)}] ${m.role === 'user' ? t('edgeExportMe') : 'EDGE'} :\n${m.content}`
     ).join('\n\n');
     const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -437,7 +440,7 @@ export default function EdgeScreen() {
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '700' }}>EDGE</Text>
           <Text style={{ color: colors.mutedForeground, fontSize: 11 }} numberOfLines={1}>
-            {activeConversationId && conversations?.find(c => c.id === activeConversationId)?.title || 'Nouvelle conversation'}
+            {activeConversationId && conversations?.find(c => c.id === activeConversationId)?.title || t('edgeNewConversation')}
           </Text>
         </View>
         <TouchableOpacity onPress={handleNewConversation} style={{ padding: 6 }}>
@@ -462,7 +465,7 @@ export default function EdgeScreen() {
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
               paddingHorizontal: 18, paddingBottom: 16, borderBottomWidth: 1, borderColor: colors.border,
             }}>
-              <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '700' }}>Conversations</Text>
+              <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: '700' }}>{t('edgeConversations')}</Text>
               <TouchableOpacity onPress={() => setDrawerOpen(false)}>
                 <Ionicons name="close" size={22} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -478,7 +481,7 @@ export default function EdgeScreen() {
               }}
             >
               <Ionicons name="add-circle-outline" size={18} color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Nouvelle conversation</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('edgeNewConversation')}</Text>
             </TouchableOpacity>
 
             {/* Conversations list */}
@@ -517,7 +520,7 @@ export default function EdgeScreen() {
                           {conv.title}
                         </Text>
                         <Text style={{ color: colors.mutedForeground, fontSize: 11, marginTop: 2 }}>
-                          {conv._count.messages} msg · {formatDate(conv.updatedAt)}
+                          {t('edgeMsgCount').replace('{n}', String(conv._count.messages))} · {formatDate(conv.updatedAt, t)}
                         </Text>
                       </View>
                     )}
@@ -542,7 +545,7 @@ export default function EdgeScreen() {
               })}
               {(!conversations || conversations.length === 0) && (
                 <Text style={{ color: colors.mutedForeground, textAlign: 'center', marginTop: 32, fontSize: 13 }}>
-                  Aucune conversation{'\n'}Envoie ton premier message !
+                  {t('edgeNoConversationsHint')}
                 </Text>
               )}
             </ScrollView>
@@ -574,7 +577,7 @@ export default function EdgeScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16, paddingBottom: 8, flexGrow: 1 }}
-        ListEmptyComponent={<WelcomeMessage />}
+        ListEmptyComponent={<WelcomeMessage colors={colors} t={t} />}
         renderItem={({ item }) => {
           const parsed = item.role === 'user' ? parseMessageContent(item.content) : null;
           const hasEmbeddedDoc = parsed?.fileName != null;
@@ -616,7 +619,7 @@ export default function EdgeScreen() {
               <Text style={{
                 color: item.role === 'user' ? '#fff' : colors.foreground, fontSize: 14, lineHeight: 21,
               }}>
-                {displayContent || (hasEmbeddedDoc ? 'Fichier envoyé' : item.content)}
+                {displayContent || (hasEmbeddedDoc ? t('edgeFileSent') : item.content)}
               </Text>
             </View>
             <Text style={{ color: colors.border, fontSize: 10, marginTop: 2, textAlign: item.role === 'user' ? 'right' : 'left' }}>
@@ -695,7 +698,7 @@ export default function EdgeScreen() {
             borderBottomLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 10,
             borderWidth: 1, borderColor: colors.border,
           }}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>EDGE réfléchit...</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{t('edgeThinking')}</Text>
           </View>
         </View>
       )}
@@ -707,7 +710,7 @@ export default function EdgeScreen() {
           backgroundColor: colors.primaryLight, borderTopWidth: 1, borderColor: colors.primaryMedium, gap: 8,
         }}>
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Extraction du texte du PDF...</Text>
+          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>{t('edgePdfExtracting')}</Text>
         </View>
       )}
       {attachment && (
@@ -755,7 +758,7 @@ export default function EdgeScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Parle à EDGE..."
+            placeholder={t('edgePlaceholderShort')}
             placeholderTextColor={colors.mutedForeground}
             multiline
             maxLength={2000}
@@ -796,14 +799,14 @@ export default function EdgeScreen() {
         </View>
 
         <Text style={{ fontSize: 10, color: colors.mutedForeground, marginTop: 5, textAlign: 'center' }}>
-          ↵ Entrée pour envoyer · Shift+↵ nouvelle ligne · 📎 documents &amp; images
+          {t('edgeInputHint')}
         </Text>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-function WelcomeMessage() {
+function WelcomeMessage({ colors, t }: { colors: any; t: (key: string) => string }) {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, paddingBottom: 40 }}>
       <View style={{
@@ -813,25 +816,25 @@ function WelcomeMessage() {
         <Ionicons name="sparkles" size={30} color={colors.primary} />
       </View>
       <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground, textAlign: 'center' }}>
-        Salut ! Moi c'est EDGE
+        {t('edgeWelcomeTitle')}
       </Text>
       <Text style={{ fontSize: 13, color: colors.mutedForeground, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>
-        Ton compagnon de recherche d'emploi.{"\n"}Dis-moi ce que tu cherches et je m'occupe du reste
+        {t('edgeWelcomeSubtitle')}
       </Text>
       <View style={{ marginTop: 24, gap: 8, width: '100%' }}>
-        <SuggestionChip text="Cherche-moi un poste de développeur" icon="search" />
-        <SuggestionChip text="Prépare un CV pour une offre tech" icon="document-text" />
-        <SuggestionChip text="Lance une simulation d'entretien" icon="mic" />
-        <SuggestionChip text="Mes statistiques de recherche" icon="bar-chart" />
+        <SuggestionChip text={t('edgeSuggest1')} icon="search" colors={colors} />
+        <SuggestionChip text={t('edgeSuggest2')} icon="document-text" colors={colors} />
+        <SuggestionChip text={t('edgeSuggest3')} icon="mic" colors={colors} />
+        <SuggestionChip text={t('edgeSuggest4')} icon="bar-chart" colors={colors} />
       </View>
       <Text style={{ fontSize: 11, color: colors.border, marginTop: 20, textAlign: 'center' }}>
-        Astuce : envoie un document ou une photo pour que je l'analyse
+        {t('edgeTipAttach')}
       </Text>
     </View>
   );
 }
 
-function SuggestionChip({ text, icon }: { text: string; icon: string }) {
+function SuggestionChip({ text, icon, colors }: { text: string; icon: string; colors: any }) {
   return (
     <TouchableOpacity style={{
       borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14,
@@ -846,19 +849,28 @@ function SuggestionChip({ text, icon }: { text: string; icon: string }) {
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, t?: (key: string) => string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "à l'instant";
-  if (diffMins < 60) return `il y a ${diffMins}min`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `il y a ${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `il y a ${diffDays}j`;
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (t) {
+    if (diffMins < 1) return t('edgeJustNow');
+    if (diffMins < 60) return t('edgeMinAgo').replace('{n}', String(diffMins));
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return t('edgeHourAgo').replace('{n}', String(diffHours));
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return t('edgeDayAgo').replace('{n}', String(diffDays));
+  } else {
+    if (diffMins < 1) return "à l'instant";
+    if (diffMins < 60) return `il y a ${diffMins}min`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `il y a ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `il y a ${diffDays}j`;
+  }
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }

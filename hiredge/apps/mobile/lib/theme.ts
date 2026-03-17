@@ -1,6 +1,12 @@
-// HIREDGE Design System — Purple primary
+// HIREDGE Design System — Purple primary with dark mode support
 
-export const colors = {
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useColorScheme } from 'react-native';
+import { storage } from './storage';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+const lightColors = {
   // Primary palette
   primary: '#6C5CE7',
   primaryForeground: '#FFFFFF',
@@ -46,6 +52,98 @@ export const colors = {
   sidebarAccent: '#F1F5F9',
   sidebarBorder: '#E2E8F0',
 } as const;
+
+const darkColors = {
+  primary: '#8B7CF7',
+  primaryForeground: '#FFFFFF',
+  primaryLight: 'rgba(139, 124, 247, 0.15)',
+  primaryMedium: 'rgba(139, 124, 247, 0.25)',
+
+  success: '#34D66D',
+  successLight: 'rgba(52, 214, 109, 0.15)',
+  successForeground: '#FFFFFF',
+  warning: '#FBBF24',
+  warningLight: 'rgba(251, 191, 36, 0.15)',
+  warningForeground: '#FEF9C3',
+  destructive: '#F87171',
+  destructiveLight: 'rgba(248, 113, 113, 0.15)',
+  destructiveForeground: '#FFFFFF',
+
+  chart1: '#8B7CF7',
+  chart2: '#34D66D',
+  chart3: '#38BDF8',
+  chart4: '#FBBF24',
+  chart5: '#F472B6',
+
+  background: '#0B0D14',
+  foreground: '#E2E8F0',
+  card: '#141726',
+  cardForeground: '#E2E8F0',
+  muted: '#1E2236',
+  mutedForeground: '#94A3B8',
+  secondary: '#1E2236',
+  secondaryForeground: '#CBD5E1',
+  accent: '#1E2236',
+  accentForeground: '#CBD5E1',
+  border: '#2A2F45',
+  input: '#2A2F45',
+
+  sidebar: '#0B0D14',
+  sidebarForeground: '#E2E8F0',
+  sidebarPrimary: '#8B7CF7',
+  sidebarAccent: '#1E2236',
+  sidebarBorder: '#2A2F45',
+} as const;
+
+// Keep backward compat: `colors` is light by default
+export const colors = lightColors;
+
+interface ThemeContextType {
+  mode: ThemeMode;
+  isDark: boolean;
+  colors: typeof lightColors;
+  setMode: (mode: ThemeMode) => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({
+  mode: 'light',
+  isDark: false,
+  colors: lightColors,
+  setMode: () => {},
+});
+
+const STORAGE_KEY = 'hiredge_theme';
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const systemScheme = useColorScheme();
+  const [mode, setModeState] = useState<ThemeMode>('light');
+
+  useEffect(() => {
+    storage.getItem(STORAGE_KEY).then((stored) => {
+      if (stored && (stored === 'light' || stored === 'dark' || stored === 'system')) {
+        setModeState(stored as ThemeMode);
+      }
+    });
+  }, []);
+
+  const setMode = useCallback((newMode: ThemeMode) => {
+    setModeState(newMode);
+    storage.setItem(STORAGE_KEY, newMode);
+  }, []);
+
+  const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
+  const currentColors = isDark ? darkColors : lightColors;
+
+  return React.createElement(
+    ThemeContext.Provider,
+    { value: { mode, isDark, colors: currentColors, setMode } },
+    children
+  );
+}
+
+export function useThemeColors() {
+  return useContext(ThemeContext);
+}
 
 export const spacing = {
   xs: 4,

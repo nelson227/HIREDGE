@@ -4,27 +4,30 @@ import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { interviewsApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
-
-const INTERVIEW_TYPES = [
-  { key: 'RH', label: 'Entretien RH', icon: '👤', desc: 'Motivation, parcours, soft skills' },
-  { key: 'TECHNICAL', label: 'Technique', icon: '💻', desc: 'Compétences techniques, problem solving' },
-  { key: 'BEHAVIORAL', label: 'Comportemental', icon: '🎭', desc: 'Mise en situation, méthode STAR' },
-  { key: 'CULTURE_FIT', label: 'Culture Fit', icon: '🏢', desc: 'Valeurs, vision, intégration' },
-];
-
-const TIPS = [
-  { icon: 'star-outline', text: 'Utilise la méthode STAR : Situation, Tâche, Action, Résultat' },
-  { icon: 'documents-outline', text: 'Prépare 3-5 exemples concrets de tes réalisations' },
-  { icon: 'business-outline', text: 'Renseigne-toi sur l\'entreprise avant l\'entretien' },
-  { icon: 'time-outline', text: 'Sois concis : 1-2 minutes par réponse max' },
-];
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 export default function InterviewScreen() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [company, setCompany] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const queryClient = useQueryClient();
+  const colors = useThemeColors();
+  const { t } = useTranslation();
+
+  const INTERVIEW_TYPES = [
+    { key: 'RH', label: t('interviewTypeRH'), icon: '👤', desc: t('interviewDescRH') },
+    { key: 'TECHNICAL', label: t('interviewTypeTechnical'), icon: '💻', desc: t('interviewDescTechnical') },
+    { key: 'BEHAVIORAL', label: t('interviewTypeBehavioral'), icon: '🎭', desc: t('interviewDescBehavioral') },
+    { key: 'CULTURE_FIT', label: t('interviewTypeCultureFit'), icon: '🏢', desc: t('interviewDescCultureFit') },
+  ];
+
+  const TIPS = [
+    { icon: 'star-outline', text: t('interviewTip1') },
+    { icon: 'documents-outline', text: t('interviewTip2') },
+    { icon: 'business-outline', text: t('interviewTip3') },
+    { icon: 'time-outline', text: t('interviewTip4') },
+  ];
 
   const { data: history } = useQuery({
     queryKey: ['interviewHistory'],
@@ -70,9 +73,9 @@ export default function InterviewScreen() {
         <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 12 }}>
           <Ionicons name="arrow-back" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground }}>Simulation d'entretien</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground }}>{t('interviewTitle')}</Text>
         <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4 }}>
-          Entraîne-toi avec un recruteur IA réaliste
+          {t('interviewSubtitle')}
         </Text>
       </View>
 
@@ -86,7 +89,7 @@ export default function InterviewScreen() {
                 borderWidth: 1, borderColor: colors.border, alignItems: 'center',
               }}>
                 <Text style={{ fontSize: 28, fontWeight: '800', color: getScoreColor(avgScore) }}>{avgScore}</Text>
-                <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>Score moyen</Text>
+                <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>{t('interviewAvgScore')}</Text>
                 <Text style={{ fontSize: 10, color: colors.border }}>{completedSessions.length} session{completedSessions.length > 1 ? 's' : ''}</Text>
               </View>
             )}
@@ -97,15 +100,15 @@ export default function InterviewScreen() {
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <Ionicons name="calendar" size={14} color={colors.primary} />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>À venir</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{t('interviewUpcoming')}</Text>
                 </View>
                 {upcoming!.slice(0, 2).map((int: any) => (
                   <View key={int.id} style={{ marginBottom: 4 }}>
                     <Text style={{ fontSize: 11, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>
-                      {int.type ?? 'Entretien'} {int.company ? `· ${int.company}` : ''}
+                      {int.type ?? t('interviewDefault')} {int.company ? `· ${int.company}` : ''}
                     </Text>
                     <Text style={{ fontSize: 10, color: colors.mutedForeground }}>
-                      {int.scheduledAt ? new Date(int.scheduledAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                      {int.scheduledAt ? new Date(int.scheduledAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                     </Text>
                   </View>
                 ))}
@@ -118,7 +121,7 @@ export default function InterviewScreen() {
       {/* Type Selection */}
       <View style={{ paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>
-          Type d'entretien
+          {t('interviewTypeLabel')}
         </Text>
         {INTERVIEW_TYPES.map((type) => (
           <TouchableOpacity
@@ -145,11 +148,11 @@ export default function InterviewScreen() {
       {/* Optional Context */}
       <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>
-          Contexte (optionnel)
+          {t('interviewContext')}
         </Text>
         <TextInput
           value={company} onChangeText={setCompany}
-          placeholder="Nom de l'entreprise visée"
+          placeholder={t('interviewCompanyPlaceholder')}
           placeholderTextColor={colors.mutedForeground}
           style={{
             backgroundColor: colors.card, borderRadius: 12, padding: 14, fontSize: 14, color: colors.foreground,
@@ -158,7 +161,7 @@ export default function InterviewScreen() {
         />
         <TextInput
           value={jobTitle} onChangeText={setJobTitle}
-          placeholder="Poste visé"
+          placeholder={t('interviewJobPlaceholder')}
           placeholderTextColor={colors.mutedForeground}
           style={{
             backgroundColor: colors.card, borderRadius: 12, padding: 14, fontSize: 14, color: colors.foreground,
@@ -183,7 +186,7 @@ export default function InterviewScreen() {
             <Ionicons name="play" size={18} color="#fff" />
           )}
           <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
-            {startMutation.isPending ? 'Préparation...' : 'Lancer la simulation'}
+            {startMutation.isPending ? t('interviewPreparing') : t('interviewStart')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -191,7 +194,7 @@ export default function InterviewScreen() {
       {/* Tips */}
       <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>
-          Conseils de préparation
+          {t('interviewTipsTitle')}
         </Text>
         <View style={{ backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
           {TIPS.map((tip, i) => (
@@ -210,7 +213,7 @@ export default function InterviewScreen() {
       {(history?.length ?? 0) > 0 && (
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>
-            Historique des simulations
+            {t('interviewHistory')}
           </Text>
           {history!.map((sim: any) => (
             <TouchableOpacity
@@ -227,7 +230,7 @@ export default function InterviewScreen() {
                   {sim.type} {sim.company ? `· ${sim.company}` : ''}
                 </Text>
                 <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                  {new Date(sim.createdAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {new Date(sim.createdAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
                 </Text>
               </View>
               {sim.overallScore != null && (

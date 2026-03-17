@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { adminApi, authApi } from "@/lib/api"
+import { useTranslation } from "@/lib/i18n"
 
 interface AdminUser {
   id: string
@@ -83,6 +84,7 @@ const tierBadgeColors: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
@@ -177,8 +179,8 @@ export default function AdminUsersPage() {
   }
 
   const formatDate = (date: string | null) => {
-    if (!date) return "Jamais"
-    return new Date(date).toLocaleDateString('fr-FR', {
+    if (!date) return t('dashboardNever')
+    return new Date(date).toLocaleDateString(undefined, {
       day: 'numeric', month: 'short', year: 'numeric'
     })
   }
@@ -199,9 +201,9 @@ export default function AdminUsersPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
+          <h1 className="text-2xl font-bold">{t('adminUserManagement')}</h1>
           <p className="text-sm text-muted-foreground">
-            {pagination?.total || 0} utilisateur{(pagination?.total || 0) > 1 ? 's' : ''} inscrits
+            {pagination?.total || 0} {t('adminUsersRegistered')}
           </p>
         </div>
       </div>
@@ -212,7 +214,7 @@ export default function AdminUsersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Rechercher par nom ou email..."
+            placeholder={t('adminSearchUsers')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -223,7 +225,7 @@ export default function AdminUsersPage() {
           onChange={(e) => setRoleFilter(e.target.value)}
           className="px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
-          <option value="">Tous les rôles</option>
+          <option value="">{t('adminAllRoles')}</option>
           {ROLES.map(r => <option key={r} value={r}>{roleLabels[r]}</option>)}
         </select>
         <select
@@ -231,28 +233,28 @@ export default function AdminUsersPage() {
           onChange={(e) => setTierFilter(e.target.value)}
           className="px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
-          <option value="">Tous les abonnements</option>
-          {TIERS.map(t => <option key={t} value={t}>{tierLabels[t]}</option>)}
+          <option value="">{t('adminAllSubscriptions')}</option>
+          {TIERS.map(tier => <option key={tier} value={tier}>{tierLabels[tier]}</option>)}
         </select>
       </div>
 
       {/* Users Table */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground">Chargement...</div>
+          <div className="p-8 text-center text-muted-foreground">{t('loading')}</div>
         ) : users.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">Aucun utilisateur trouvé</div>
+          <div className="p-8 text-center text-muted-foreground">{t('dashboardNoUsersFound')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Utilisateur</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rôle</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Abonnement</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Activité</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Inscrit le</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('adminUser')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('adminRole')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('adminSubscription')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">{t('adminActivity')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t('adminRegisteredOn')}</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t('adminActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -309,8 +311,8 @@ export default function AdminUsersPage() {
                     {/* Activity */}
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <div className="text-xs text-muted-foreground space-y-0.5">
-                        <p>{user._count.applications} candidature{user._count.applications > 1 ? 's' : ''}</p>
-                        <p>{user._count.simulations} simulation{user._count.simulations > 1 ? 's' : ''}</p>
+                        <p>{user._count.applications} {t('dashboardApplication')}{user._count.applications > 1 ? 's' : ''}</p>
+                        <p>{user._count.simulations} {t('dashboardSimulation')}{user._count.simulations > 1 ? 's' : ''}</p>
                       </div>
                     </td>
 
@@ -321,7 +323,7 @@ export default function AdminUsersPage() {
                         <span>{formatDate(user.createdAt)}</span>
                       </div>
                       {user.lastActiveAt && (
-                        <p className="text-xs text-muted-foreground/60 mt-0.5">Actif {formatDate(user.lastActiveAt)}</p>
+                        <p className="text-xs text-muted-foreground/60 mt-0.5">{t('dashboardActiveOn')} {formatDate(user.lastActiveAt)}</p>
                       )}
                     </td>
 
@@ -342,7 +344,7 @@ export default function AdminUsersPage() {
                             <div className="fixed inset-0 z-40" onClick={() => { setActionMenuId(null); setConfirmDelete(null) }} />
                             <div className="absolute right-0 top-full mt-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
                               {/* Role section */}
-                              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Changer le rôle</div>
+                              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">{t('adminChangeRole')}</div>
                               {ROLES.map(role => (
                                 <button
                                   key={role}
@@ -359,7 +361,7 @@ export default function AdminUsersPage() {
                               <div className="border-t border-border my-1" />
 
                               {/* Subscription section */}
-                              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Changer l'abonnement</div>
+                              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">{t('adminChangeSubscription')}</div>
                               {TIERS.map(tier => (
                                 <button
                                   key={tier}
@@ -379,20 +381,20 @@ export default function AdminUsersPage() {
                                   <div className="border-t border-border my-1" />
                                   {confirmDelete === user.id ? (
                                     <div className="px-3 py-2">
-                                      <p className="text-xs text-destructive mb-2">Êtes-vous sûr ? Cette action est irréversible.</p>
+                                      <p className="text-xs text-destructive mb-2">{t('adminDeleteConfirm')}</p>
                                       <div className="flex gap-2">
                                         <button
                                           onClick={() => handleDelete(user.id)}
                                           disabled={actionLoading}
                                           className="flex-1 px-2 py-1 bg-destructive text-destructive-foreground rounded text-xs font-medium hover:bg-destructive/90 disabled:opacity-50"
                                         >
-                                          {actionLoading ? '...' : 'Confirmer'}
+                                          {actionLoading ? '...' : t('confirm')}
                                         </button>
                                         <button
                                           onClick={() => setConfirmDelete(null)}
                                           className="flex-1 px-2 py-1 bg-muted rounded text-xs font-medium hover:bg-muted/80"
                                         >
-                                          Annuler
+                                          {t('cancel')}
                                         </button>
                                       </div>
                                     </div>
@@ -402,7 +404,7 @@ export default function AdminUsersPage() {
                                       className="w-full text-left px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
-                                      Supprimer le compte
+                                      {t('adminDeleteAccount')}
                                     </button>
                                   )}
                                 </>
@@ -423,7 +425,7 @@ export default function AdminUsersPage() {
         {pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              Page {pagination.page} sur {pagination.totalPages} ({pagination.total} résultats)
+              Page {pagination.page} {t('dashboardResultsPage')} {pagination.totalPages} ({pagination.total} {t('dashboardResultsPage')})
             </p>
             <div className="flex items-center gap-1">
               <button

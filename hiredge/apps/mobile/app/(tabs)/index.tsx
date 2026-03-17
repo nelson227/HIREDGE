@@ -5,11 +5,14 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth.store';
 import api, { jobsApi, notificationsApi, applicationsApi, interviewsApi, squadApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
 
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['applicationStats'],
@@ -66,7 +69,7 @@ export default function HomeScreen() {
   const interviews = stats?.byStatus?.INTERVIEW_SCHEDULED ?? 0;
   const responseRate = stats?.responseRate ?? 0;
   const pending = stats?.byStatus?.PENDING ?? 0;
-  const firstName = user?.fullName?.split(' ')[0] ?? 'Utilisateur';
+  const firstName = user?.fullName?.split(' ')[0] ?? t('dashboardUser');
   const totalJobs = recommended?.length ?? 0;
   const recentSquadMessages = squad?.messages?.slice(0, 3) ?? [];
 
@@ -80,10 +83,10 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <View>
             <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>
-              Bonjour, {firstName} 👋
+              {t('homeWelcome')}, {firstName} 👋
             </Text>
             <Text style={{ color: colors.mutedForeground, marginTop: 4, fontSize: 14 }}>
-              Voici un résumé de ta recherche aujourd'hui.
+              {t('homeSummary')}
             </Text>
           </View>
           <TouchableOpacity
@@ -125,14 +128,14 @@ export default function HomeScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '600', color: colors.foreground, fontSize: 15, marginBottom: 2 }}>
-                EDGE Insights
+                {t('dashboardEdgeInsights')}
               </Text>
               <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18 }}>
                 {totalJobs > 0
-                  ? `J'ai trouvé ${totalJobs} offres pour toi ! ${(upcomingInterviews?.length ?? 0) > 0 ? `${upcomingInterviews!.length} entretien(s) à venir.` : 'Continue à postuler !'}`
+                  ? `${t('dashboardEdgeFoundJobs').replace('{n}', String(totalJobs))} ${(upcomingInterviews?.length ?? 0) > 0 ? t('dashboardEdgeUpcoming').replace('{n}', String(upcomingInterviews!.length)) : t('dashboardEdgeContinueApply')}`
                   : total > 0
-                  ? `${total} candidature(s) en cours. Je cherche des offres pour toi.`
-                  : 'Complète ton profil pour recevoir des recommandations personnalisées !'}
+                  ? t('dashboardEdgeApplications').replace('{n}', String(total))
+                  : t('dashboardEdgeNoJobs')}
               </Text>
             </View>
           </View>
@@ -140,12 +143,12 @@ export default function HomeScreen() {
 
         {/* Stats Grid — 2x2 like reference */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-          <StatCard icon="briefcase-outline" value={total} label="Candidatures" color={colors.primary} />
-          <StatCard icon="trending-up-outline" value={`${responseRate}%`} label="Réponses" color={colors.success} />
+          <StatCard icon="briefcase-outline" value={total} label={t('homeApplications')} color={colors.primary} colors={colors} />
+          <StatCard icon="trending-up-outline" value={`${responseRate}%`} label={t('homeResponseRate')} color={colors.success} colors={colors} />
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
-          <StatCard icon="calendar-outline" value={interviews} label="Entretiens" color={colors.warning} />
-          <StatCard icon="chatbubble-outline" value={pending} label="En attente" color={colors.chart5} />
+          <StatCard icon="calendar-outline" value={interviews} label={t('homeInterviews')} color={colors.warning} colors={colors} />
+          <StatCard icon="chatbubble-outline" value={pending} label={t('homePending')} color={colors.chart5} colors={colors} />
         </View>
 
         {/* Upcoming Interviews */}
@@ -155,7 +158,7 @@ export default function HomeScreen() {
             borderWidth: 1, borderColor: colors.border, marginBottom: 16,
           }}>
             <View style={{ padding: 16, paddingBottom: 12 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>À venir</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>{t('dashboardUpcoming')}</Text>
             </View>
             {upcomingInterviews!.map((interview: any, i: number) => (
               <View key={interview.id} style={{
@@ -170,13 +173,13 @@ export default function HomeScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>
-                    Entretien {interview.type === 'TECHNICAL' ? 'technique' : interview.type === 'HR' ? 'RH' : ''}
+                    {t('dashboardInterviewLabel')} {interview.type === 'TECHNICAL' ? t('dashboardInterviewTechnical').toLowerCase() : interview.type === 'HR' ? t('dashboardInterviewHR') : ''}
                   </Text>
                   <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
-                    {interview.application?.job?.company?.name || interview.application?.job?.title || 'Entreprise'}
+                    {interview.application?.job?.company?.name || interview.application?.job?.title || t('dashboardCompany')}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '600', marginTop: 2 }}>
-                    {formatEventDate(interview.scheduledAt)}
+                    {formatEventDate(interview.scheduledAt, t)}
                   </Text>
                 </View>
               </View>
@@ -195,10 +198,10 @@ export default function HomeScreen() {
             padding: 16, paddingBottom: 12,
           }}>
             <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
-              Offres recommandées
+              {t('homeRecommended')}
             </Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/jobs')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Voir tout</Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{t('dashboardViewAll')}</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
@@ -264,7 +267,7 @@ export default function HomeScreen() {
                 <Ionicons name="briefcase-outline" size={24} color={colors.mutedForeground} />
               </View>
               <Text style={{ color: colors.mutedForeground, textAlign: 'center', fontSize: 13 }}>
-                Complète ton profil pour recevoir des recommandations
+                {t('dashboardCompleteProfile')}
               </Text>
             </View>
           )}
@@ -280,9 +283,9 @@ export default function HomeScreen() {
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
               padding: 16, paddingBottom: 12,
             }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>Activité Escouade</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>{t('dashboardSquadActivity')}</Text>
               <TouchableOpacity onPress={() => router.push('/(tabs)/squad')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Voir</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{t('dashboardViewSquad')}</Text>
                 <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
@@ -298,7 +301,7 @@ export default function HomeScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }}>
-                      {msg.sender?.candidateProfile?.firstName ?? 'Membre'}
+                      {msg.sender?.candidateProfile?.firstName ?? t('dashboardMember')}
                     </Text>
                     <Text style={{ fontSize: 12, color: colors.mutedForeground }} numberOfLines={1}>{msg.content}</Text>
                   </View>
@@ -307,7 +310,7 @@ export default function HomeScreen() {
             ) : (
               <View style={{ padding: 20, alignItems: 'center', borderTopWidth: 1, borderColor: colors.border }}>
                 <Ionicons name="people-outline" size={24} color={colors.mutedForeground} />
-                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6 }}>Pas encore de messages</Text>
+                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6 }}>{t('dashboardNoActivity')}</Text>
               </View>
             )}
           </View>
@@ -324,7 +327,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="sparkles" size={16} color={colors.primaryForeground} />
             <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: 14 }}>
-              Parler à EDGE
+              {t('homeAskEdge')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -337,7 +340,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="search" size={16} color={colors.foreground} />
             <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 14 }}>
-              Offres
+              {t('navJobs')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -346,7 +349,7 @@ export default function HomeScreen() {
   );
 }
 
-function StatCard({ icon, value, label, color }: { icon: string; value: number | string; label: string; color: string }) {
+function StatCard({ icon, value, label, color, colors }: { icon: string; value: number | string; label: string; color: string; colors: any }) {
   return (
     <View style={{
       flex: 1, backgroundColor: colors.card, borderRadius: 12, padding: 16,
@@ -368,14 +371,14 @@ function StatCard({ icon, value, label, color }: { icon: string; value: number |
   );
 }
 
-function formatEventDate(dateStr?: string): string {
-  if (!dateStr) return 'Date non définie';
+function formatEventDate(dateStr: string | undefined, t: (key: string) => string): string {
+  if (!dateStr) return t('dashboardDateNotDefined');
   const date = new Date(dateStr);
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  if (date.toDateString() === now.toDateString()) return `Aujourd'hui, ${time}`;
-  if (date.toDateString() === tomorrow.toDateString()) return `Demain, ${time}`;
-  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + `, ${time}`;
+  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  if (date.toDateString() === now.toDateString()) return `${t('dashboardToday')}, ${time}`;
+  if (date.toDateString() === tomorrow.toDateString()) return `${t('dashboardTomorrow')}, ${time}`;
+  return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) + `, ${time}`;
 }

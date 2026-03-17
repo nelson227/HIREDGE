@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import api, { squadApi } from '../../lib/api';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
 import { useAuthStore } from '../../stores/auth.store';
+import { useTranslation } from '@hiredge/shared';
 
 const REACTIONS = ['👍', '❤️', '😂', '🔥', '🎉', '💪', '👏', '🚀'];
 
@@ -26,6 +27,9 @@ function getSenderName(msg: any): string {
 }
 
 export default function SquadScreen() {
+  const { colors } = useThemeColors();
+  const { t } = useTranslation();
+
   const { data: mySquad, isLoading, refetch, error } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
@@ -38,17 +42,17 @@ export default function SquadScreen() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text style={{ color: colors.mutedForeground }}>Chargement...</Text>
+        <Text style={{ color: colors.mutedForeground }}>{t('squadLoading')}</Text>
       </View>
     );
   }
 
-  if (!mySquad || !mySquad.id) return <NoSquadView onJoined={() => refetch()} />;
-  return <SquadDetailView squad={mySquad} onLeft={() => refetch()} />;
+  if (!mySquad || !mySquad.id) return <NoSquadView onJoined={() => refetch()} colors={colors} t={t} />;
+  return <SquadDetailView squad={mySquad} onLeft={() => refetch()} colors={colors} t={t} />;
 }
 
 // ─── No Squad ────────────────────────────────────────────────────────────────
-function NoSquadView({ onJoined }: { onJoined: () => void }) {
+function NoSquadView({ onJoined, colors, t }: { onJoined: () => void; colors: any; t: (key: string) => string }) {
   const [showCreate, setShowCreate] = useState(false);
   const [showJoinCode, setShowJoinCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -69,7 +73,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
   const joinByCodeMut = useMutation({
     mutationFn: async () => { await squadApi.join(joinCode.trim()); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mySquad'] }); setShowJoinCode(false); onJoined(); },
-    onError: () => Alert.alert('Erreur', 'Code invalide ou escouade pleine'),
+    onError: () => Alert.alert(t('squadError'), t('squadCodeInvalid')),
   });
 
   const createMut = useMutation({
@@ -80,9 +84,9 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>Escouade</Text>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>{t('squadTitle')}</Text>
         <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 4 }}>
-          Rejoins un groupe de 5-8 personnes pour vous entraider
+          {t('squadDescription')}
         </Text>
       </View>
 
@@ -97,7 +101,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             }}
           >
             <Ionicons name="add-circle" size={18} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Créer</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('squadCreate')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setShowJoinCode(true)}
@@ -108,7 +112,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             }}
           >
             <Ionicons name="key-outline" size={18} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Code</Text>
+            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>{t('squadCode')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -120,7 +124,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
           }}>
             <TextInput
               value={name} onChangeText={setName}
-              placeholder="Nom de l'escouade"
+              placeholder={t('squadName')}
               placeholderTextColor={colors.mutedForeground}
               style={{
                 borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12,
@@ -129,7 +133,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             />
             <TextInput
               value={description} onChangeText={setDescription}
-              placeholder="Description (optionnel)"
+              placeholder={t('squadDescriptionOptional')}
               placeholderTextColor={colors.mutedForeground}
               multiline
               style={{
@@ -139,14 +143,14 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity onPress={() => setShowCreate(false)} style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Annuler</Text>
+                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>{t('squadCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => createMut.mutate()}
                 disabled={!name.trim() || createMut.isPending}
                 style={{ flex: 1, backgroundColor: name.trim() ? colors.primary : colors.border, borderRadius: 12, padding: 12, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700' }}>{createMut.isPending ? 'Création...' : 'Créer'}</Text>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{createMut.isPending ? t('squadCreating') : t('squadCreate')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -158,10 +162,10 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             backgroundColor: colors.card, borderRadius: 12, padding: 16,
             borderWidth: 1, borderColor: colors.border, marginBottom: 20,
           }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground, marginBottom: 10 }}>Rejoindre avec un code</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground, marginBottom: 10 }}>{t('squadJoinWithCode')}</Text>
             <TextInput
               value={joinCode} onChangeText={setJoinCode}
-              placeholder="Code d'invitation"
+              placeholder={t('squadInviteCode')}
               placeholderTextColor={colors.mutedForeground}
               autoCapitalize="characters"
               style={{
@@ -171,14 +175,14 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity onPress={() => setShowJoinCode(false)} style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Annuler</Text>
+                <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>{t('squadCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => joinByCodeMut.mutate()}
                 disabled={!joinCode.trim() || joinByCodeMut.isPending}
                 style={{ flex: 1, backgroundColor: joinCode.trim() ? colors.primary : colors.border, borderRadius: 12, padding: 12, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700' }}>{joinByCodeMut.isPending ? '...' : 'Rejoindre'}</Text>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{joinByCodeMut.isPending ? '...' : t('squadJoin')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -186,7 +190,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
 
         {/* Available squads */}
         <Text style={{ fontSize: 14, fontWeight: '600', color: colors.mutedForeground, marginBottom: 12 }}>
-          Escouades disponibles
+          {t('squadAvailable')}
         </Text>
 
         {available?.length > 0 ? (
@@ -207,7 +211,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{sq.name}</Text>
                   <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
-                    {sq._count?.members ?? 0}/8 membres
+                    {sq._count?.members ?? 0}/8 {t('squadMembersCount')}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -215,7 +219,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
                   disabled={joinMut.isPending}
                   style={{ backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>Rejoindre</Text>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{t('squadJoin')}</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -227,7 +231,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
           }}>
             <Ionicons name="people-outline" size={32} color={colors.mutedForeground} />
             <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: 'center', marginTop: 10 }}>
-              Aucune escouade disponible
+              {t('squadNoAvailable')}
             </Text>
           </View>
         )}
@@ -237,7 +241,7 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
 }
 
 // ─── Squad Detail ────────────────────────────────────────────────────────────
-function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) {
+function SquadDetailView({ squad, onLeft, colors, t }: { squad: any; onLeft: () => void; colors: any; t: (key: string) => string }) {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
@@ -294,38 +298,38 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
   });
 
   const handleSend = () => {
-    const t = message.trim();
-    if (!t || sendMut.isPending) return;
+    const trimmed = message.trim();
+    if (!trimmed || sendMut.isPending) return;
     setMessage('');
-    sendMut.mutate(t);
+    sendMut.mutate(trimmed);
   };
 
   const handleMessageLongPress = (msg: any) => {
     const isOwn = msg.sender?.id === user?.id || msg.userId === user?.id;
     const buttons: any[] = [
-      { text: 'Répondre', onPress: () => setReplyTo(msg) },
-      { text: msg.pinned ? 'Désépingler' : 'Épingler', onPress: () => pinMut.mutate(msg.id) },
-      { text: 'Réagir', onPress: () => setShowReactions(msg.id) },
+      { text: t('squadReply'), onPress: () => setReplyTo(msg) },
+      { text: msg.pinned ? t('squadUnpin') : t('squadPin'), onPress: () => pinMut.mutate(msg.id) },
+      { text: t('squadReact'), onPress: () => setShowReactions(msg.id) },
     ];
     if (isOwn) {
-      buttons.push({ text: 'Supprimer pour moi', onPress: () => deleteMut.mutate({ msgId: msg.id, mode: 'FOR_ME' }) });
-      buttons.push({ text: 'Supprimer pour tous', style: 'destructive', onPress: () => deleteMut.mutate({ msgId: msg.id, mode: 'FOR_ALL' }) });
+      buttons.push({ text: t('squadDeleteForMe'), onPress: () => deleteMut.mutate({ msgId: msg.id, mode: 'FOR_ME' }) });
+      buttons.push({ text: t('squadDeleteForAll'), style: 'destructive', onPress: () => deleteMut.mutate({ msgId: msg.id, mode: 'FOR_ALL' }) });
     }
-    buttons.push({ text: 'Annuler', style: 'cancel' });
-    Alert.alert('Message', msg.content?.substring(0, 60) + '...', buttons);
+    buttons.push({ text: t('squadCancel'), style: 'cancel' });
+    Alert.alert(t('squadMessage'), msg.content?.substring(0, 60) + '...', buttons);
   };
 
   const handleLeave = () => {
-    Alert.alert('Quitter', `Quitter l'escouade "${squad.name}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Quitter', style: 'destructive', onPress: () => leaveMut.mutate() },
+    Alert.alert(t('squadLeave'), t('squadLeaveConfirm'), [
+      { text: t('squadCancel'), style: 'cancel' },
+      { text: t('squadLeave'), style: 'destructive', onPress: () => leaveMut.mutate() },
     ]);
   };
 
   const handleCopyCode = async () => {
     if (squad.inviteCode) {
       await Clipboard.setStringAsync(squad.inviteCode);
-      Alert.alert('Copié !', `Code : ${squad.inviteCode}`);
+      Alert.alert(t('squadCopied'), `Code : ${squad.inviteCode}`);
     }
   };
 
@@ -343,7 +347,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: colors.foreground }} numberOfLines={1}>{squad.name}</Text>
-              <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{squad.members?.length ?? 0} membres</Text>
+              <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{squad.members?.length ?? 0} {t('squadMembersCount')}</Text>
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -362,17 +366,17 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
         flexDirection: 'row', marginHorizontal: 16, backgroundColor: colors.muted,
         borderRadius: 12, padding: 3, marginBottom: 6,
       }}>
-        {(['chat', 'membres', 'events'] as const).map(t => (
+        {(['chat', 'membres', 'events'] as const).map(tabKey => (
           <TouchableOpacity
-            key={t}
-            onPress={() => setTab(t)}
+            key={tabKey}
+            onPress={() => setTab(tabKey)}
             style={{
               flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10,
-              backgroundColor: tab === t ? colors.card : 'transparent',
+              backgroundColor: tab === tabKey ? colors.card : 'transparent',
             }}
           >
-            <Text style={{ fontWeight: '700', fontSize: 12, color: tab === t ? colors.foreground : colors.mutedForeground }}>
-              {t === 'chat' ? 'Chat' : t === 'membres' ? 'Membres' : 'Événements'}
+            <Text style={{ fontWeight: '700', fontSize: 12, color: tab === tabKey ? colors.foreground : colors.mutedForeground }}>
+              {tabKey === 'chat' ? t('squadChat') : tabKey === 'membres' ? t('squadMembers') : t('squadEvents')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -407,7 +411,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: colors.foreground }}>{getSenderName(item)}</Text>
                       <Text style={{ fontSize: 10, color: colors.border }}>
-                        {new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(item.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                       </Text>
                       {item.pinned && <Ionicons name="pin" size={10} color={colors.warning} />}
                     </View>
@@ -444,7 +448,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
             ListEmptyComponent={
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
                 <Ionicons name="chatbubbles-outline" size={32} color={colors.mutedForeground} />
-                <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 10 }}>Commence la conversation !</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 10 }}>{t('squadStartConversation')}</Text>
               </View>
             }
           />
@@ -489,7 +493,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
           }}>
             <TextInput
               value={message} onChangeText={setMessage}
-              placeholder="Message..."
+              placeholder={t('squadMessagePlaceholder')}
               placeholderTextColor={colors.mutedForeground}
               multiline
               style={{
@@ -520,7 +524,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
             }}>
               <Ionicons name="key" size={18} color={colors.primary} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: colors.mutedForeground }}>Code d'invitation</Text>
+                <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{t('squadInviteCode')}</Text>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: colors.primary, letterSpacing: 2 }}>{squad.inviteCode}</Text>
               </View>
               <Ionicons name="copy-outline" size={18} color={colors.primary} />
@@ -546,7 +550,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{getMemberName(m)}</Text>
                   <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>
-                    {m.role === 'CHAMPION' ? '👑 Champion' : 'Membre'}
+                    {m.role === 'CHAMPION' ? `👑 ${t('squadChampion')}` : t('squadMember')}
                   </Text>
                 </View>
                 <View style={{
@@ -579,7 +583,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{evt.title}</Text>
                   <Text style={{ fontSize: 11, color: colors.mutedForeground }}>
-                    {evt.scheduledAt ? new Date(evt.scheduledAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                    {evt.scheduledAt ? new Date(evt.scheduledAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                   </Text>
                 </View>
               </View>
@@ -588,7 +592,7 @@ function SquadDetailView({ squad, onLeft }: { squad: any; onLeft: () => void }) 
           )) : (
             <View style={{ alignItems: 'center', paddingTop: 60 }}>
               <Ionicons name="calendar-outline" size={32} color={colors.mutedForeground} />
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 10 }}>Aucun événement</Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 10 }}>{t('squadNoEvents')}</Text>
             </View>
           )}
         </ScrollView>

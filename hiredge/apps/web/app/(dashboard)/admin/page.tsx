@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { adminApi, authApi } from "@/lib/api"
+import { useTranslation } from "@/lib/i18n"
 
 interface PlatformStats {
   totalUsers: number
@@ -29,6 +30,7 @@ interface PlatformStats {
 
 export default function AdminPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [stats, setStats] = useState<PlatformStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -55,7 +57,7 @@ export default function AdminPage() {
       const { data } = await adminApi.getStats()
       if (data.success) setStats(data.data)
     } catch {
-      setError("Impossible de charger les statistiques")
+      setError(t('adminLoadError'))
     } finally {
       setLoading(false)
     }
@@ -83,29 +85,29 @@ export default function AdminPage() {
   }
 
   const statCards = [
-    { label: "Utilisateurs totaux", value: stats?.totalUsers || 0, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Offres d'emploi", value: stats?.totalJobs || 0, icon: Briefcase, color: "text-green-500", bg: "bg-green-500/10" },
-    { label: "Candidatures", value: stats?.totalApplications || 0, icon: FileStack, color: "text-purple-500", bg: "bg-purple-500/10" },
-    { label: "Escouades", value: stats?.totalSquads || 0, icon: Users2, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { label: t('adminTotalUsers'), value: stats?.totalUsers || 0, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: t('adminTotalJobs'), value: stats?.totalJobs || 0, icon: Briefcase, color: "text-green-500", bg: "bg-green-500/10" },
+    { label: t('adminTotalApplications'), value: stats?.totalApplications || 0, icon: FileStack, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { label: t('adminTotalSquads'), value: stats?.totalSquads || 0, icon: Users2, color: "text-orange-500", bg: "bg-orange-500/10" },
   ]
 
   const activityCards = [
-    { label: "Inscriptions (7j)", value: stats?.recentSignups || 0, icon: UserPlus, color: "text-emerald-500" },
-    { label: "Utilisateurs actifs (7j)", value: stats?.activeUsersLast7d || 0, icon: Activity, color: "text-cyan-500" },
+    { label: t('adminRecentSignups'), value: stats?.recentSignups || 0, icon: UserPlus, color: "text-emerald-500" },
+    { label: t('adminActiveUsers'), value: stats?.activeUsersLast7d || 0, icon: Activity, color: "text-cyan-500" },
   ]
 
   const roleLabels: Record<string, string> = {
-    CANDIDATE: "Candidats",
-    SCOUT: "Éclaireurs",
-    RECRUITER: "Recruteurs",
-    ADMIN: "Admins",
+    CANDIDATE: t('adminCandidate'),
+    SCOUT: t('adminScout'),
+    RECRUITER: t('adminRecruiter'),
+    ADMIN: t('adminAdmin'),
   }
 
   const tierLabels: Record<string, string> = {
-    FREE: "Gratuit",
-    STARTER: "Starter",
-    PRO: "Pro",
-    SQUAD_PLUS: "Squad+",
+    FREE: t('adminFree'),
+    STARTER: t('adminStarter'),
+    PRO: t('adminPro'),
+    SQUAD_PLUS: t('adminSquadPlus'),
   }
 
   return (
@@ -115,15 +117,15 @@ export default function AdminPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">Administration</h1>
+            <h1 className="text-2xl font-bold">{t('adminTitle')}</h1>
           </div>
-          <p className="text-muted-foreground">Tableau de bord de la plateforme HIREDGE</p>
+          <p className="text-muted-foreground">{t('adminSubtitle')}</p>
         </div>
         <Link
           href="/admin/users"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
         >
-          Gérer les utilisateurs
+          {t('adminManageUsers')}
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -164,7 +166,7 @@ export default function AdminPage() {
         <div className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-muted-foreground" />
-            Répartition par rôle
+            {t('adminByRole')}
           </h2>
           <div className="space-y-3">
             {Object.entries(stats?.usersByRole || {}).map(([role, count]) => {
@@ -192,7 +194,7 @@ export default function AdminPage() {
         <div className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-muted-foreground" />
-            Répartition par abonnement
+            {t('adminBySubscription')}
           </h2>
           <div className="space-y-3">
             {Object.entries(stats?.usersBySubscription || {}).map(([tier, count]) => {

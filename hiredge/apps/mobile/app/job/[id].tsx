@@ -5,6 +5,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { jobsApi, applicationsApi, squadApi } from '../../lib/api';
+import { useThemeColors } from '../../lib/theme';
+import { useTranslation } from '../../lib/i18n';
 
 // ─── Types ───────────────────────────────────────────────────────
 interface CoverLetterData { coverLetter: string; generatedAt: string }
@@ -26,19 +28,26 @@ function cleanDescription(text: string): string {
     .trim();
 }
 
-function formatSalary(min?: number, max?: number, currency?: string): string {
+function formatSalary(min?: number, max?: number, currency?: string, t?: (k: string) => string): string {
   if (!min && !max) return '';
   const cur = currency ?? 'EUR';
   const symbol = cur === 'CAD' ? 'CA$' : cur === 'USD' ? '$' : '€';
   const fmt = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n);
   if (min && max) return `${symbol}${fmt(min)} - ${fmt(max)}`;
   if (min) return `${symbol}${fmt(min)}+`;
-  if (max) return `jusqu'à ${symbol}${fmt(max)}`;
+  if (max) return `${t?.('jobUpTo') ?? 'jusqu\'\u00e0'} ${symbol}${fmt(max)}`;
   return '';
 }
 
-function formatLevel(level: string): string {
-  const map: Record<string, string> = { junior: 'Junior', mid: 'Confirmé', senior: 'Senior', lead: 'Lead' };
+function formatLevel(level: string, t?: (k: string) => string): string {
+  if (!t) {
+    const map: Record<string, string> = { junior: 'Junior', mid: 'Confirmé', senior: 'Senior', lead: 'Lead' };
+    return map[level?.toLowerCase()] ?? level;
+  }
+  const map: Record<string, string> = {
+    junior: t('jobLevelJunior'), mid: t('jobLevelMid'),
+    senior: t('jobLevelSenior'), lead: t('jobLevelLead'),
+  };
   return map[level?.toLowerCase()] ?? level;
 }
 
@@ -49,25 +58,34 @@ function getMatchColor(score: number): string {
   return '#FF7675';
 }
 
-function getContractLabel(type: string): string {
+function getContractLabel(type: string, t?: (k: string) => string): string {
+  if (!t) {
+    const labels: Record<string, string> = {
+      CDI: 'CDI', CDD: 'CDD', FREELANCE: 'Freelance', STAGE: 'Stage',
+      ALTERNANCE: 'Alternance', TEMPS_PARTIEL: 'Temps partiel',
+      FULL_TIME: 'Temps plein', PART_TIME: 'Temps partiel', CONTRACT: 'Contrat',
+    };
+    return labels[type] || type;
+  }
   const labels: Record<string, string> = {
-    CDI: 'CDI', CDD: 'CDD', FREELANCE: 'Freelance', STAGE: 'Stage',
-    ALTERNANCE: 'Alternance', TEMPS_PARTIEL: 'Temps partiel',
-    FULL_TIME: 'Temps plein', PART_TIME: 'Temps partiel', CONTRACT: 'Contrat',
+    CDI: t('jobContractCDI'), CDD: t('jobContractCDD'), FREELANCE: t('jobContractFreelance'),
+    STAGE: t('jobContractIntern'), ALTERNANCE: t('jobContractAlternance'),
+    TEMPS_PARTIEL: t('jobContractPartTime'), FULL_TIME: t('jobContractFullTime'),
+    PART_TIME: t('jobContractPartTime'), CONTRACT: t('jobContractContract'),
   };
   return labels[type] || type;
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, t?: (k: string) => string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffHours < 1) return "À l'instant";
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  if (diffDays < 7) return `Il y a ${diffDays}j`;
-  return date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+  if (diffHours < 1) return t?.('jobJustNow') ?? "\u00c0 l'instant";
+  if (diffHours < 24) return `${t?.('jobAgo') ?? 'Il y a'} ${diffHours}h`;
+  if (diffDays < 7) return `${t?.('jobAgo') ?? 'Il y a'} ${diffDays}${t?.('jobDaysShort') ?? 'j'}`;
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function parseSkills(skills: string[] | string | undefined): string[] {
@@ -80,6 +98,8 @@ function parseSkills(skills: string[] | string | undefined): string[] {
 export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'offer' | 'letter' | 'company'>('offer');
+  const colors = useThemeColors();
+  const { t } = useTranslation();
 
   // Cover letter state
   const [coverLetter, setCoverLetter] = useState<CoverLetterData | null>(null);
@@ -123,11 +143,11 @@ export default function JobDetailScreen() {
       const res = await jobsApi.getCoverLetter(id!);
       if (res.data?.data) setCoverLetter(res.data.data);
     } catch (err: any) {
-      setCoverLetterError(err.response?.data?.error?.message || 'Erreur lors de la génération');
+      setCoverLetterError(err.response?.data?.error?.message || t('jobGenerationError'));
     } finally {
       setCoverLetterLoading(false);
     }
-  }, [id, coverLetter, coverLetterLoading]);
+  }, [id]);
 
   const regenerateCoverLetter = useCallback(async () => {
     setCoverLetter(null);
@@ -137,7 +157,7 @@ export default function JobDetailScreen() {
       const res = await jobsApi.getCoverLetter(id!);
       if (res.data?.data) setCoverLetter(res.data.data);
     } catch (err: any) {
-      setCoverLetterError(err.response?.data?.error?.message || 'Erreur lors de la génération');
+      setCoverLetterError(err.response?.data?.error?.message || t('jobGenerationError'));
     } finally {
       setCoverLetterLoading(false);
     }
@@ -201,7 +221,7 @@ export default function JobDetailScreen() {
       }
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || 'Erreur lors de la candidature';
+      const msg = err.response?.data?.error?.message || t('jobApplicationError');
       if (err.response?.data?.error?.code === 'ALREADY_APPLIED') {
         setApplied(true);
         setShowApplyModal(false);
@@ -223,21 +243,21 @@ export default function JobDetailScreen() {
   // ─── Loading / Error ───────────────────────────────────────
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA' }}>
-        <ActivityIndicator size="large" color="#6C5CE7" />
-        <Text style={{ marginTop: 12, color: '#868E96', fontSize: 14 }}>Chargement...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 12, color: colors.mutedForeground, fontSize: 14 }}>{t('jobLoading')}</Text>
       </View>
     );
   }
 
   if (!job) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA', padding: 24 }}>
-        <Ionicons name="business-outline" size={48} color="#ADB5BD" />
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436', marginTop: 16 }}>Offre introuvable</Text>
-        <Text style={{ color: '#868E96', marginTop: 8, textAlign: 'center' }}>Cette offre n'existe plus ou a été retirée.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, backgroundColor: '#6C5CE7', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Retour</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: 24 }}>
+        <Ionicons name="business-outline" size={48} color={colors.mutedForeground} />
+        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginTop: 16 }}>{t('jobNotFound')}</Text>
+        <Text style={{ color: colors.mutedForeground, marginTop: 8, textAlign: 'center' }}>{t('jobNotFoundDesc')}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('jobBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -245,15 +265,15 @@ export default function JobDetailScreen() {
 
   const skills = parseSkills(job.requiredSkills);
   const niceToHave = parseSkills(job.niceToHave);
-  const salaryLabel = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
+  const salaryLabel = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, t);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
 
         {/* ═══ Header ═══ */}
         <View style={{
-          backgroundColor: '#6C5CE7', paddingTop: 56, paddingBottom: 28,
+          backgroundColor: colors.primary, paddingTop: 56, paddingBottom: 28,
           paddingHorizontal: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -274,34 +294,34 @@ export default function JobDetailScreen() {
           </View>
 
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', lineHeight: 28 }}>{job.title}</Text>
-          <Text style={{ color: '#C9C3FF', fontSize: 16, marginTop: 6, fontWeight: '500' }}>{job.company?.name ?? 'Entreprise'}</Text>
+          <Text style={{ color: '#C9C3FF', fontSize: 16, marginTop: 6, fontWeight: '500' }}>{job.company?.name ?? t('jobCompany')}</Text>
 
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-            <InfoBadge icon="location-outline" text={`${job.location}${job.remote ? ' (Télétravail)' : ''}`} />
+            <InfoBadge icon="location-outline" text={`${job.location}${job.remote ? ` (${t('jobRemote')})` : ''}`} />
             {salaryLabel ? <InfoBadge icon="cash-outline" text={salaryLabel} /> : null}
-            <InfoBadge icon="briefcase-outline" text={getContractLabel(job.contractType)} />
-            <InfoBadge icon="time-outline" text={formatDate(job.postedAt)} />
+            <InfoBadge icon="briefcase-outline" text={getContractLabel(job.contractType, t)} />
+            <InfoBadge icon="time-outline" text={formatDate(job.postedAt, t)} />
           </View>
         </View>
 
         {/* ═══ EDGE Analysis Card ═══ */}
         <View style={{
           marginHorizontal: 16, marginTop: 16, borderRadius: 16, overflow: 'hidden',
-          backgroundColor: '#F0EEFF', borderWidth: 1, borderColor: '#DDD6FE',
+          backgroundColor: colors.primaryLight, borderWidth: 1, borderColor: colors.primaryMedium,
         }}>
           <View style={{ flexDirection: 'row', padding: 16, gap: 12, alignItems: 'flex-start' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#6C5CE7', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
               <Ionicons name="sparkles" size={22} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 4 }}>Analyse EDGE</Text>
-              <Text style={{ fontSize: 13, color: '#495057', lineHeight: 20 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 4 }}>{t('jobEdgeAnalysis')}</Text>
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, lineHeight: 20 }}>
                 {job.matchAnalysis
                   || (job.matchScore != null && job.matchScore >= 70
-                    ? "Ce poste correspond bien à ton profil ! Consulte la lettre de motivation et l'analyse de l'entreprise."
+                    ? t('jobMatchHigh')
                     : job.matchScore != null && job.matchScore >= 40
-                    ? "Ce poste présente un potentiel intéressant. J'ai préparé une lettre de motivation adaptée."
-                    : "Découvre les détails ci-dessous. J'ai préparé une lettre de motivation et une analyse pour toi.")}
+                    ? t('jobMatchMedium')
+                    : t('jobMatchLow'))}
               </Text>
             </View>
           </View>
@@ -319,8 +339,8 @@ export default function JobDetailScreen() {
                   <Ionicons name="people" size={20} color="#fff" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E3A5F' }}>Candidature envoyée !</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Rejoins une escouade pour vous soutenir mutuellement</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E3A5F' }}>{t('jobApplicationSent')}</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{t('jobJoinSquad')}</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowSquadBanner(false)}>
@@ -336,7 +356,7 @@ export default function JobDetailScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E293B' }} numberOfLines={1}>{sq.name}</Text>
                     <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                      {sq._count?.members || 0}/{sq.maxMembers || 10} membres{sq.jobFamily ? ` • ${sq.jobFamily}` : ''}
+                      {sq._count?.members || 0}/{sq.maxMembers || 10} {t('jobMembers')}{sq.jobFamily ? ` • ${sq.jobFamily}` : ''}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -346,7 +366,7 @@ export default function JobDetailScreen() {
                   >
                     {joiningSquad === sq.id
                       ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Rejoindre</Text>
+                      : <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{t('jobJoin')}</Text>
                     }
                   </TouchableOpacity>
                 </View>
@@ -365,13 +385,13 @@ export default function JobDetailScreen() {
         {/* ═══ Tabs ═══ */}
         <View style={{
           flexDirection: 'row', marginHorizontal: 16, marginTop: 20,
-          backgroundColor: '#fff', borderRadius: 14, padding: 4,
-          borderWidth: 1, borderColor: '#E9ECEF',
+          backgroundColor: colors.card, borderRadius: 14, padding: 4,
+          borderWidth: 1, borderColor: colors.border,
         }}>
           {([
-            { key: 'offer' as const, label: 'Offre', icon: 'document-text-outline' },
-            { key: 'letter' as const, label: 'Lettre', icon: 'mail-outline' },
-            { key: 'company' as const, label: 'Entreprise', icon: 'business-outline' },
+            { key: 'offer' as const, label: t('jobTabOffer'), icon: 'document-text-outline' },
+            { key: 'letter' as const, label: t('jobTabLetter'), icon: 'mail-outline' },
+            { key: 'company' as const, label: t('jobTabCompany'), icon: 'business-outline' },
           ]).map((tab) => (
             <TouchableOpacity
               key={tab.key}
@@ -379,11 +399,11 @@ export default function JobDetailScreen() {
               style={{
                 flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
                 paddingVertical: 10, borderRadius: 10,
-                backgroundColor: activeTab === tab.key ? '#6C5CE7' : 'transparent',
+                backgroundColor: activeTab === tab.key ? colors.primary : 'transparent',
               }}
             >
-              <Ionicons name={tab.icon as any} size={16} color={activeTab === tab.key ? '#fff' : '#868E96'} />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: activeTab === tab.key ? '#fff' : '#868E96' }}>
+              <Ionicons name={tab.icon as any} size={16} color={activeTab === tab.key ? '#fff' : colors.mutedForeground} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: activeTab === tab.key ? '#fff' : colors.mutedForeground }}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -395,40 +415,40 @@ export default function JobDetailScreen() {
           <View>
             {/* Quick Info Grid */}
             <View style={{
-              marginHorizontal: 16, marginTop: 16, backgroundColor: '#fff', borderRadius: 16,
-              padding: 16, borderWidth: 1, borderColor: '#E9ECEF',
+              marginHorizontal: 16, marginTop: 16, backgroundColor: colors.card, borderRadius: 16,
+              padding: 16, borderWidth: 1, borderColor: colors.border,
             }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                <QuickInfoItem icon="briefcase-outline" label="Contrat" value={getContractLabel(job.contractType)} />
-                <QuickInfoItem icon="location-outline" label="Lieu" value={`${job.location}${job.remote ? ' (Télétravail)' : ''}`} />
-                {salaryLabel ? <QuickInfoItem icon="cash-outline" label="Salaire" value={salaryLabel} /> : null}
+                <QuickInfoItem icon="briefcase-outline" label={t('jobContract')} value={getContractLabel(job.contractType, t)} colors={colors} />
+                <QuickInfoItem icon="location-outline" label={t('jobLocation')} value={`${job.location}${job.remote ? ` (${t('jobRemote')})` : ''}`} colors={colors} />
+                {salaryLabel ? <QuickInfoItem icon="cash-outline" label={t('jobSalary')} value={salaryLabel} colors={colors} /> : null}
                 {(job.experienceMin != null || job.experienceMax != null) && (
-                  <QuickInfoItem icon="star-outline" label="Expérience" value={
+                  <QuickInfoItem icon="star-outline" label={t('jobExperience')} value={
                     job.experienceMin != null && job.experienceMax != null
-                      ? `${job.experienceMin}-${job.experienceMax} ans`
-                      : job.experienceMin != null ? `${job.experienceMin}+ ans` : `Jusqu'à ${job.experienceMax} ans`
-                  } />
+                      ? `${job.experienceMin}-${job.experienceMax} ${t('jobYears')}`
+                      : job.experienceMin != null ? `${job.experienceMin}+ ${t('jobYears')}` : `${t('jobUpTo')} ${job.experienceMax} ${t('jobYears')}`
+                  } colors={colors} />
                 )}
               </View>
             </View>
 
             {/* Skills */}
             {skills.length > 0 && (
-              <Section title="Compétences requises">
+              <Section title={t('jobRequiredSkills')} colors={colors}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {skills.map((skill, i) => (
-                    <View key={i} style={{ backgroundColor: '#F0EEFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#DDD6FE' }}>
-                      <Text style={{ fontSize: 13, color: '#6C5CE7', fontWeight: '600' }}>{skill}</Text>
+                    <View key={i} style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.primaryMedium }}>
+                      <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>{skill}</Text>
                     </View>
                   ))}
                 </View>
                 {niceToHave.length > 0 && (
-                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F1F3F5' }}>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#868E96', marginBottom: 8 }}>Compétences appréciées</Text>
+                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.muted }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.mutedForeground, marginBottom: 8 }}>{t('jobNiceToHave')}</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {niceToHave.map((skill, i) => (
-                        <View key={i} style={{ backgroundColor: '#F1F3F5', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
-                          <Text style={{ fontSize: 13, color: '#868E96', fontWeight: '500' }}>{skill}</Text>
+                        <View key={i} style={{ backgroundColor: colors.muted, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                          <Text style={{ fontSize: 13, color: colors.mutedForeground, fontWeight: '500' }}>{skill}</Text>
                         </View>
                       ))}
                     </View>
@@ -439,14 +459,14 @@ export default function JobDetailScreen() {
 
             {/* Description */}
             {job.description && (
-              <Section title="Description du poste">
-                <DescriptionView text={cleanDescription(job.description)} />
+              <Section title={t('jobDescription')} colors={colors}>
+                <DescriptionView text={cleanDescription(job.description)} colors={colors} />
               </Section>
             )}
 
             {/* Avantages */}
             {job.benefits?.length > 0 && (
-              <Section title="Avantages">
+              <Section title={t('jobBenefits')} colors={colors}>
                 <View style={{ gap: 8 }}>
                   {job.benefits.map((b: string, i: number) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
@@ -464,19 +484,19 @@ export default function JobDetailScreen() {
                 <TouchableOpacity
                   onPress={() => Linking.openURL(job.sourceUrl)}
                   style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff',
-                    padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF',
+                    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card,
+                    padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border,
                   }}
                 >
-                  <Ionicons name="open-outline" size={18} color="#6C5CE7" />
-                  <Text style={{ color: '#6C5CE7', fontSize: 14, fontWeight: '600' }}>Voir l'offre originale</Text>
+                  <Ionicons name="open-outline" size={18} color={colors.primary} />
+                  <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '600' }}>{t('jobViewOriginal')}</Text>
                 </TouchableOpacity>
               </View>
             )}
 
             {/* Footer date */}
-            <Text style={{ paddingHorizontal: 20, color: '#ADB5BD', fontSize: 12, marginTop: 16, marginBottom: 8 }}>
-              Publiée le {new Date(job.postedAt).toLocaleDateString('fr-FR')} {job.source ? `• Source : ${job.source}` : ''}
+            <Text style={{ paddingHorizontal: 20, color: colors.mutedForeground, fontSize: 12, marginTop: 16, marginBottom: 8 }}>
+              {t('jobPostedOn')} {new Date(job.postedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} {job.source ? `• Source : ${job.source}` : ''}
             </Text>
           </View>
         )}
@@ -486,24 +506,24 @@ export default function JobDetailScreen() {
           <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
             {coverLetterLoading && (
               <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-                <ActivityIndicator size="large" color="#6C5CE7" />
-                <Text style={{ color: '#6C5CE7', fontSize: 15, fontWeight: '600', marginTop: 16 }}>
-                  EDGE rédige ta lettre...
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600', marginTop: 16 }}>
+                  {t('jobEdgeWriting')}
                 </Text>
-                <Text style={{ color: '#868E96', fontSize: 13, marginTop: 4 }}>
-                  Analyse du poste et de ton profil en cours
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 4 }}>
+                  {t('jobAnalysisInProgress')}
                 </Text>
               </View>
             )}
 
             {coverLetterError && !coverLetterLoading && (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Ionicons name="alert-circle-outline" size={40} color="#FF7675" />
-                <Text style={{ color: '#FF7675', fontSize: 14, marginTop: 12, textAlign: 'center' }}>{coverLetterError}</Text>
+                <Ionicons name="alert-circle-outline" size={40} color={colors.destructive} />
+                <Text style={{ color: colors.destructive, fontSize: 14, marginTop: 12, textAlign: 'center' }}>{coverLetterError}</Text>
                 <TouchableOpacity onPress={regenerateCoverLetter} style={{
-                  marginTop: 16, backgroundColor: '#6C5CE7', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10,
+                  marginTop: 16, backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10,
                 }}>
-                  <Text style={{ color: '#fff', fontWeight: '600' }}>Réessayer</Text>
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>{t('jobRetry')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -515,39 +535,39 @@ export default function JobDetailScreen() {
                   <TouchableOpacity
                     onPress={async () => {
                       await Clipboard.setStringAsync(coverLetter.coverLetter);
-                      Alert.alert('Copié', 'La lettre a été copiée dans le presse-papiers');
+                      Alert.alert(t('jobCopied'), t('jobCopiedMessage'));
                     }}
-                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#fff', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF' }}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
                   >
-                    <Ionicons name="copy-outline" size={18} color="#6C5CE7" />
-                    <Text style={{ color: '#6C5CE7', fontSize: 14, fontWeight: '600' }}>Copier</Text>
+                    <Ionicons name="copy-outline" size={18} color={colors.primary} />
+                    <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '600' }}>{t('jobCopy')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={regenerateCoverLetter}
-                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#fff', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF' }}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
                   >
-                    <Ionicons name="refresh-outline" size={18} color="#6C5CE7" />
-                    <Text style={{ color: '#6C5CE7', fontSize: 14, fontWeight: '600' }}>Régénérer</Text>
+                    <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+                    <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '600' }}>{t('jobRegenerate')}</Text>
                   </TouchableOpacity>
                 </View>
                 {/* Letter content */}
-                <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E9ECEF' }}>
-                  <Text style={{ fontSize: 14, lineHeight: 24, color: '#2D3436' }}>{coverLetter.coverLetter}</Text>
+                <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ fontSize: 14, lineHeight: 24, color: colors.foreground }}>{coverLetter.coverLetter}</Text>
                 </View>
               </View>
             )}
 
             {!coverLetter && !coverLetterLoading && !coverLetterError && (
               <View style={{ alignItems: 'center', paddingVertical: 50 }}>
-                <Ionicons name="mail-outline" size={48} color="#ADB5BD" />
-                <Text style={{ color: '#868E96', fontSize: 15, marginTop: 12, textAlign: 'center' }}>
-                  Génère une lettre de motivation personnalisée pour ce poste
+                <Ionicons name="mail-outline" size={48} color={colors.mutedForeground} />
+                <Text style={{ color: colors.mutedForeground, fontSize: 15, marginTop: 12, textAlign: 'center' }}>
+                  {t('jobGenerateLetterPrompt')}
                 </Text>
                 <TouchableOpacity onPress={loadCoverLetter} style={{
-                  marginTop: 20, backgroundColor: '#6C5CE7', paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14,
-                  shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+                  marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14,
+                  shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
                 }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>✦  Générer la lettre</Text>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>✦  {t('jobGenerateLetter')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -559,8 +579,8 @@ export default function JobDetailScreen() {
           <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
             {companyLoading && (
               <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-                <ActivityIndicator size="large" color="#6C5CE7" />
-                <Text style={{ color: '#868E96', fontSize: 14, marginTop: 12 }}>Analyse de l'entreprise en cours...</Text>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={{ color: colors.mutedForeground, fontSize: 14, marginTop: 12 }}>{t('jobCompanyAnalysisLoading')}</Text>
               </View>
             )}
 
@@ -568,30 +588,30 @@ export default function JobDetailScreen() {
               <View style={{ gap: 16 }}>
                 {/* Company header */}
                 <View style={{
-                  backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF',
+                  backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border,
                   flexDirection: 'row', gap: 14, alignItems: 'flex-start',
                 }}>
-                  <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: '#6C5CE718', justifyContent: 'center', alignItems: 'center' }}>
-                    <Ionicons name="business" size={24} color="#6C5CE7" />
+                  <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: `${colors.primary}18`, justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="business" size={24} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D3436' }}>{companyAnalysis.companyName}</Text>
-                    {companyAnalysis.industry && <Text style={{ fontSize: 13, color: '#868E96', marginTop: 2 }}>{companyAnalysis.industry}</Text>}
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>{companyAnalysis.companyName}</Text>
+                    {companyAnalysis.industry && <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>{companyAnalysis.industry}</Text>}
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Ionicons name="briefcase-outline" size={14} color="#6C5CE7" />
-                        <Text style={{ fontSize: 13, color: '#495057' }}>{companyAnalysis.activeJobCount} offres</Text>
+                        <Ionicons name="briefcase-outline" size={14} color={colors.primary} />
+                        <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{companyAnalysis.activeJobCount} {t('jobOffers')}</Text>
                       </View>
                       {companyAnalysis.location && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Ionicons name="globe-outline" size={14} color="#6C5CE7" />
-                          <Text style={{ fontSize: 13, color: '#495057' }}>{companyAnalysis.location}</Text>
+                          <Ionicons name="globe-outline" size={14} color={colors.primary} />
+                          <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{companyAnalysis.location}</Text>
                         </View>
                       )}
                       {companyAnalysis.hasRemote && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Ionicons name="wifi-outline" size={14} color="#00B894" />
-                          <Text style={{ fontSize: 13, color: '#00B894' }}>Télétravail</Text>
+                          <Ionicons name="wifi-outline" size={14} color={colors.success} />
+                          <Text style={{ fontSize: 13, color: colors.success }}>{t('jobRemote')}</Text>
                         </View>
                       )}
                     </View>
@@ -600,20 +620,20 @@ export default function JobDetailScreen() {
 
                 {/* AI Analysis */}
                 {companyAnalysis.analysis && (
-                  <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 10 }}>Analyse IA</Text>
-                    <Text style={{ fontSize: 14, color: '#495057', lineHeight: 22 }}>{companyAnalysis.analysis}</Text>
+                  <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>{t('jobAIAnalysis')}</Text>
+                    <Text style={{ fontSize: 14, color: colors.mutedForeground, lineHeight: 22 }}>{companyAnalysis.analysis}</Text>
                   </View>
                 )}
 
                 {/* Top Skills */}
                 {companyAnalysis.topSkills?.length > 0 && (
-                  <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 10 }}>Technologies demandées</Text>
+                  <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>{t('jobTechRequired')}</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {companyAnalysis.topSkills.map((skill, i) => (
-                        <View key={i} style={{ backgroundColor: '#F0EEFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
-                          <Text style={{ fontSize: 13, color: '#6C5CE7', fontWeight: '600' }}>{skill}</Text>
+                        <View key={i} style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                          <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>{skill}</Text>
                         </View>
                       ))}
                     </View>
@@ -622,13 +642,13 @@ export default function JobDetailScreen() {
 
                 {/* Open positions */}
                 {companyAnalysis.jobTitles?.length > 0 && (
-                  <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 10 }}>Postes ouverts</Text>
+                  <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 10 }}>{t('jobOpenPositions')}</Text>
                     <View style={{ gap: 8 }}>
                       {companyAnalysis.jobTitles.map((title, i) => (
                         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="checkmark-circle" size={16} color="#6C5CE7" />
-                          <Text style={{ fontSize: 14, color: '#495057', flex: 1 }}>{title}</Text>
+                          <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                          <Text style={{ fontSize: 14, color: colors.mutedForeground, flex: 1 }}>{title}</Text>
                         </View>
                       ))}
                     </View>
@@ -639,8 +659,8 @@ export default function JobDetailScreen() {
 
             {!companyAnalysis && !companyLoading && (
               <View style={{ alignItems: 'center', paddingVertical: 50 }}>
-                <Ionicons name="business-outline" size={48} color="#ADB5BD" />
-                <Text style={{ color: '#868E96', fontSize: 14, marginTop: 12 }}>Aucune donnée disponible</Text>
+                <Ionicons name="business-outline" size={48} color={colors.mutedForeground} />
+                <Text style={{ color: colors.mutedForeground, fontSize: 14, marginTop: 12 }}>{t('jobNoCompanyData')}</Text>
               </View>
             )}
           </View>
@@ -650,8 +670,8 @@ export default function JobDetailScreen() {
         {job.matchScore != null && job.matchScore > 0 && (
           <View style={{ marginHorizontal: 16, marginTop: 24 }}>
             {/* Score breakdown */}
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF' }}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 16 }}>Score de compatibilité</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 16 }}>{t('jobCompatibilityScore')}</Text>
 
               {/* Circular score */}
               <View style={{ alignItems: 'center', marginBottom: 20 }}>
@@ -668,21 +688,21 @@ export default function JobDetailScreen() {
               {job.matchDetails && (
                 <View style={{ gap: 12 }}>
                   {[
-                    { label: 'Compétences', value: job.matchDetails.skills },
-                    { label: 'Pertinence', value: job.matchDetails.semantic },
-                    { label: 'Expérience', value: job.matchDetails.experience },
-                    { label: 'Salaire', value: job.matchDetails.salary },
-                    { label: 'Localisation', value: job.matchDetails.location },
+                    { label: t('jobSkills'), value: job.matchDetails.skills },
+                    { label: t('jobRelevance'), value: job.matchDetails.semantic },
+                    { label: t('jobExperience'), value: job.matchDetails.experience },
+                    { label: t('jobSalaryLabel'), value: job.matchDetails.salary },
+                    { label: t('jobLocationLabel'), value: job.matchDetails.location },
                   ].map(({ label, value }: { label: string; value: number }) => (
                     <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Text style={{ width: 90, fontSize: 12, color: '#868E96' }}>{label}</Text>
-                      <View style={{ flex: 1, height: 6, backgroundColor: '#F1F3F5', borderRadius: 3, overflow: 'hidden' }}>
+                      <Text style={{ width: 90, fontSize: 12, color: colors.mutedForeground }}>{label}</Text>
+                      <View style={{ flex: 1, height: 6, backgroundColor: colors.muted, borderRadius: 3, overflow: 'hidden' }}>
                         <View style={{
                           width: `${value}%`, height: '100%', borderRadius: 3,
-                          backgroundColor: value >= 70 ? '#6C5CE7' : value >= 40 ? '#6C5CE7' : '#FDCB6E',
+                          backgroundColor: value >= 70 ? colors.primary : value >= 40 ? colors.primary : '#FDCB6E',
                         }} />
                       </View>
-                      <Text style={{ width: 32, fontSize: 12, fontWeight: '600', color: '#2D3436', textAlign: 'right' }}>{value}%</Text>
+                      <Text style={{ width: 32, fontSize: 12, fontWeight: '600', color: colors.foreground, textAlign: 'right' }}>{value}%</Text>
                     </View>
                   ))}
                 </View>
@@ -691,13 +711,13 @@ export default function JobDetailScreen() {
 
             {/* Selling Points */}
             {job.sellingPoints?.length > 0 && (
-              <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF', marginTop: 12 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 12 }}>Points forts</Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, marginTop: 12 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 12 }}>{t('jobSellingPoints')}</Text>
                 <View style={{ gap: 10 }}>
                   {job.sellingPoints.map((point: string, i: number) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                      <Ionicons name="star" size={16} color="#00B894" style={{ marginTop: 2 }} />
-                      <Text style={{ flex: 1, fontSize: 14, color: '#495057', lineHeight: 20 }}>{point}</Text>
+                      <Ionicons name="star" size={16} color={colors.success} style={{ marginTop: 2 }} />
+                      <Text style={{ flex: 1, fontSize: 14, color: colors.mutedForeground, lineHeight: 20 }}>{point}</Text>
                     </View>
                   ))}
                 </View>
@@ -706,13 +726,13 @@ export default function JobDetailScreen() {
 
             {/* Gaps */}
             {job.gaps?.length > 0 && (
-              <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E9ECEF', marginTop: 12 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginBottom: 12 }}>Points à travailler</Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, marginTop: 12 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginBottom: 12 }}>{t('jobGaps')}</Text>
                 <View style={{ gap: 10 }}>
                   {job.gaps.map((gap: string, i: number) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FDCB6E', marginTop: 6 }} />
-                      <Text style={{ flex: 1, fontSize: 14, color: '#495057', lineHeight: 20 }}>{gap}</Text>
+                      <Text style={{ flex: 1, fontSize: 14, color: colors.mutedForeground, lineHeight: 20 }}>{gap}</Text>
                     </View>
                   ))}
                 </View>
@@ -726,30 +746,30 @@ export default function JobDetailScreen() {
       {/* ═══ CTA bas de page ═══ */}
       <View style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: '#fff', padding: 16, paddingBottom: 28,
-        borderTopWidth: 1, borderColor: '#F1F3F5',
+        backgroundColor: colors.card, padding: 16, paddingBottom: 28,
+        borderTopWidth: 1, borderColor: colors.muted,
         flexDirection: 'row', gap: 12,
         shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 12,
       }}>
         <TouchableOpacity style={{
-          width: 52, height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: '#E9ECEF',
-          justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff',
+          width: 52, height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: colors.border,
+          justifyContent: 'center', alignItems: 'center', backgroundColor: colors.card,
         }}>
-          <Ionicons name="bookmark-outline" size={22} color="#6C5CE7" />
+          <Ionicons name="bookmark-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => { if (!applied) handleOpenApplyModal(); }}
           disabled={applyMutation.isPending || applied}
           style={{
             flex: 1, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
-            backgroundColor: applied ? '#00B894' : '#6C5CE7',
+            backgroundColor: applied ? '#00B894' : colors.primary,
             opacity: applyMutation.isPending ? 0.7 : 1,
-            shadowColor: applied ? '#00B894' : '#6C5CE7',
+            shadowColor: applied ? '#00B894' : colors.primary,
             shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8,
           }}
         >
           <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-            {applied ? '✓ Candidature envoyée' : applyMutation.isPending ? 'Envoi...' : '✦  Postuler avec EDGE'}
+            {applied ? t('jobApplied') : applyMutation.isPending ? t('jobSending') : t('jobApplyWithEdge')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -758,44 +778,44 @@ export default function JobDetailScreen() {
       <Modal visible={showApplyModal} transparent animationType="slide" onRequestClose={() => setShowApplyModal(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <View style={{
-            backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
             paddingHorizontal: 20, paddingTop: 20, paddingBottom: 34, maxHeight: '80%',
           }}>
             {/* Handle */}
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#E9ECEF', alignSelf: 'center', marginBottom: 16 }} />
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 }} />
 
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name="send" size={20} color="#6C5CE7" />
-                <Text style={{ fontSize: 18, fontWeight: '800', color: '#2D3436' }}>Postuler avec EDGE</Text>
+                <Ionicons name="send" size={20} color={colors.primary} />
+                <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground }}>{t('jobApplyModalTitle')}</Text>
               </View>
               <TouchableOpacity onPress={() => setShowApplyModal(false)}>
-                <Ionicons name="close" size={24} color="#868E96" />
+                <Ionicons name="close" size={24} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Job Summary */}
               <View style={{
-                backgroundColor: '#F8F9FA', borderRadius: 16, padding: 14, marginBottom: 14,
-                borderWidth: 1, borderColor: '#E9ECEF',
+                backgroundColor: colors.background, borderRadius: 16, padding: 14, marginBottom: 14,
+                borderWidth: 1, borderColor: colors.border,
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#F0EEFF', justifyContent: 'center', alignItems: 'center' }}>
-                    <Ionicons name="business" size={20} color="#6C5CE7" />
+                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="business" size={20} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436' }} numberOfLines={2}>{job.title}</Text>
-                    <Text style={{ fontSize: 13, color: '#868E96', marginTop: 2 }}>{job.company?.name ?? 'Entreprise'}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground }} numberOfLines={2}>{job.title}</Text>
+                    <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 2 }}>{job.company?.name ?? t('jobCompanyFallback')}</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <Ionicons name="location-outline" size={12} color="#868E96" />
-                        <Text style={{ fontSize: 11, color: '#868E96' }}>{job.location}</Text>
+                        <Ionicons name="location-outline" size={12} color={colors.mutedForeground} />
+                        <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{job.location}</Text>
                       </View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <Ionicons name="briefcase-outline" size={12} color="#868E96" />
-                        <Text style={{ fontSize: 11, color: '#868E96' }}>{getContractLabel(job.contractType)}</Text>
+                        <Ionicons name="briefcase-outline" size={12} color={colors.mutedForeground} />
+                        <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{getContractLabel(job.contractType, t)}</Text>
                       </View>
                     </View>
                   </View>
@@ -814,43 +834,43 @@ export default function JobDetailScreen() {
 
               {/* Cover Letter Toggle */}
               <View style={{
-                backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 14,
-                borderWidth: 1, borderColor: '#E9ECEF',
+                backgroundColor: colors.card, borderRadius: 16, padding: 14, marginBottom: 14,
+                borderWidth: 1, borderColor: colors.border,
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Ionicons name="document-text" size={18} color="#6C5CE7" />
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#2D3436' }}>Lettre de motivation IA</Text>
+                    <Ionicons name="document-text" size={18} color={colors.primary} />
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>{t('jobCoverLetterAI')}</Text>
                   </View>
                   <Switch
                     value={includeCoverLetter}
                     onValueChange={setIncludeCoverLetter}
-                    trackColor={{ false: '#E9ECEF', true: '#6C5CE780' }}
-                    thumbColor={includeCoverLetter ? '#6C5CE7' : '#CED4DA'}
+                    trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+                    thumbColor={includeCoverLetter ? colors.primary : '#CED4DA'}
                   />
                 </View>
                 {includeCoverLetter && (
                   <View style={{ marginTop: 10 }}>
                     {applyCoverLetterLoading ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <ActivityIndicator size="small" color="#6C5CE7" />
-                        <Text style={{ fontSize: 12, color: '#6C5CE7' }}>EDGE rédige ta lettre...</Text>
+                        <ActivityIndicator size="small" color={colors.primary} />
+                        <Text style={{ fontSize: 12, color: colors.primary }}>{t('jobEdgeWriting')}</Text>
                       </View>
                     ) : applyCoverLetter ? (
                       <View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-                          <Ionicons name="checkmark-circle" size={14} color="#00B894" />
-                          <Text style={{ fontSize: 12, color: '#00B894', fontWeight: '600' }}>Lettre prête à envoyer</Text>
+                          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                          <Text style={{ fontSize: 12, color: colors.success, fontWeight: '600' }}>{t('jobLetterReady')}</Text>
                         </View>
-                        <View style={{ backgroundColor: '#F8F9FA', borderRadius: 10, padding: 10, maxHeight: 100 }}>
-                          <Text style={{ fontSize: 11, color: '#495057', lineHeight: 16 }} numberOfLines={5}>
+                        <View style={{ backgroundColor: colors.background, borderRadius: 10, padding: 10, maxHeight: 100 }}>
+                          <Text style={{ fontSize: 11, color: colors.mutedForeground, lineHeight: 16 }} numberOfLines={5}>
                             {applyCoverLetter}
                           </Text>
                         </View>
                       </View>
                     ) : (
-                      <Text style={{ fontSize: 12, color: '#868E96' }}>
-                        La lettre sera générée et jointe à ta candidature.
+                      <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
+                        {t('jobLetterWillGenerate')}
                       </Text>
                     )}
                   </View>
@@ -859,11 +879,11 @@ export default function JobDetailScreen() {
 
               {/* EDGE tip */}
               <View style={{
-                flexDirection: 'row', gap: 10, backgroundColor: '#F0EEFF', borderRadius: 12, padding: 12, marginBottom: 14,
+                flexDirection: 'row', gap: 10, backgroundColor: colors.primaryLight, borderRadius: 12, padding: 12, marginBottom: 14,
               }}>
-                <Ionicons name="sparkles" size={16} color="#6C5CE7" style={{ marginTop: 1 }} />
-                <Text style={{ flex: 1, fontSize: 12, color: '#6C5CE7', lineHeight: 18 }}>
-                  EDGE enregistre ta candidature et te notifiera des mises à jour. Suis l'avancement depuis ton tableau de bord.
+                <Ionicons name="sparkles" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 12, color: colors.primary, lineHeight: 18 }}>
+                  {t('jobEdgeTip')}
                 </Text>
               </View>
 
@@ -882,30 +902,30 @@ export default function JobDetailScreen() {
                 disabled={applyMutation.isPending}
                 style={{
                   flex: 1, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
-                  borderWidth: 1.5, borderColor: '#E9ECEF', backgroundColor: '#fff',
+                  borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card,
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#868E96' }}>Annuler</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.mutedForeground }}>{t('jobCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => applyMutation.mutate()}
                 disabled={applyMutation.isPending || applied}
                 style={{
                   flex: 2, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
-                  backgroundColor: '#6C5CE7', opacity: applyMutation.isPending ? 0.7 : 1,
+                  backgroundColor: colors.primary, opacity: applyMutation.isPending ? 0.7 : 1,
                   flexDirection: 'row', gap: 8,
-                  shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+                  shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
                 }}
               >
                 {applyMutation.isPending ? (
                   <>
                     <ActivityIndicator size="small" color="#fff" />
-                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Envoi...</Text>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t('jobSending')}</Text>
                   </>
                 ) : (
                   <>
                     <Ionicons name="send" size={16} color="#fff" />
-                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Confirmer</Text>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t('jobConfirm')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -919,7 +939,7 @@ export default function JobDetailScreen() {
 
 // ─── Sub-components ──────────────────────────────────────────────
 
-function DescriptionView({ text }: { text: string }) {
+function DescriptionView({ text, colors }: { text: string; colors: any }) {
   const paragraphs = text.split(/\n+/).filter(Boolean);
   return (
     <View style={{ gap: 8 }}>
@@ -930,8 +950,8 @@ function DescriptionView({ text }: { text: string }) {
         if (/^[•\-\*·∙◦▪▸►]/.test(trimmed)) {
           return (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingLeft: 4 }}>
-              <Text style={{ color: '#6C5CE7', fontSize: 14, marginTop: 2 }}>•</Text>
-              <Text style={{ flex: 1, fontSize: 14, color: '#495057', lineHeight: 22 }}>
+              <Text style={{ color: colors.primary, fontSize: 14, marginTop: 2 }}>•</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: colors.mutedForeground, lineHeight: 22 }}>
                 {trimmed.replace(/^[•\-\*·∙◦▪▸►]\s*/, '')}
               </Text>
             </View>
@@ -940,24 +960,24 @@ function DescriptionView({ text }: { text: string }) {
         // Short lines that look like headers
         if (trimmed.length < 80 && /^[A-ZÀ-Ú]/.test(trimmed) && !trimmed.endsWith('.') && !trimmed.endsWith(',') && trimmed.split(' ').length <= 10) {
           return (
-            <Text key={i} style={{ fontSize: 15, fontWeight: '700', color: '#2D3436', marginTop: 8 }}>
+            <Text key={i} style={{ fontSize: 15, fontWeight: '700', color: colors.foreground, marginTop: 8 }}>
               {trimmed}
             </Text>
           );
         }
         return (
-          <Text key={i} style={{ fontSize: 14, color: '#495057', lineHeight: 22 }}>{trimmed}</Text>
+          <Text key={i} style={{ fontSize: 14, color: colors.mutedForeground, lineHeight: 22 }}>{trimmed}</Text>
         );
       })}
     </View>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, colors }: { title: string; children: React.ReactNode; colors: any }) {
   return (
     <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-      <Text style={{ fontSize: 16, fontWeight: '800', color: '#2D3436', marginBottom: 12 }}>{title}</Text>
-      <View style={{ borderTopWidth: 1, borderTopColor: '#F1F3F5', paddingTop: 12 }}>{children}</View>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.foreground, marginBottom: 12 }}>{title}</Text>
+      <View style={{ borderTopWidth: 1, borderTopColor: colors.muted, paddingTop: 12 }}>{children}</View>
     </View>
   );
 }
@@ -975,13 +995,13 @@ function InfoBadge({ icon, text }: { icon: string; text: string }) {
   );
 }
 
-function QuickInfoItem({ icon, label, value }: { icon: string; label: string; value: string }) {
+function QuickInfoItem({ icon, label, value, colors }: { icon: string; label: string; value: string; colors: any }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, width: '47%', padding: 10, backgroundColor: '#F8F9FA', borderRadius: 12 }}>
-      <Ionicons name={icon as any} size={18} color="#6C5CE7" />
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, width: '47%', padding: 10, backgroundColor: colors.background, borderRadius: 12 }}>
+      <Ionicons name={icon as any} size={18} color={colors.primary} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 11, color: '#868E96' }}>{label}</Text>
-        <Text style={{ fontSize: 13, fontWeight: '600', color: '#2D3436' }} numberOfLines={1}>{value}</Text>
+        <Text style={{ fontSize: 11, color: colors.mutedForeground }}>{label}</Text>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>{value}</Text>
       </View>
     </View>
   );
