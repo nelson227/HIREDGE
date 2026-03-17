@@ -135,11 +135,16 @@ const jobRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /jobs/:id/cover-letter — generate tailored cover letter
   fastify.get('/:id/cover-letter', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const { regenerate } = request.query as { regenerate?: string };
     const userId = request.user.id;
 
     const cacheKey = `coverletter:${userId}:${id}`;
-    const cached = await redis.get(cacheKey);
-    if (cached) return reply.send({ success: true, data: JSON.parse(cached) });
+    if (regenerate === 'true') {
+      await redis.del(cacheKey);
+    } else {
+      const cached = await redis.get(cacheKey);
+      if (cached) return reply.send({ success: true, data: JSON.parse(cached) });
+    }
 
     const job = await jobService.getJobById(id, userId);
     const profile = await prisma.candidateProfile.findUnique({

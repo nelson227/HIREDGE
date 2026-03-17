@@ -167,7 +167,7 @@ export default function JobDetailPage() {
     setCoverLetterLoading(true)
     setCoverLetterError(null)
     try {
-      const res = await jobsApi.getCoverLetter(jobId)
+      const res = await jobsApi.getCoverLetter(jobId, true)
       if (res.data?.data) setCoverLetter(res.data.data)
     } catch (err: any) {
       setCoverLetterError(err.response?.data?.error?.message || "Erreur lors de la génération")

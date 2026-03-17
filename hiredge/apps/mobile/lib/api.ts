@@ -154,7 +154,7 @@ export const jobsApi = {
   getRecommended: (limit?: number) =>
     api.get('/jobs/recommended', { params: { limit } }),
   getById: (id: string) => api.get(`/jobs/${id}`),
-  getCoverLetter: (id: string) => api.get(`/jobs/${id}/cover-letter`),
+  getCoverLetter: (id: string, regenerate?: boolean) => api.get(`/jobs/${id}/cover-letter`, { params: regenerate ? { regenerate: 'true' } : undefined }),
   getCompanyAnalysis: (id: string) => api.get(`/jobs/${id}/company-analysis`),
 };
 

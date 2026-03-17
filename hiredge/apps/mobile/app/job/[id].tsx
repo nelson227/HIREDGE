@@ -155,7 +155,7 @@ export default function JobDetailScreen() {
     setCoverLetterLoading(true);
     setCoverLetterError(null);
     try {
-      const res = await jobsApi.getCoverLetter(id!);
+      const res = await jobsApi.getCoverLetter(id!, true);
       if (res.data?.data) setCoverLetter(res.data.data);
     } catch (err: any) {
       setCoverLetterError(err.response?.data?.error?.message || t('jobGenerationError'));
