@@ -56,7 +56,7 @@ COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/share
 
 # Startup script: run prisma db push then start server
 COPY start.sh ./start.sh
-RUN chmod +x start.sh
+RUN chmod +x start.sh && sed -i 's/\r$//' start.sh
 
 # Prisma needs a writable home for its cache
 ENV HOME=/tmp

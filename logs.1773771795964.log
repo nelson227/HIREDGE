@@ -1,0 +1,105 @@
+2026-03-17T17:16:34.171959649Z [inf]  
+2026-03-17T17:16:36.792127313Z [inf]  [35m[Region: us-west1][0m
+2026-03-17T17:16:36.802619666Z [inf]  [35m=========================
+2026-03-17T17:16:36.802646340Z [inf]  Using Detected Dockerfile
+2026-03-17T17:16:36.802650015Z [inf]  =========================
+2026-03-17T17:16:36.802653598Z [inf]  [0m
+2026-03-17T17:16:36.802667017Z [inf]  context: h88w-hJsE
+2026-03-17T17:16:36.961493908Z [inf]  [internal] load build definition from Dockerfile
+2026-03-17T17:16:36.961534453Z [inf]  [internal] load build definition from Dockerfile
+2026-03-17T17:16:36.961556281Z [inf]  [internal] load build definition from Dockerfile
+2026-03-17T17:16:36.967941735Z [inf]  [internal] load build definition from Dockerfile
+2026-03-17T17:16:36.970157014Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-17T17:16:37.203476787Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-17T17:16:37.203691877Z [inf]  [internal] load .dockerignore
+2026-03-17T17:16:37.203749417Z [inf]  [internal] load .dockerignore
+2026-03-17T17:16:37.204214519Z [inf]  [internal] load .dockerignore
+2026-03-17T17:16:37.209663774Z [inf]  [internal] load .dockerignore
+2026-03-17T17:16:37.216931896Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-17T17:16:37.216965973Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-17T17:16:37.216978991Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-17T17:16:37.216986533Z [inf]  [internal] load build context
+2026-03-17T17:16:37.216992362Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-17T17:16:37.216998827Z [inf]  [deps 4/4] RUN npm ci
+2026-03-17T17:16:37.217010830Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-17T17:16:37.217020777Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-17T17:16:37.217026121Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-17T17:16:37.217031801Z [inf]  [base 3/3] WORKDIR /app
+2026-03-17T17:16:37.217042822Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-17T17:16:37.217048482Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-17T17:16:37.217055294Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-17T17:16:37.217061868Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-17T17:16:37.217067036Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-17T17:16:37.217079475Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-17T17:16:37.217085601Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-17T17:16:37.217091067Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-17T17:16:37.217132531Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-17T17:16:37.217139734Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-17T17:16:37.217165345Z [inf]  [runner 14/14] RUN chmod +x start.sh
+2026-03-17T17:16:37.217181551Z [inf]  [runner 13/14] COPY start.sh ./start.sh
+2026-03-17T17:16:37.217191442Z [inf]  [runner 12/14] COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
+2026-03-17T17:16:37.217203207Z [inf]  [runner 11/14] COPY --from=shared-build /app/packages/shared ./packages/shared
+2026-03-17T17:16:37.217208735Z [inf]  [runner 10/14] COPY --from=api-build /app/apps/api ./apps/api
+2026-03-17T17:16:37.217214096Z [inf]  [runner  9/14] COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
+2026-03-17T17:16:37.217219375Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-17T17:16:37.217224762Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-17T17:16:37.217235234Z [inf]  [internal] load build context
+2026-03-17T17:16:37.217244819Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-17T17:16:37.222290972Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-17T17:16:37.223851848Z [inf]  [internal] load build context
+2026-03-17T17:16:37.232982568Z [inf]  [internal] load build context
+2026-03-17T17:16:37.239995551Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-17T17:16:37.240020266Z [inf]  [base 3/3] WORKDIR /app
+2026-03-17T17:16:37.240032091Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-17T17:16:37.240039332Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-17T17:16:37.240047048Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-17T17:16:37.240054117Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-17T17:16:37.240060711Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-17T17:16:37.240069028Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-17T17:16:37.240075155Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-17T17:16:37.240092212Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-17T17:16:37.240100899Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-17T17:16:37.240124722Z [inf]  [deps 4/4] RUN npm ci
+2026-03-17T17:16:37.240131704Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-17T17:16:37.240141379Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-17T17:16:37.240147117Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-17T17:16:37.240157717Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-17T17:16:37.240163840Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-17T17:16:37.240169795Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-17T17:16:37.240175557Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-17T17:16:37.240181055Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-17T17:16:37.240187915Z [inf]  [runner  9/14] COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
+2026-03-17T17:16:37.240193655Z [inf]  [runner 10/14] COPY --from=api-build /app/apps/api ./apps/api
+2026-03-17T17:16:37.240209041Z [inf]  [runner 11/14] COPY --from=shared-build /app/packages/shared ./packages/shared
+2026-03-17T17:16:37.240215725Z [inf]  [runner 12/14] COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
+2026-03-17T17:16:37.240223437Z [inf]  [runner 13/14] COPY start.sh ./start.sh
+2026-03-17T17:16:37.240230341Z [inf]  [runner 14/14] RUN chmod +x start.sh
+2026-03-17T17:16:37.240691187Z [inf]  exporting to docker image format
+2026-03-17T17:16:37.240704711Z [inf]  exporting to image
+2026-03-17T17:16:37.446957525Z [inf]  [auth] sharing credentials for production-us-west2.railway-registry.com
+2026-03-17T17:16:37.447012112Z [inf]  [auth] sharing credentials for production-us-west2.railway-registry.com
+2026-03-17T17:16:38.187444184Z [inf]  importing to docker
+2026-03-17T17:16:46.137902183Z [inf]  importing to docker
+2026-03-17T17:16:46.173841338Z [inf]  [92mBuild time: 9.37 seconds[0m
+2026-03-17T17:16:56.271201002Z [inf]  
+2026-03-17T17:16:56.271204393Z [inf]  [35m====================
+Starting Healthcheck
+====================
+[0m
+2026-03-17T17:16:56.271205272Z [inf]  [37mPath: /health[0m
+2026-03-17T17:16:56.271206035Z [inf]  [37mRetry window: 5m0s[0m
+2026-03-17T17:16:56.271206918Z [inf]  
+2026-03-17T17:17:06.412466059Z [inf]  [93mAttempt #1 failed with service unavailable. Continuing to retry for 4m49s[0m
+2026-03-17T17:17:17.472985564Z [inf]  [93mAttempt #2 failed with service unavailable. Continuing to retry for 4m38s[0m
+2026-03-17T17:17:29.510791317Z [inf]  [93mAttempt #3 failed with service unavailable. Continuing to retry for 4m26s[0m
+2026-03-17T17:17:43.551456671Z [inf]  [93mAttempt #4 failed with service unavailable. Continuing to retry for 4m12s[0m
+2026-03-17T17:18:01.589117114Z [inf]  [93mAttempt #5 failed with service unavailable. Continuing to retry for 3m54s[0m
+2026-03-17T17:18:27.673666395Z [inf]  [93mAttempt #6 failed with service unavailable. Continuing to retry for 3m28s[0m
+2026-03-17T17:19:07.715724481Z [inf]  [93mAttempt #7 failed with service unavailable. Continuing to retry for 2m48s[0m
+2026-03-17T17:19:47.770534640Z [inf]  [93mAttempt #8 failed with service unavailable. Continuing to retry for 2m8s[0m
+2026-03-17T17:20:27.810082532Z [inf]  [93mAttempt #9 failed with service unavailable. Continuing to retry for 1m28s[0m
+2026-03-17T17:21:07.897404809Z [inf]  [93mAttempt #10 failed with service unavailable. Continuing to retry for 48s[0m
+2026-03-17T17:21:47.952907813Z [inf]  [93mAttempt #11 failed with service unavailable. Continuing to retry for 8s[0m
+2026-03-17T17:21:48.051681717Z [inf]  
+2026-03-17T17:21:48.051684501Z [inf]  [91m1/1 replicas never became healthy![0m
+2026-03-17T17:21:48.051685271Z [inf]  [91mHealthcheck failed![0m
