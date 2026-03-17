@@ -240,9 +240,7 @@ export const translations = {
     interviewType: "Type d'entretien",
     interviewTypeHR: 'RH',
     interviewTypeTech: 'Technique',
-    interviewTypeBehavioral: 'Comportemental',
     interviewTypeCaseStudy: 'Étude de cas',
-    interviewStart: 'Démarrer la simulation',
     interviewInProgress: 'En cours',
     interviewCompleted: 'Terminée',
     interviewScore: 'Score',
@@ -291,7 +289,6 @@ export const translations = {
     squadError: 'Erreur',
 
     // ── Éclaireurs (Scouts) ──
-    scoutsTitle: 'Éclaireurs',
     scoutsDescription: 'Des employés vous partagent des infos internes anonymement',
     scoutsNoScouts: 'Aucun éclaireur disponible',
     scoutsAsk: 'Poser une question',
@@ -498,8 +495,6 @@ export const translations = {
     settingsContact: 'Nous contacter',
 
     // ── Notifications page ──
-    notificationsTitle: 'Notifications',
-    notificationsMarkAllRead: 'Tout marquer lu',
     notificationsNone: 'Aucune notification',
     notificationsJustNow: 'À l\'instant',
     notificationsMinAgo: 'Il y a {n} min',
@@ -1103,9 +1098,7 @@ export const translations = {
     interviewType: 'Interview type',
     interviewTypeHR: 'HR',
     interviewTypeTech: 'Technical',
-    interviewTypeBehavioral: 'Behavioral',
     interviewTypeCaseStudy: 'Case Study',
-    interviewStart: 'Start simulation',
     interviewInProgress: 'In progress',
     interviewCompleted: 'Completed',
     interviewScore: 'Score',
@@ -1154,7 +1147,6 @@ export const translations = {
     squadError: 'Error',
 
     // ── Scouts ──
-    scoutsTitle: 'Scouts',
     scoutsDescription: 'Employees share anonymous insider info with you',
     scoutsNoScouts: 'No scouts available',
     scoutsAsk: 'Ask a question',
@@ -1361,8 +1353,6 @@ export const translations = {
     settingsBillingComingSoon: 'Subscription and payment management will be available soon. You currently enjoy free access.',
 
     // ── Notification settings ──
-    notificationsTitle: 'Notifications',
-    notificationsMarkAllRead: 'Mark all read',
     notificationsNone: 'No notifications',
     notificationsJustNow: 'Just now',
     notificationsMinAgo: '{n} min ago',
@@ -1958,9 +1948,7 @@ export const translations = {
     interviewType: 'Interview-Typ',
     interviewTypeHR: 'HR',
     interviewTypeTech: 'Technisch',
-    interviewTypeBehavioral: 'Verhaltensbasiert',
     interviewTypeCaseStudy: 'Fallstudie',
-    interviewStart: 'Simulation starten',
     interviewInProgress: 'Läuft',
     interviewCompleted: 'Abgeschlossen',
     interviewScore: 'Punktzahl',
@@ -2007,7 +1995,6 @@ export const translations = {
     squadNoEvents: 'Keine Termine',
     squadError: 'Fehler',
 
-    scoutsTitle: 'Scouts',
     scoutsDescription: 'Mitarbeiter teilen anonyme Insiderinformationen mit Ihnen',
     scoutsNoScouts: 'Keine Scouts verfügbar',
     scoutsAsk: 'Eine Frage stellen',
@@ -2210,8 +2197,6 @@ export const translations = {
     settingsPasswordError: 'Fehler beim Ändern des Passworts',
     settingsBillingComingSoon: 'Abonnement- und Zahlungsverwaltung wird bald verfügbar sein. Sie genießen derzeit kostenlosen Zugang.',
 
-    notificationsTitle: 'Benachrichtigungen',
-    notificationsMarkAllRead: 'Alle als gelesen markieren',
     notificationsNone: 'Keine Benachrichtigungen',
     notificationsJustNow: 'Gerade eben',
     notificationsMinAgo: 'Vor {n} Min.',
@@ -2800,9 +2785,7 @@ export const translations = {
     interviewType: 'Tipo de entrevista',
     interviewTypeHR: 'RRHH',
     interviewTypeTech: 'Técnica',
-    interviewTypeBehavioral: 'Comportamental',
     interviewTypeCaseStudy: 'Caso de estudio',
-    interviewStart: 'Iniciar simulación',
     interviewInProgress: 'En curso',
     interviewCompleted: 'Completada',
     interviewScore: 'Puntuación',
@@ -2849,7 +2832,6 @@ export const translations = {
     squadNoEvents: 'Sin eventos',
     squadError: 'Error',
 
-    scoutsTitle: 'Exploradores',
     scoutsDescription: 'Los empleados comparten información interna anónimamente contigo',
     scoutsNoScouts: 'No hay exploradores disponibles',
     scoutsAsk: 'Hacer una pregunta',
@@ -3052,8 +3034,6 @@ export const translations = {
     settingsPasswordError: 'Error al cambiar la contraseña',
     settingsBillingComingSoon: 'La gestión de suscripciones y pagos estará disponible próximamente. Actualmente disfrutas de acceso gratuito.',
 
-    notificationsTitle: 'Notificaciones',
-    notificationsMarkAllRead: 'Marcar todo leído',
     notificationsNone: 'Sin notificaciones',
     notificationsJustNow: 'Ahora mismo',
     notificationsMinAgo: 'Hace {n} min',
