@@ -1,6 +1,5 @@
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
-import { APPLICATION_LIMITS } from '@hiredge/shared';
 import { squadMatchingService } from './squad-matching.service';
 
 export class ApplicationService {
@@ -13,24 +12,6 @@ export class ApplicationService {
     // Check subscription limits
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AppError('USER_NOT_FOUND', 'Utilisateur introuvable', 404);
-
-    if (user.subscriptionTier === 'FREE') {
-      const thisMonth = new Date();
-      thisMonth.setDate(1);
-      thisMonth.setHours(0, 0, 0, 0);
-
-      const count = await prisma.application.count({
-        where: { userId: userId, createdAt: { gte: thisMonth } },
-      });
-
-      if (count >= APPLICATION_LIMITS.FREE_MONTHLY) {
-        throw new AppError(
-          'LIMIT_REACHED',
-          `Limite de ${APPLICATION_LIMITS.FREE_MONTHLY} candidatures/mois atteinte. Passez en Premium pour un accès illimité.`,
-          403,
-        );
-      }
-    }
 
     // Check if already applied
     const existing = await prisma.application.findFirst({
