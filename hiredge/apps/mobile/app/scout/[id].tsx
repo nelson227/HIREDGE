@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { scoutsApi } from '../../lib/api';
 
 export default function ScoutConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -14,7 +14,7 @@ export default function ScoutConversationScreen() {
   const { data: conversation } = useQuery({
     queryKey: ['scoutConversation', id],
     queryFn: async () => {
-      const { data } = await api.get(`/scouts/conversations/${id}`);
+      const { data } = await scoutsApi.getConversation(id!);
       return data.data;
     },
   });
@@ -22,7 +22,7 @@ export default function ScoutConversationScreen() {
   const { data: messages, refetch } = useQuery({
     queryKey: ['scoutMessages', id],
     queryFn: async () => {
-      const { data } = await api.get(`/scouts/conversations/${id}/messages`);
+      const { data } = await scoutsApi.getMessages(id!);
       return data.data;
     },
     refetchInterval: 5000,
@@ -30,7 +30,7 @@ export default function ScoutConversationScreen() {
 
   const sendMutation = useMutation({
     mutationFn: async (text: string) => {
-      const { data } = await api.post(`/scouts/conversations/${id}/messages`, { content: text });
+      const { data } = await scoutsApi.sendMessage(id!, text);
       return data.data;
     },
     onSuccess: () => {

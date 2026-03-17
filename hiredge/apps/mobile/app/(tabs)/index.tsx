@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { jobsApi, notificationsApi, applicationsApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
 
 export default function HomeScreen() {
@@ -12,7 +12,7 @@ export default function HomeScreen() {
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['applicationStats'],
     queryFn: async () => {
-      const { data } = await api.get('/applications/stats');
+      const { data } = await applicationsApi.stats();
       return data.data;
     },
   });
@@ -20,7 +20,7 @@ export default function HomeScreen() {
   const { data: recommended, refetch: refetchJobs } = useQuery({
     queryKey: ['recommendedJobs'],
     queryFn: async () => {
-      const { data } = await api.get('/jobs/recommended?limit=5');
+      const { data } = await jobsApi.getRecommended(5);
       return data.data;
     },
   });
@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const { data: notifications } = useQuery({
     queryKey: ['notifCount'],
     queryFn: async () => {
-      const { data } = await api.get('/notifications/count');
+      const { data } = await notificationsApi.count();
       return data.data;
     },
   });

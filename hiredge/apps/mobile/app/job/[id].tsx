@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'rea
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { jobsApi, applicationsApi } from '../../lib/api';
 
 // Nettoie les descriptions avec patterns anti-spam (RemoteOK, etc.)
 function cleanDescription(text: string): string {
@@ -22,7 +22,7 @@ export default function JobDetailScreen() {
   const { data: job, isLoading } = useQuery({
     queryKey: ['job', id],
     queryFn: async () => {
-      const { data } = await api.get(`/jobs/${id}`);
+      const { data } = await jobsApi.getById(id!);
       return data.data;
     },
     enabled: !!id,
@@ -30,7 +30,7 @@ export default function JobDetailScreen() {
 
   const applyMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/applications', { jobId: id });
+      await applicationsApi.create({ jobId: id! });
     },
     onSuccess: () => {
       router.push('/(tabs)');

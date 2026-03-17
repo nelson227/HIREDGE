@@ -2,7 +2,7 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import { notificationsApi } from '../lib/api';
 
 export default function NotificationsScreen() {
   const queryClient = useQueryClient();
@@ -10,14 +10,14 @@ export default function NotificationsScreen() {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const { data } = await api.get('/notifications');
+      const { data } = await notificationsApi.list();
       return data.data;
     },
   });
 
   const markAllMutation = useMutation({
     mutationFn: async () => {
-      await api.patch('/notifications/read-all');
+      await notificationsApi.markAllRead();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -27,7 +27,7 @@ export default function NotificationsScreen() {
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.patch(`/notifications/${id}/read`);
+      await notificationsApi.markRead(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });

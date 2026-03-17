@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import { profileApi } from '../lib/api';
 
 export default function EditProfileScreen() {
   const queryClient = useQueryClient();
@@ -11,7 +11,7 @@ export default function EditProfileScreen() {
   const { data: profile } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data } = await api.get('/profile');
+      const { data } = await profileApi.get();
       return data.data;
     },
   });
@@ -36,7 +36,7 @@ export default function EditProfileScreen() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      await api.patch('/profile', {
+      await profileApi.update({
         title: title.trim() || undefined,
         bio: bio.trim() || undefined,
         preferredLocations: locations.split(',').map((l) => l.trim()).filter(Boolean),

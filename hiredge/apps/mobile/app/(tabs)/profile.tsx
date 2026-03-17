@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/auth.store';
-import api from '../../lib/api';
+import { profileApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
 
 export default function ProfileScreen() {
@@ -14,7 +14,7 @@ export default function ProfileScreen() {
   const { data: profile, refetch } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data } = await api.get('/profile');
+      const { data } = await profileApi.get();
       return data.data;
     },
   });

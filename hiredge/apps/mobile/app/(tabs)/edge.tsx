@@ -2,7 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { edgeApi } from '../../lib/api';
 import { type CVData } from '../../lib/document-generator';
 import { colors } from '../../lib/theme';
 
@@ -83,7 +83,7 @@ export default function EdgeScreen() {
   const { data: conversations } = useQuery({
     queryKey: ['edgeConversations'],
     queryFn: async () => {
-      const { data } = await api.get('/edge/conversations');
+      const { data } = await edgeApi.getConversations();
       return data.data as Conversation[];
     },
   });
@@ -92,10 +92,7 @@ export default function EdgeScreen() {
   const { data: history } = useQuery({
     queryKey: ['edgeHistory', activeConversationId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set('limit', '50');
-      if (activeConversationId) params.set('conversationId', activeConversationId);
-      const { data } = await api.get(`/edge/history?${params}`);
+      const { data } = await edgeApi.getHistory(activeConversationId ?? undefined, undefined, 50);
       return data.data as ChatMessage[];
     },
   });
@@ -120,7 +117,7 @@ export default function EdgeScreen() {
       const body: any = { message: finalMessage };
       if (imageBase64) body.imageBase64 = imageBase64;
       if (activeConversationId) body.conversationId = activeConversationId;
-      const { data } = await api.post('/edge/chat', body);
+      const { data } = await edgeApi.chat(finalMessage, activeConversationId ?? undefined, imageBase64);
       return { ...data.data, _attachment: payload.attachment };
     },
     onMutate: async (payload) => {
@@ -175,7 +172,7 @@ export default function EdgeScreen() {
   // ─── Conversation management ────────────────────────────
   const handleNewConversation = useCallback(async () => {
     try {
-      const { data } = await api.post('/edge/conversations');
+      const { data } = await edgeApi.createConversation();
       const newConv = data.data;
       setActiveConversationId(newConv.id);
       queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
@@ -196,7 +193,7 @@ export default function EdgeScreen() {
 
   const handleDeleteConversation = useCallback(async (convId: string) => {
     try {
-      await api.delete(`/edge/conversations/${encodeURIComponent(convId)}`);
+      await edgeApi.deleteConversation(convId);
       queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
       queryClient.removeQueries({ queryKey: ['edgeHistory', convId] });
       if (activeConversationId === convId) {
@@ -214,7 +211,7 @@ export default function EdgeScreen() {
 
   const handleRenameConversation = useCallback(async (convId: string, title: string) => {
     try {
-      await api.patch(`/edge/conversations/${encodeURIComponent(convId)}`, { title });
+      await edgeApi.renameConversation(convId, title);
       queryClient.invalidateQueries({ queryKey: ['edgeConversations'] });
       setEditingConvId(null);
     } catch { /* silent */ }

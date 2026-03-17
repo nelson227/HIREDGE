@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { interviewsApi } from '../../lib/api';
 
 const INTERVIEW_TYPES = [
   { key: 'RH', label: 'Entretien RH', icon: '👤', desc: 'Motivation, parcours, soft skills' },
@@ -21,15 +21,15 @@ export default function InterviewScreen() {
   const { data: history } = useQuery({
     queryKey: ['interviewHistory'],
     queryFn: async () => {
-      const { data } = await api.get('/interviews/history');
+      const { data } = await interviewsApi.getHistory();
       return data.data;
     },
   });
 
   const startMutation = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post('/interviews/start', {
-        type: selectedType,
+      const { data } = await interviewsApi.start({
+        type: selectedType!,
         company: company || undefined,
         jobTitle: jobTitle || undefined,
       });

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { interviewsApi } from '../../lib/api';
 
 export default function InterviewSessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,7 +13,7 @@ export default function InterviewSessionScreen() {
   const { data: simulation, isLoading, refetch } = useQuery({
     queryKey: ['simulation', id],
     queryFn: async () => {
-      const { data } = await api.get(`/interviews/${id}`);
+      const { data } = await interviewsApi.getById(id!);
       return data.data;
     },
     enabled: !!id,
@@ -21,7 +21,7 @@ export default function InterviewSessionScreen() {
 
   const respondMutation = useMutation({
     mutationFn: async (message: string) => {
-      const { data } = await api.post(`/interviews/${id}/respond`, { message });
+      const { data } = await interviewsApi.respond(id!, message);
       return data.data;
     },
     onSuccess: () => refetch(),

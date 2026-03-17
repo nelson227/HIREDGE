@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import api, { scoutsApi } from '../lib/api';
 
 export default function ScoutsScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -11,7 +11,7 @@ export default function ScoutsScreen() {
   const { data: conversations, refetch } = useQuery({
     queryKey: ['scoutConversations'],
     queryFn: async () => {
-      const { data } = await api.get('/scouts/conversations');
+      const { data } = await scoutsApi.getConversations();
       return data.data;
     },
   });

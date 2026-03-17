@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { storage } from './storage';
 
 function getSocketUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) {
@@ -14,22 +14,38 @@ function getSocketUrl(): string {
   return 'http://localhost:3000';
 }
 
-const API_URL = getSocketUrl();
+const SOCKET_URL = getSocketUrl();
 
 let socket: Socket | null = null;
 
 export async function connectSocket(): Promise<Socket> {
   if (socket?.connected) return socket;
 
-  const token = await SecureStore.getItemAsync('accessToken');
+  // Clean up old disconnected socket if any
+  if (socket) {
+    socket.removeAllListeners();
+    socket.disconnect();
+    socket = null;
+  }
+
+  const token = await storage.getItem('accessToken');
   if (!token) throw new Error('No auth token');
 
-  socket = io(API_URL, {
+  socket = io(SOCKET_URL, {
     auth: { token },
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
+  });
+
+  // On reconnect attempts, always use the latest token
+  socket.on('reconnect_attempt', async () => {
+    const freshToken = await storage.getItem('accessToken');
+    if (freshToken && socket) {
+      socket.auth = { token: freshToken };
+    }
   });
 
   return new Promise((resolve, reject) => {
@@ -42,8 +58,19 @@ export function getSocket(): Socket | null {
   return socket;
 }
 
+// Update socket auth token (call after token refresh)
+export function updateSocketToken(newToken: string) {
+  if (socket) {
+    socket.auth = { token: newToken };
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }
+}
+
 export function disconnectSocket() {
   if (socket) {
+    socket.removeAllListeners();
     socket.disconnect();
     socket = null;
   }

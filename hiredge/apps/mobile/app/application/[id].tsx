@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { applicationsApi } from '../../lib/api';
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Brouillon', APPLIED: 'Envoyée', VIEWED: 'Consultée',
@@ -22,13 +22,13 @@ export default function ApplicationDetailScreen() {
   const { data: application, isLoading } = useQuery({
     queryKey: ['application', id],
     queryFn: async () => {
-      const { data } = await api.get(`/applications/${id}`);
+      const { data } = await applicationsApi.getById(id!);
       return data.data;
     },
   });
 
   const withdrawMutation = useMutation({
-    mutationFn: () => api.patch(`/applications/${id}`, { status: 'REJECTED' }),
+    mutationFn: () => applicationsApi.updateStatus(id!, 'REJECTED'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', id] });
       queryClient.invalidateQueries({ queryKey: ['applications'] });

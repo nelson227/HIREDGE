@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import api, { profileApi } from '../lib/api';
 import { colors } from '../lib/theme';
 
 const { width } = Dimensions.get('window');
@@ -33,7 +33,7 @@ export default function OnboardingScreen() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await api.patch('/profile', {
+      await profileApi.update({
         title: form.title || undefined,
         bio: form.bio || undefined,
         preferredLocations: form.locations,
@@ -43,7 +43,7 @@ export default function OnboardingScreen() {
       });
       if (form.skills.length) {
         for (const s of form.skills) {
-          await api.post('/profile/skills', { name: s, level: 3, category: 'TECHNICAL' });
+          await profileApi.addSkill({ name: s, level: '3', yearsOfExperience: undefined });
         }
       }
     },

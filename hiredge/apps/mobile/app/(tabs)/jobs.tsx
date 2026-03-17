@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { jobsApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
 
 // ─── Types des filtres ──────────────────────────────────────────────────────
@@ -93,17 +93,17 @@ export default function JobsScreen() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['jobs', search, filters],
     queryFn: async ({ pageParam = 1 }) => {
-      const params = new URLSearchParams();
-      if (search) params.set('q', search);
-      if (filters.contract) params.set('contract', filters.contract);
-      if (filters.remote) params.set('remote', filters.remote);
-      if (filters.salaryMin) params.set('salaryMin', String(filters.salaryMin));
-      if (filters.experienceLevel) params.set('experienceLevel', filters.experienceLevel);
-      if (filters.postedAfter) params.set('postedAfter', postedAfterDate(filters.postedAfter));
-      if (filters.location) params.set('location', filters.location);
-      params.set('page', String(pageParam));
-      params.set('limit', '20');
-      const { data } = await api.get(`/jobs/search?${params}`);
+      const { data } = await jobsApi.search({
+        q: search || undefined,
+        contract: filters.contract || undefined,
+        remote: (filters.remote as any) || undefined,
+        salaryMin: filters.salaryMin || undefined,
+        experienceLevel: filters.experienceLevel || undefined,
+        postedAfter: filters.postedAfter ? postedAfterDate(filters.postedAfter) : undefined,
+        location: filters.location || undefined,
+        page: pageParam,
+        limit: 20,
+      });
       return data;
     },
     getNextPageParam: (lastPage: any) => {

@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../lib/api';
+import api, { applicationsApi } from '../lib/api';
 
 const STATUS_FILTERS = ['Tous', 'DRAFT', 'APPLIED', 'VIEWED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -32,10 +32,9 @@ export default function ApplicationsScreen() {
   const { data, refetch } = useQuery({
     queryKey: ['applications', filter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filter !== 'Tous') params.set('status', filter);
-      params.set('limit', '50');
-      const { data } = await api.get(`/applications?${params}`);
+      const params: Record<string, string> = { limit: '50' };
+      if (filter !== 'Tous') params.status = filter;
+      const { data } = await applicationsApi.list(params);
       return data.data;
     },
   });
@@ -43,7 +42,7 @@ export default function ApplicationsScreen() {
   const { data: stats } = useQuery({
     queryKey: ['applicationStats'],
     queryFn: async () => {
-      const { data } = await api.get('/applications/stats');
+      const { data } = await applicationsApi.stats();
       return data.data;
     },
   });

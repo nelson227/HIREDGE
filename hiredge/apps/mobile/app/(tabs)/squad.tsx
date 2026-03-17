@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, FlatList } from 'r
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../lib/api';
+import api, { squadApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
 
 function getMemberName(m: any): string {
@@ -17,7 +17,7 @@ export default function SquadScreen() {
   const { data: mySquad, isLoading, refetch } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
-      try { const { data } = await api.get('/squads/mine'); return data.data; } catch { return null; }
+      try { const { data } = await squadApi.getMySquad(); return data.data; } catch { return null; }
     },
   });
 
@@ -42,16 +42,16 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
 
   const { data: available } = useQuery({
     queryKey: ['availableSquads'],
-    queryFn: async () => { const { data } = await api.get('/squads/available'); return data.data; },
+    queryFn: async () => { const { data } = await squadApi.getAvailable(); return data.data; },
   });
 
   const joinMut = useMutation({
-    mutationFn: async (id: string) => { await api.post(`/squads/${id}/join`); },
+    mutationFn: async (id: string) => { await squadApi.joinById(id); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mySquad'] }); onJoined(); },
   });
 
   const createMut = useMutation({
-    mutationFn: async () => { await api.post('/squads', { name, description }); },
+    mutationFn: async () => { await squadApi.create({ name, description }); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mySquad'] }); onJoined(); },
   });
 
@@ -191,14 +191,14 @@ function SquadDetailView({ squad }: { squad: any }) {
   const { data: messages, refetch } = useQuery({
     queryKey: ['squadMessages', squad.id],
     queryFn: async () => {
-      const { data } = await api.get(`/squads/${squad.id}/messages?limit=50`);
+      const { data } = await squadApi.getMessages(squad.id);
       return data.data?.items ?? [];
     },
     refetchInterval: 5000,
   });
 
   const sendMut = useMutation({
-    mutationFn: async (content: string) => { await api.post(`/squads/${squad.id}/messages`, { content }); },
+    mutationFn: async (content: string) => { await squadApi.sendMessage(squad.id, content); },
     onSuccess: () => refetch(),
   });
 
