@@ -89,9 +89,6 @@ export default function LoginPage() {
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
                   Mot de passe
                 </label>
-                <span className="text-sm text-muted-foreground cursor-not-allowed">
-                  Mot de passe oublié ?
-                </span>
               </div>
               <div className="relative">
                 <Input

@@ -6,9 +6,9 @@ import { requireRole } from '../middleware/auth';
 import { AppError } from '../services/auth.service';
 import { env } from '../config/env';
 
-// Admin panel credentials (password is bcrypt-hashed)
-const ADMIN_EMAIL = 'nguemtelekem400@gmail.com';
-const ADMIN_PASSWORD_HASH = '$2a$12$6YbCX7TDWW7.GrnHt4EwaeCpVbd3kFpnI7p7UhfnXYUcp.PRrioHi';
+// Admin panel credentials from environment variables
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /admin/verify-access — Admin panel login (no ADMIN role preHandler)

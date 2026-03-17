@@ -1,12 +1,11 @@
-// HIREDGE Design System — Indigo primary matching reference Next.js app
-// oklch(0.55 0.22 270) ≈ #4F46E5 indigo-600
+// HIREDGE Design System — Purple primary
 
 export const colors = {
-  // Primary palette (indigo)
-  primary: '#4F46E5',
+  // Primary palette
+  primary: '#6C5CE7',
   primaryForeground: '#FFFFFF',
-  primaryLight: 'rgba(79, 70, 229, 0.10)',
-  primaryMedium: 'rgba(79, 70, 229, 0.20)',
+  primaryLight: 'rgba(108, 92, 231, 0.10)',
+  primaryMedium: 'rgba(108, 92, 231, 0.20)',
 
   // Semantic colors
   success: '#22C55E',
@@ -20,7 +19,7 @@ export const colors = {
   destructiveForeground: '#FFFFFF',
 
   // Chart colors
-  chart1: '#4F46E5',
+  chart1: '#6C5CE7',
   chart2: '#22C55E',
   chart3: '#0EA5E9',
   chart4: '#F59E0B',
@@ -43,7 +42,7 @@ export const colors = {
   // Sidebar (drawer)
   sidebar: '#FAFAFF',
   sidebarForeground: '#0F172A',
-  sidebarPrimary: '#4F46E5',
+  sidebarPrimary: '#6C5CE7',
   sidebarAccent: '#F1F5F9',
   sidebarBorder: '#E2E8F0',
 } as const;
@@ -93,7 +92,7 @@ export const shadows = {
     elevation: 3,
   },
   lg: {
-    shadowColor: '#4F46E5',
+    shadowColor: '#6C5CE7',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

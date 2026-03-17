@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../lib/theme';
 
 interface EmptyStateProps {
   icon: string;
@@ -14,7 +15,7 @@ export default function EmptyState({ icon, title, description, actionLabel, onAc
   return (
     <View style={[{ alignItems: 'center', paddingVertical: 48, paddingHorizontal: 32 }, style]}>
       <View style={{
-        width: 72, height: 72, borderRadius: 36, backgroundColor: '#6C5CE708',
+        width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primaryLight,
         justifyContent: 'center', alignItems: 'center', marginBottom: 16,
       }}>
         <Ionicons name={icon as any} size={32} color="#DEE2E6" />
@@ -29,7 +30,7 @@ export default function EmptyState({ icon, title, description, actionLabel, onAc
         <TouchableOpacity
           onPress={onAction}
           style={{
-            marginTop: 16, backgroundColor: '#6C5CE7', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20,
+            marginTop: 16, backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20,
           }}
         >
           <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>{actionLabel}</Text>

@@ -5,6 +5,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { scoutsApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
+import { connectSocket, getSocket } from '../../lib/socket';
 
 export default function ScoutConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,8 +27,39 @@ export default function ScoutConversationScreen() {
       const { data } = await scoutsApi.getMessages(id!);
       return data.data;
     },
-    refetchInterval: 5000,
+    refetchInterval: 30000, // Fallback polling every 30s (WebSocket handles real-time)
   });
+
+  // WebSocket listener for real-time messages
+  useEffect(() => {
+    let socket = getSocket();
+
+    function onNewMessage(payload: any) {
+      if (payload?.conversationId === id) {
+        queryClient.invalidateQueries({ queryKey: ['scoutMessages', id] });
+      }
+    }
+
+    async function setupSocket() {
+      try {
+        socket = await connectSocket();
+        socket.on('scout:new_message', onNewMessage);
+      } catch {
+        // Socket connection failed, polling fallback is active
+      }
+    }
+
+    if (socket?.connected) {
+      socket.on('scout:new_message', onNewMessage);
+    } else {
+      setupSocket();
+    }
+
+    return () => {
+      const s = getSocket();
+      s?.off('scout:new_message', onNewMessage);
+    };
+  }, [id]);
 
   const sendMutation = useMutation({
     mutationFn: async (text: string) => {

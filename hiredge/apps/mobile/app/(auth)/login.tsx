@@ -111,31 +111,6 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Divider */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-          <Text style={{ marginHorizontal: 12, color: colors.mutedForeground, fontSize: 12 }}>Ou continuer avec</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        </View>
-
-        {/* Social buttons */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity style={{
-            flex: 1, height: 44, borderRadius: 8, borderWidth: 1, borderColor: colors.border,
-            backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
-            <Ionicons name="logo-google" size={18} color={colors.foreground} />
-            <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{
-            flex: 1, height: 44, borderRadius: 8, borderWidth: 1, borderColor: colors.border,
-            backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
-            <Ionicons name="logo-linkedin" size={18} color={colors.foreground} />
-            <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>LinkedIn</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Register link */}
         <View style={{ alignItems: 'center', marginTop: 28 }}>
           <Link href="/(auth)/register" asChild>

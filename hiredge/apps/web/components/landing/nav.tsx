@@ -31,9 +31,6 @@ export function LandingNav() {
             <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Témoignages
             </Link>
-            <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Tarifs
-            </Link>
           </div>
 
           {/* Desktop CTA */}
@@ -68,9 +65,6 @@ export function LandingNav() {
               </Link>
               <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Témoignages
-              </Link>
-              <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Tarifs
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <Button variant="outline" asChild className="w-full">

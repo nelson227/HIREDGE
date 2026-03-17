@@ -106,6 +106,7 @@ export default function SettingsPage() {
   const [prefForm, setPrefForm] = useState({ salaryMin: "", salaryMax: "", city: "", country: "" })
   const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" })
   const [message, setMessage] = useState("")
+  const [pwLoading, setPwLoading] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -182,18 +183,45 @@ export default function SettingsPage() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) return
     if (!confirm("Dernière confirmation : toutes vos données seront supprimées définitivement.")) return
     try {
-      await authApi.logout()
-      setMessage("Votre demande de suppression a été enregistrée. Le support vous contactera.")
+      await authApi.deleteAccount()
+      router.push("/login")
     } catch {
-      setMessage("Erreur lors de la demande de suppression. Contactez le support.")
+      setMessage("Erreur lors de la suppression du compte. Contactez le support.")
     }
-    router.push("/login")
   }
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* no-op */ }
     try { sessionStorage.removeItem('adminToken') } catch {}
     router.push("/login")
+  }
+
+  const handleChangePassword = async () => {
+    if (!pwForm.current || !pwForm.newPw) {
+      setMessage("Veuillez remplir tous les champs")
+      return
+    }
+    if (pwForm.newPw.length < 8) {
+      setMessage("Le nouveau mot de passe doit contenir au moins 8 caractères")
+      return
+    }
+    if (pwForm.newPw !== pwForm.confirm) {
+      setMessage("Les mots de passe ne correspondent pas")
+      return
+    }
+    setPwLoading(true)
+    setMessage("")
+    try {
+      await authApi.changePassword(pwForm.current, pwForm.newPw)
+      setMessage("Mot de passe modifié avec succès !")
+      setPwForm({ current: "", newPw: "", confirm: "" })
+      setTimeout(() => setMessage(""), 3000)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message || "Erreur lors du changement de mot de passe"
+      setMessage(msg)
+    } finally {
+      setPwLoading(false)
+    }
   }
 
   const toggleNotification = async (id: string) => {
@@ -519,17 +547,20 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Mot de passe actuel</label>
-                    <Input type="password" />
+                    <Input type="password" value={pwForm.current} onChange={(e) => setPwForm({...pwForm, current: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Nouveau mot de passe</label>
-                    <Input type="password" />
+                    <Input type="password" value={pwForm.newPw} onChange={(e) => setPwForm({...pwForm, newPw: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Confirmer le nouveau mot de passe</label>
-                    <Input type="password" />
+                    <Input type="password" value={pwForm.confirm} onChange={(e) => setPwForm({...pwForm, confirm: e.target.value})} />
                   </div>
-                  <Button>Modifier le mot de passe</Button>
+                  <Button onClick={handleChangePassword} disabled={pwLoading}>
+                    {pwLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Modifier le mot de passe
+                  </Button>
                 </CardContent>
               </Card>
 

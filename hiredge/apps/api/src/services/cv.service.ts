@@ -82,7 +82,7 @@ export class CVService {
   async parseWithAI(text: string): Promise<ParsedCVData> {
     const openai = this.getOpenAI();
 
-    const trimmedText = text.slice(0, 15000); // safety limit
+    const trimmedText = text.slice(0, 50000); // safety limit (50KB)
 
     const response = await openai.chat.completions.create({
       model: 'llama-3.3-70b-versatile',

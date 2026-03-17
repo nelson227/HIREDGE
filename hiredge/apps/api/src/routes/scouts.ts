@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { scoutService } from '../services/scout.service';
 import { AppError } from '../services/auth.service';
 import prisma from '../db/prisma';
+import { emitToUser } from '../lib/websocket';
 
 const scoutRegisterSchema = z.object({
   companyId: z.string().uuid('companyId invalide'),
@@ -183,6 +184,8 @@ const scoutRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const message = await scoutService.sendMessage(request.user.id, id, content);
+      // Notify both participants in real-time
+      emitToUser(request.user.id, 'scout:new_message', { conversationId: id, message });
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

@@ -1,4 +1,5 @@
 import { View, Text, ViewStyle } from 'react-native';
+import { colors } from '../../lib/theme';
 
 type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 type BadgeSize = 'sm' | 'md';
@@ -11,7 +12,7 @@ interface BadgeProps {
 }
 
 const COLORS: Record<BadgeVariant, { bg: string; text: string }> = {
-  primary: { bg: '#6C5CE715', text: '#6C5CE7' },
+  primary: { bg: colors.primaryLight, text: colors.primary },
   secondary: { bg: '#00CEC915', text: '#00CEC9' },
   success: { bg: '#00B89415', text: '#00B894' },
   warning: { bg: '#FDCB6E20', text: '#E17055' },

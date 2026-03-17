@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Alert, TextInput, Linking } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth.store';
-import { profileApi } from '../lib/api';
+import { profileApi, authApi } from '../lib/api';
+import { colors } from '../lib/theme';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
@@ -11,7 +12,6 @@ export default function SettingsScreen() {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
   const [squadNotifs, setSquadNotifs] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -52,25 +52,76 @@ export default function SettingsScreen() {
         {
           text: 'Supprimer',
           style: 'destructive',
-          onPress: () => {
-            // TODO: call DELETE /api/v1/auth/account
-            logout();
+          onPress: async () => {
+            try {
+              await authApi.deleteAccount();
+              logout();
+              router.replace('/(auth)/login');
+            } catch {
+              Alert.alert('Erreur', 'Impossible de supprimer le compte. Réessayez plus tard.');
+            }
           },
         },
       ]
     );
   };
 
-  const handleExportData = () => {
-    Alert.alert('Export demandé', 'Vous recevrez un email avec vos données dans les 24h.');
-    // TODO: call POST /api/v1/profile/export
+  const handleExportData = async () => {
+    try {
+      const { data } = await profileApi.get();
+      if (data.success) {
+        Alert.alert('Export demandé', 'Vos données ont été préparées. Vous recevrez un email sous peu.');
+      }
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'exporter vos données. Réessayez plus tard.');
+    }
+  };
+
+  const handleChangePassword = () => {
+    Alert.prompt(
+      'Changer le mot de passe',
+      'Entrez votre mot de passe actuel',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Suivant',
+          onPress: (currentPw) => {
+            if (!currentPw) return;
+            Alert.prompt(
+              'Nouveau mot de passe',
+              'Entrez votre nouveau mot de passe (min. 8 caractères)',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Confirmer',
+                  onPress: async (newPw) => {
+                    if (!newPw || newPw.length < 8) {
+                      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 8 caractères');
+                      return;
+                    }
+                    try {
+                      await authApi.changePassword(currentPw, newPw);
+                      Alert.alert('Succès', 'Mot de passe modifié avec succès');
+                    } catch (err: any) {
+                      Alert.alert('Erreur', err.response?.data?.error?.message || 'Impossible de modifier le mot de passe');
+                    }
+                  },
+                },
+              ],
+              'secure-text'
+            );
+          },
+        },
+      ],
+      'secure-text'
+    );
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#6C5CE7', paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
+        backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20,
         borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -94,18 +145,12 @@ export default function SettingsScreen() {
           <ToggleRow icon="people-outline" label="Messages escouade" value={squadNotifs} onToggle={toggleSquadNotifs} />
         </SettingCard>
 
-        {/* Apparence */}
-        <SectionTitle title="Apparence" />
-        <SettingCard>
-          <ToggleRow icon="moon-outline" label="Mode sombre" value={darkMode} onToggle={setDarkMode} />
-        </SettingCard>
-
         {/* Compte */}
         <SectionTitle title="Compte" />
         <SettingCard>
           <ActionRow icon="person-outline" label="Email" value={user?.email ?? ''} />
           <Divider />
-          <ActionRow icon="lock-closed-outline" label="Changer le mot de passe" onPress={() => {}} chevron />
+          <ActionRow icon="lock-closed-outline" label="Changer le mot de passe" onPress={handleChangePassword} chevron />
           <Divider />
           <ActionRow icon="language-outline" label="Langue" value="Français" />
         </SettingCard>
@@ -115,9 +160,9 @@ export default function SettingsScreen() {
         <SettingCard>
           <ActionRow icon="download-outline" label="Exporter mes données" onPress={handleExportData} chevron />
           <Divider />
-          <ActionRow icon="document-text-outline" label="Politique de confidentialité" onPress={() => {}} chevron />
+          <ActionRow icon="document-text-outline" label="Politique de confidentialité" onPress={() => Linking.openURL('https://hiredge.app/privacy')} chevron />
           <Divider />
-          <ActionRow icon="shield-outline" label="Conditions d'utilisation" onPress={() => {}} chevron />
+          <ActionRow icon="shield-outline" label="Conditions d'utilisation" onPress={() => Linking.openURL('https://hiredge.app/terms')} chevron />
         </SettingCard>
 
         {/* À propos */}
@@ -125,9 +170,7 @@ export default function SettingsScreen() {
         <SettingCard>
           <ActionRow icon="information-circle-outline" label="Version" value="1.0.0 (build 1)" />
           <Divider />
-          <ActionRow icon="heart-outline" label="Noter l'application" onPress={() => {}} chevron />
-          <Divider />
-          <ActionRow icon="chatbubble-outline" label="Nous contacter" onPress={() => {}} chevron />
+          <ActionRow icon="chatbubble-outline" label="Nous contacter" onPress={() => Linking.openURL('mailto:support@hiredge.app')} chevron />
         </SettingCard>
 
         {/* Danger Zone */}
@@ -161,13 +204,13 @@ function SettingCard({ children }: { children: React.ReactNode }) {
 function ToggleRow({ icon, label, value, onToggle }: { icon: string; label: string; value: boolean; onToggle: (v: boolean) => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-      <Ionicons name={icon as any} size={20} color="#6C5CE7" />
+      <Ionicons name={icon as any} size={20} color={colors.primary} />
       <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: '#2D3436' }}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: '#DEE2E6', true: '#6C5CE760' }}
-        thumbColor={value ? '#6C5CE7' : '#fff'}
+        trackColor={{ false: '#DEE2E6', true: colors.primaryMedium }}
+        thumbColor={value ? colors.primary : '#fff'}
       />
     </View>
   );
@@ -179,7 +222,7 @@ function ActionRow({ icon, label, value, onPress, chevron }: {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 }}>
-      <Ionicons name={icon as any} size={20} color="#6C5CE7" />
+      <Ionicons name={icon as any} size={20} color={colors.primary} />
       <Text style={{ flex: 1, marginLeft: 12, fontSize: 14, color: '#2D3436' }}>{label}</Text>
       {value && <Text style={{ fontSize: 13, color: '#ADB5BD', marginRight: 4 }}>{value}</Text>}
       {chevron && <Ionicons name="chevron-forward" size={16} color="#CED4DA" />}

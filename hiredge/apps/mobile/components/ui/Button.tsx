@@ -1,4 +1,5 @@
 import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { colors } from '../../lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -15,10 +16,10 @@ interface ButtonProps {
 }
 
 const VARIANTS: Record<Variant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: '#6C5CE7', text: '#FFFFFF' },
+  primary: { bg: colors.primary, text: '#FFFFFF' },
   secondary: { bg: '#00CEC9', text: '#FFFFFF' },
-  outline: { bg: 'transparent', text: '#6C5CE7', border: '#6C5CE7' },
-  ghost: { bg: 'transparent', text: '#6C5CE7' },
+  outline: { bg: 'transparent', text: colors.primary, border: colors.primary },
+  ghost: { bg: 'transparent', text: colors.primary },
   danger: { bg: '#FF7675', text: '#FFFFFF' },
 };
 

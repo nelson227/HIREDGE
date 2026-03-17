@@ -98,6 +98,24 @@ export class AuthService {
     await prisma.session.deleteMany({ where: { userId } });
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError('USER_NOT_FOUND', 'Utilisateur introuvable', 404);
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new AppError('INVALID_PASSWORD', 'Mot de passe actuel incorrect', 400);
+
+    const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+  }
+
+  async deleteAccount(userId: string) {
+    // Revoke all sessions first
+    await prisma.session.deleteMany({ where: { userId } });
+    // Delete user — cascade handles related records (profile, applications, etc.)
+    await prisma.user.delete({ where: { id: userId } });
+  }
+
   async blacklistAccessToken(token: string, expiresInSeconds: number) {
     await redis.setex(`blacklist:${token}`, expiresInSeconds, '1');
   }

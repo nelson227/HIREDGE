@@ -1,6 +1,7 @@
 import { View, TextInput, Text, TextInputProps, ViewStyle } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../lib/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -13,7 +14,7 @@ interface InputProps extends TextInputProps {
 export default function Input({ label, error, hint, icon, containerStyle, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
 
-  const borderColor = error ? '#FF7675' : focused ? '#6C5CE7' : '#E9ECEF';
+  const borderColor = error ? '#FF7675' : focused ? colors.primary : '#E9ECEF';
 
   return (
     <View style={[{ marginBottom: 16 }, containerStyle]}>
@@ -27,7 +28,7 @@ export default function Input({ label, error, hint, icon, containerStyle, ...pro
         paddingHorizontal: 14,
       }}>
         {icon && (
-          <Ionicons name={icon as any} size={18} color={focused ? '#6C5CE7' : '#ADB5BD'} style={{ marginRight: 8 }} />
+          <Ionicons name={icon as any} size={18} color={focused ? colors.primary : '#ADB5BD'} style={{ marginRight: 8 }} />
         )}
         <TextInput
           {...props}

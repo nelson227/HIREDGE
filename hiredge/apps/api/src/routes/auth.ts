@@ -238,6 +238,51 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
     return reply.send({ success: true, data: user });
   });
+
+  // PUT /auth/password — Change password (authenticated)
+  fastify.put('/password', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { currentPassword, newPassword } = request.body as { currentPassword?: string; newPassword?: string };
+    if (!currentPassword || !newPassword) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Mot de passe actuel et nouveau mot de passe requis' },
+      });
+    }
+    if (newPassword.length < 8) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Le nouveau mot de passe doit faire au moins 8 caractères' },
+      });
+    }
+    try {
+      await authService.changePassword(request.user.id, currentPassword, newPassword);
+      return reply.send({ success: true, data: { message: 'Mot de passe modifié avec succès' } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      }
+      throw err;
+    }
+  });
+
+  // DELETE /auth/account — Delete account (authenticated)
+  fastify.delete('/account', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    try {
+      // Blacklist the current access token
+      const token = request.headers.authorization?.replace('Bearer ', '');
+      if (token) {
+        await authService.blacklistAccessToken(token, 900);
+      }
+      await authService.deleteAccount(request.user.id);
+      clearTokenCookies(reply);
+      return reply.send({ success: true, data: { message: 'Compte supprimé avec succès' } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      }
+      throw err;
+    }
+  });
 };
 
 export default authRoutes;

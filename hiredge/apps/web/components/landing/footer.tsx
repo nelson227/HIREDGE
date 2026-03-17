@@ -6,27 +6,18 @@ import { Sparkles } from "lucide-react"
 const footerLinks = {
   product: [
     { label: "Fonctionnalités", href: "#features" },
-    { label: "Tarifs", href: "#" },
-    { label: "Assistant IA", href: "#" },
-    { label: "Escouades", href: "#" },
-    { label: "Éclaireurs", href: "#" },
+    { label: "Comment ça marche", href: "#how-it-works" },
+    { label: "Témoignages", href: "#testimonials" },
   ],
   company: [
-    { label: "À propos", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Carrières", href: "#" },
-    { label: "Presse", href: "#" },
+    { label: "À propos", href: "mailto:contact@hiredge.app" },
   ],
   resources: [
-    { label: "Centre d'aide", href: "#" },
-    { label: "Documentation", href: "#" },
-    { label: "API", href: "#" },
-    { label: "Communauté", href: "#" },
+    { label: "Centre d'aide", href: "mailto:support@hiredge.app" },
   ],
   legal: [
-    { label: "Confidentialité", href: "#" },
-    { label: "CGU", href: "#" },
-    { label: "Sécurité", href: "#" },
+    { label: "Confidentialité", href: "/privacy" },
+    { label: "CGU", href: "/terms" },
   ],
 }
 
@@ -108,15 +99,9 @@ export function LandingFooter() {
             © {new Date().getFullYear()} HIREDGE. Tous droits réservés.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Twitter
-            </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              LinkedIn
-            </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              GitHub
-            </Link>
+            <span className="text-sm text-muted-foreground">
+              contact@hiredge.app
+            </span>
           </div>
         </div>
       </div>
