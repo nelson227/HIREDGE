@@ -86,17 +86,6 @@ async function buildServer() {
   app.decorate('optionalAuthenticate', optionalAuthenticate);
   app.decorate('prisma', prisma);
 
-  // Raw body support for Stripe webhooks
-  app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
-    try {
-      (req as any).rawBody = body;
-      const json = JSON.parse(body.toString());
-      done(null, json);
-    } catch (err: any) {
-      done(err, undefined);
-    }
-  });
-
   // Root
   app.get('/', async () => ({
     name: 'HIREDGE API',

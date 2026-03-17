@@ -52,22 +52,28 @@ const paymentRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /payments/webhook — Stripe webhook (no auth, raw body)
-  fastify.post('/webhook', {
-    config: { rawBody: true },
-  }, async (request, reply) => {
-    const signature = request.headers['stripe-signature'] as string;
-    if (!signature) {
-      return reply.status(400).send({ success: false, error: { code: 'MISSING_SIGNATURE', message: 'Missing stripe-signature header' } });
-    }
+  // Register in a separate encapsulated scope to override JSON parser only for this route
+  fastify.register(async (scope) => {
+    scope.removeContentTypeParser('application/json');
+    scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (_req, body, done) => {
+      done(null, body);
+    });
 
-    try {
-      const rawBody = (request as any).rawBody || Buffer.from(JSON.stringify(request.body));
-      await stripeService.handleWebhook(rawBody, signature);
-      return reply.send({ received: true });
-    } catch (err: any) {
-      fastify.log.error(err, 'Stripe webhook error');
-      return reply.status(400).send({ success: false, error: { code: 'WEBHOOK_ERROR', message: err.message } });
-    }
+    scope.post('/webhook', async (request, reply) => {
+      const signature = request.headers['stripe-signature'] as string;
+      if (!signature) {
+        return reply.status(400).send({ success: false, error: { code: 'MISSING_SIGNATURE', message: 'Missing stripe-signature header' } });
+      }
+
+      try {
+        const rawBody = Buffer.isBuffer(request.body) ? request.body : Buffer.from(JSON.stringify(request.body));
+        await stripeService.handleWebhook(rawBody, signature);
+        return reply.send({ received: true });
+      } catch (err: any) {
+        fastify.log.error(err, 'Stripe webhook error');
+        return reply.status(400).send({ success: false, error: { code: 'WEBHOOK_ERROR', message: err.message } });
+      }
+    });
   });
 };
 
