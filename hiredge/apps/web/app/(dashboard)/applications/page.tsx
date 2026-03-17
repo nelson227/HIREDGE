@@ -102,6 +102,9 @@ export default function ApplicationsPage() {
   const [detailData, setDetailData] = useState<any>(null)
   const [detailProfile, setDetailProfile] = useState<any>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [showCvViewer, setShowCvViewer] = useState(false)
+  const [cvBlobUrl, setCvBlobUrl] = useState<string | null>(null)
+  const [cvLoading, setCvLoading] = useState(false)
 
   const MAX_VISIBLE_CARDS = 3
 
@@ -238,6 +241,8 @@ export default function ApplicationsPage() {
   const viewApplicationDetail = async (app: Application) => {
     setSelectedApp(app)
     setDetailLoading(true)
+    setShowCvViewer(false)
+    if (cvBlobUrl) { URL.revokeObjectURL(cvBlobUrl); setCvBlobUrl(null) }
     try {
       const [appRes, profileRes] = await Promise.allSettled([
         applicationsApi.getById(app.id),
@@ -247,6 +252,26 @@ export default function ApplicationsPage() {
       if (profileRes.status === "fulfilled") setDetailProfile(profileRes.value.data?.data)
     } catch { /* handled by UI */ }
     finally { setDetailLoading(false) }
+  }
+
+  const toggleCvViewer = async () => {
+    if (showCvViewer) {
+      setShowCvViewer(false)
+      return
+    }
+    if (cvBlobUrl) {
+      setShowCvViewer(true)
+      return
+    }
+    try {
+      setCvLoading(true)
+      const res = await profileApi.downloadCv()
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      setCvBlobUrl(url)
+      setShowCvViewer(true)
+    } catch { /* CV non disponible */ }
+    finally { setCvLoading(false) }
   }
 
   const totalApplications = Object.values(applications).flat().length
@@ -507,8 +532,8 @@ export default function ApplicationsPage() {
       </Dialog>
 
       {/* Dialog "Voir ma candidature" — détails complets */}
-      <Dialog open={selectedApp !== null} onOpenChange={() => { setSelectedApp(null); setDetailData(null); setDetailProfile(null) }}>
-        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+      <Dialog open={selectedApp !== null} onOpenChange={() => { setSelectedApp(null); setDetailData(null); setDetailProfile(null); setShowCvViewer(false); if (cvBlobUrl) { URL.revokeObjectURL(cvBlobUrl); setCvBlobUrl(null) } }}>
+        <DialogContent className={`${showCvViewer ? 'max-w-4xl' : 'max-w-lg'} max-h-[85vh] flex flex-col transition-all duration-300`}>
           <DialogHeader>
             <DialogTitle>Ma candidature</DialogTitle>
             <DialogDescription>
@@ -578,16 +603,28 @@ export default function ApplicationsPage() {
                   <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <FileText className="w-4 h-4" /> CV
                   </h4>
-                  <a
-                    href={detailProfile.cvUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-muted/50 rounded-lg p-3 text-sm text-primary hover:bg-muted transition-colors"
+                  <button
+                    onClick={toggleCvViewer}
+                    disabled={cvLoading}
+                    className="flex items-center gap-2 w-full bg-muted/50 rounded-lg p-3 text-sm text-primary hover:bg-muted transition-colors"
                   >
-                    <FileText className="w-4 h-4" />
-                    Voir / Télécharger le CV
-                    <ExternalLink className="w-3.5 h-3.5 ml-auto" />
-                  </a>
+                    {cvLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileText className="w-4 h-4" />
+                    )}
+                    {showCvViewer ? 'Masquer mon CV' : 'Voir mon CV'}
+                    <ChevronDown className={`w-3.5 h-3.5 ml-auto transition-transform ${showCvViewer ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showCvViewer && cvBlobUrl && (
+                    <div className="rounded-lg overflow-hidden border border-border bg-white">
+                      <iframe
+                        src={cvBlobUrl}
+                        className="w-full h-[500px]"
+                        title="CV"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

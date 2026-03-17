@@ -42,6 +42,7 @@ export class ApplicationService {
         userId: userId,
         jobId: data.jobId,
         status: 'APPLIED',
+        coverLetterContent: data.coverLetterContent ?? null,
         notes: data.notes ?? null,
       },
       include: {
