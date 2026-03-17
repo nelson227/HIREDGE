@@ -264,7 +264,7 @@ export default function SquadPage() {
       const squadList = Array.isArray(mySquads) ? mySquads : [mySquads].filter(Boolean)
       setSquads(squadList)
 
-      if (squadList.length > 0) {
+      if (squadList.length > 0 && squadList[0].id) {
         selectSquad(squadList[0].id)
       } else {
         loadAvailableSquads()

@@ -15,6 +15,7 @@ function getApiUrl(): string {
 }
 
 const API_URL = getApiUrl();
+console.log('[API] Base URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,

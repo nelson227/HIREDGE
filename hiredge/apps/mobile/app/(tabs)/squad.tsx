@@ -26,10 +26,24 @@ function getSenderName(msg: any): string {
 }
 
 export default function SquadScreen() {
-  const { data: mySquad, isLoading, refetch } = useQuery({
+  const [debugInfo, setDebugInfo] = useState('');
+  const { data: mySquad, isLoading, refetch, error } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
-      try { const { data } = await squadApi.getMySquad(); const squads = data.data; return Array.isArray(squads) ? squads[0] ?? null : squads ?? null; } catch { return null; }
+      try {
+        console.log('[Squad] Fetching from API...');
+        const { data } = await squadApi.getMySquad();
+        const info = `URL OK | success=${data.success} | data=${JSON.stringify(data.data).substring(0, 200)}`;
+        console.log('[Squad]', info);
+        setDebugInfo(info);
+        const squads = data.data;
+        return Array.isArray(squads) ? squads[0] ?? null : squads ?? null;
+      } catch (err: any) {
+        const errInfo = `ERR ${err?.response?.status ?? 'network'}: ${JSON.stringify(err?.response?.data ?? err?.message).substring(0, 200)}`;
+        console.error('[Squad]', errInfo);
+        setDebugInfo(errInfo);
+        return null;
+      }
     },
   });
 
@@ -41,12 +55,12 @@ export default function SquadScreen() {
     );
   }
 
-  if (!mySquad) return <NoSquadView onJoined={() => refetch()} />;
+  if (!mySquad || !mySquad.id) return <NoSquadView onJoined={() => refetch()} debugInfo={debugInfo || `mySquad=${JSON.stringify(mySquad)?.substring(0, 150)}`} />;
   return <SquadDetailView squad={mySquad} onLeft={() => refetch()} />;
 }
 
 // ─── No Squad ────────────────────────────────────────────────────────────────
-function NoSquadView({ onJoined }: { onJoined: () => void }) {
+function NoSquadView({ onJoined, debugInfo }: { onJoined: () => void; debugInfo?: string }) {
   const [showCreate, setShowCreate] = useState(false);
   const [showJoinCode, setShowJoinCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -82,6 +96,11 @@ function NoSquadView({ onJoined }: { onJoined: () => void }) {
         <Text style={{ fontSize: 13, color: colors.mutedForeground, marginTop: 4 }}>
           Rejoins un groupe de 5-8 personnes pour vous entraider
         </Text>
+        {debugInfo ? (
+          <Text style={{ fontSize: 10, color: '#f97316', marginTop: 8, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+            DEBUG: {debugInfo}
+          </Text>
+        ) : null}
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
