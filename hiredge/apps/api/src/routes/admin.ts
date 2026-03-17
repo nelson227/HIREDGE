@@ -8,7 +8,7 @@ import { env } from '../config/env';
 
 // Admin panel credentials from environment variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /admin/verify-access — Admin panel login (no ADMIN role preHandler)
@@ -17,11 +17,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     if (!email || !password) {
       return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Email et mot de passe requis' } });
     }
-    if (email !== ADMIN_EMAIL) {
-      return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
-    }
-    const valid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
-    if (!valid) {
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
       return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
     }
     const adminToken = jwt.sign({ adminAccess: true, email }, env.JWT_SECRET, { expiresIn: '2h' });
