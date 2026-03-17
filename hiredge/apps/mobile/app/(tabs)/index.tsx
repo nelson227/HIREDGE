@@ -3,10 +3,12 @@ import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import api, { jobsApi, notificationsApi, applicationsApi } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth.store';
+import api, { jobsApi, notificationsApi, applicationsApi, interviewsApi, squadApi } from '../../lib/api';
 import { colors } from '../../lib/theme';
 
 export default function HomeScreen() {
+  const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: stats, refetch: refetchStats } = useQuery({
@@ -33,6 +35,27 @@ export default function HomeScreen() {
     },
   });
 
+  const { data: upcomingInterviews } = useQuery({
+    queryKey: ['upcomingInterviews'],
+    queryFn: async () => {
+      try {
+        const { data } = await interviewsApi.list();
+        const all = data.data ?? [];
+        return all.filter((i: any) => i.status === 'SCHEDULED' && i.scheduledAt && new Date(i.scheduledAt) > new Date()).slice(0, 3);
+      } catch { return []; }
+    },
+  });
+
+  const { data: squad } = useQuery({
+    queryKey: ['mySquad'],
+    queryFn: async () => {
+      try {
+        const { data } = await squadApi.getMySquad();
+        return data.data;
+      } catch { return null; }
+    },
+  });
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refetchStats(), refetchJobs()]);
@@ -43,6 +66,9 @@ export default function HomeScreen() {
   const interviews = stats?.byStatus?.INTERVIEW_SCHEDULED ?? 0;
   const responseRate = stats?.responseRate ?? 0;
   const pending = stats?.byStatus?.PENDING ?? 0;
+  const firstName = user?.fullName?.split(' ')[0] ?? 'Utilisateur';
+  const totalJobs = recommended?.length ?? 0;
+  const recentSquadMessages = squad?.messages?.slice(0, 3) ?? [];
 
   return (
     <ScrollView
@@ -50,14 +76,14 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       <View style={{ padding: 16, paddingTop: 56 }}>
-        {/* Welcome Section */}
+        {/* Welcome Section — personalized */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <View>
             <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>
-              Bonjour 👋
+              Bonjour, {firstName} 👋
             </Text>
             <Text style={{ color: colors.mutedForeground, marginTop: 4, fontSize: 14 }}>
-              Voici ce qui se passe dans ta recherche.
+              Voici un résumé de ta recherche aujourd'hui.
             </Text>
           </View>
           <TouchableOpacity
@@ -81,7 +107,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* AI Insights Card — gradient-like */}
+        {/* AI Insights Card — dynamic message like web */}
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/edge')}
           activeOpacity={0.85}
@@ -102,7 +128,11 @@ export default function HomeScreen() {
                 EDGE Insights
               </Text>
               <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18 }}>
-                Des recommandations personnalisées t'attendent. Discute avec EDGE pour en savoir plus.
+                {totalJobs > 0
+                  ? `J'ai trouvé ${totalJobs} offres pour toi ! ${(upcomingInterviews?.length ?? 0) > 0 ? `${upcomingInterviews!.length} entretien(s) à venir.` : 'Continue à postuler !'}`
+                  : total > 0
+                  ? `${total} candidature(s) en cours. Je cherche des offres pour toi.`
+                  : 'Complète ton profil pour recevoir des recommandations personnalisées !'}
               </Text>
             </View>
           </View>
@@ -118,6 +148,42 @@ export default function HomeScreen() {
           <StatCard icon="chatbubble-outline" value={pending} label="En attente" color={colors.chart5} />
         </View>
 
+        {/* Upcoming Interviews */}
+        {(upcomingInterviews?.length ?? 0) > 0 && (
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 12,
+            borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+          }}>
+            <View style={{ padding: 16, paddingBottom: 12 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>À venir</Text>
+            </View>
+            {upcomingInterviews!.map((interview: any, i: number) => (
+              <View key={interview.id} style={{
+                flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
+                borderTopWidth: 1, borderColor: colors.border,
+              }}>
+                <View style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center',
+                }}>
+                  <Ionicons name="calendar" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>
+                    Entretien {interview.type === 'TECHNICAL' ? 'technique' : interview.type === 'HR' ? 'RH' : ''}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
+                    {interview.application?.job?.company?.name || interview.application?.job?.title || 'Entreprise'}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '600', marginTop: 2 }}>
+                    {formatEventDate(interview.scheduledAt)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Recent Job Matches */}
         <View style={{
           backgroundColor: colors.card, borderRadius: 12,
@@ -129,7 +195,7 @@ export default function HomeScreen() {
             padding: 16, paddingBottom: 12,
           }}>
             <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
-              Offres récentes
+              Offres recommandées
             </Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/jobs')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Voir tout</Text>
@@ -204,6 +270,49 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* Squad Activity */}
+        {squad && (
+          <View style={{
+            backgroundColor: colors.card, borderRadius: 12,
+            borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+          }}>
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              padding: 16, paddingBottom: 12,
+            }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>Activité Escouade</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/squad')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Voir</Text>
+                <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+            {recentSquadMessages.length > 0 ? (
+              recentSquadMessages.map((msg: any) => (
+                <View key={msg.id} style={{
+                  flexDirection: 'row', gap: 10, padding: 14, borderTopWidth: 1, borderColor: colors.border,
+                }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                      {(msg.sender?.candidateProfile?.firstName ?? '?')[0]}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground }}>
+                      {msg.sender?.candidateProfile?.firstName ?? 'Membre'}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.mutedForeground }} numberOfLines={1}>{msg.content}</Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View style={{ padding: 20, alignItems: 'center', borderTopWidth: 1, borderColor: colors.border }}>
+                <Ionicons name="people-outline" size={24} color={colors.mutedForeground} />
+                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6 }}>Pas encore de messages</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Quick actions row */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 32 }}>
           <TouchableOpacity
@@ -257,4 +366,16 @@ function StatCard({ icon, value, label, color }: { icon: string; value: number |
       </View>
     </View>
   );
+}
+
+function formatEventDate(dateStr?: string): string {
+  if (!dateStr) return 'Date non définie';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  if (date.toDateString() === now.toDateString()) return `Aujourd'hui, ${time}`;
+  if (date.toDateString() === tomorrow.toDateString()) return `Demain, ${time}`;
+  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + `, ${time}`;
 }

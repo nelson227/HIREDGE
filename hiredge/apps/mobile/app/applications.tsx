@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, RefreshControl, Alert } from 'react-native';
 import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api, { applicationsApi } from '../lib/api';
@@ -28,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function ApplicationsScreen() {
   const [filter, setFilter] = useState('Tous');
   const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data, refetch } = useQuery({
     queryKey: ['applications', filter],
@@ -54,6 +55,23 @@ export default function ApplicationsScreen() {
   }, []);
 
   const applications = data?.items ?? [];
+
+  const handleWithdraw = (appId: string, jobTitle?: string) => {
+    Alert.alert('Retirer', `Retirer la candidature pour "${jobTitle ?? 'ce poste'}" ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Retirer', style: 'destructive', onPress: async () => {
+          try {
+            await applicationsApi.withdraw(appId);
+            await refetch();
+            queryClient.invalidateQueries({ queryKey: ['applicationStats'] });
+          } catch {
+            Alert.alert('Erreur', 'Impossible de retirer la candidature');
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
@@ -140,9 +158,35 @@ export default function ApplicationsScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={{ fontSize: 11, color: '#CED4DA', marginTop: 8 }}>
-              {formatDate(item.createdAt)}
-            </Text>
+            {/* Next step for interview */}
+            {item.status === 'INTERVIEW_SCHEDULED' && item.interview?.scheduledAt && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8,
+                backgroundColor: '#FFF3BF', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
+              }}>
+                <Ionicons name="calendar" size={12} color="#E67700" />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: '#E67700' }}>
+                  Entretien le {new Date(item.interview.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+              <Text style={{ fontSize: 11, color: '#CED4DA' }}>
+                {formatDate(item.createdAt)}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {item.job?.id && (
+                  <TouchableOpacity onPress={() => router.push(`/job/${item.job.id}`)} hitSlop={8}>
+                    <Ionicons name="eye-outline" size={16} color="#868E96" />
+                  </TouchableOpacity>
+                )}
+                {!['REJECTED', 'ACCEPTED', 'OFFERED'].includes(item.status) && (
+                  <TouchableOpacity onPress={() => handleWithdraw(item.id, item.job?.title)} hitSlop={8}>
+                    <Ionicons name="close-circle-outline" size={16} color="#FF7675" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
