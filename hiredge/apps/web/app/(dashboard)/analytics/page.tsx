@@ -76,10 +76,10 @@ export default function AnalyticsPage() {
       const applications = applicationsRes.data?.data?.applications || []
       const byStatus: Record<string, number> = {
         DRAFT: 0,
-        SENT: 0,
+        APPLIED: 0,
         VIEWED: 0,
-        INTERVIEW: 0,
-        OFFER: 0,
+        INTERVIEW_SCHEDULED: 0,
+        OFFER_RECEIVED: 0,
         REJECTED: 0,
       }
       applications.forEach((app: any) => {
@@ -118,14 +118,14 @@ export default function AnalyticsPage() {
   const totalInterviews = stats?.interviews || 0
   const totalJobs = stats?.jobs || 0
   const responseRate = totalApplications > 0 
-    ? Math.round(((stats?.applications.byStatus.VIEWED || 0) + (stats?.applications.byStatus.INTERVIEW || 0) + (stats?.applications.byStatus.OFFER || 0)) / totalApplications * 100)
+    ? Math.round(((stats?.applications.byStatus.VIEWED || 0) + (stats?.applications.byStatus.INTERVIEW_SCHEDULED || 0) + (stats?.applications.byStatus.OFFER_RECEIVED || 0)) / totalApplications * 100)
     : 0
 
   const applicationsByStatus = [
-    { status: "Envoyées", count: stats?.applications.byStatus.SENT || 0, color: "bg-primary" },
+    { status: "Envoyées", count: stats?.applications.byStatus.APPLIED || 0, color: "bg-primary" },
     { status: "Vues", count: stats?.applications.byStatus.VIEWED || 0, color: "bg-chart-2" },
-    { status: "Entretien", count: stats?.applications.byStatus.INTERVIEW || 0, color: "bg-warning" },
-    { status: "Offre", count: stats?.applications.byStatus.OFFER || 0, color: "bg-success" },
+    { status: "Entretien", count: stats?.applications.byStatus.INTERVIEW_SCHEDULED || 0, color: "bg-warning" },
+    { status: "Offre", count: stats?.applications.byStatus.OFFER_RECEIVED || 0, color: "bg-success" },
     { status: "Refusées", count: stats?.applications.byStatus.REJECTED || 0, color: "bg-destructive" },
   ]
 

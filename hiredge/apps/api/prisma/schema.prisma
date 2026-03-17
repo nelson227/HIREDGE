@@ -276,13 +276,14 @@ model Squad {
 }
 
 model SquadMember {
-  id       String          @id @default(uuid())
-  squadId  String
-  userId   String
-  role     String          @default("MEMBER")
-  isActive Boolean         @default(true)
-  joinedAt DateTime        @default(now())
-  leftAt   DateTime?
+  id         String          @id @default(uuid())
+  squadId    String
+  userId     String
+  role       String          @default("MEMBER")
+  isActive   Boolean         @default(true)
+  joinedAt   DateTime        @default(now())
+  leftAt     DateTime?
+  lastReadAt DateTime?       @default(now())
 
   squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -23,10 +23,10 @@ type KanbanStatus = "draft" | "applied" | "screening" | "interview" | "offer" | 
 // Mapping des statuts API vers Kanban
 const statusMapping: Record<string, KanbanStatus> = {
   DRAFT: "draft",
-  SENT: "applied",
+  APPLIED: "applied",
   VIEWED: "screening",
-  INTERVIEW: "interview",
-  OFFER: "offer",
+  INTERVIEW_SCHEDULED: "interview",
+  OFFER_RECEIVED: "offer",
   ACCEPTED: "offer",
   REJECTED: "rejected",
 }
@@ -34,10 +34,10 @@ const statusMapping: Record<string, KanbanStatus> = {
 // Mapping inverse pour les updates vers l'API
 const reverseStatusMapping: Record<KanbanStatus, string> = {
   draft: "DRAFT",
-  applied: "SENT",
+  applied: "APPLIED",
   screening: "VIEWED",
-  interview: "INTERVIEW",
-  offer: "OFFER",
+  interview: "INTERVIEW_SCHEDULED",
+  offer: "OFFER_RECEIVED",
   rejected: "REJECTED",
 }
 

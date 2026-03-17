@@ -274,6 +274,8 @@ export const squadApi = {
     api.post(`/squads/${squadId}/messages/${messageId}/important`),
   deleteMessage: (squadId: string, messageId: string, mode: 'FOR_ME' | 'FOR_ALL') =>
     api.delete(`/squads/${squadId}/messages/${messageId}`, { params: { mode } }),
+  markAsRead: (squadId: string) =>
+    api.patch(`/squads/${squadId}/read`),
 };
 
 // ─── Scouts ──────────────────────────────────────────────────────

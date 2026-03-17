@@ -4,12 +4,32 @@ import { squadService } from '../services/squad.service';
 import { squadMatchingService } from '../services/squad-matching.service';
 import { AppError } from '../services/auth.service';
 import { emitToSquad } from '../lib/websocket';
+import { notificationService } from '../services/notification.service';
 import prisma from '../db/prisma';
 import path from 'path';
 import fs from 'fs/promises';
 
 const squadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
+
+  // Helper : notifier les membres inactifs d'une squad lors d'un nouveau message
+  async function notifySquadMembersOfMessage(squadId: string, senderId: string, senderName: string, messagePreview: string) {
+    const members = await prisma.squadMember.findMany({
+      where: { squadId, isActive: true, userId: { not: senderId } },
+      select: { userId: true },
+    });
+    const squad = await prisma.squad.findUnique({ where: { id: squadId }, select: { name: true } });
+    const truncated = messagePreview.length > 60 ? messagePreview.slice(0, 60) + '…' : messagePreview;
+    for (const m of members) {
+      notificationService.createNotification(m.userId, {
+        type: 'SQUAD_MESSAGE',
+        title: `💬 ${senderName} — ${squad?.name ?? 'Escouade'}`,
+        body: truncated,
+        actionUrl: `/squad?id=${squadId}`,
+        metadata: { squadId },
+      }).catch(() => {});
+    }
+  }
 
   // POST /squads — Create a squad
   fastify.post('/', async (request, reply) => {
@@ -29,11 +49,32 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /squads/mine — Get current user's squads (multi-squad)
+  // GET /squads/mine — Get current user's squads (multi-squad) with unread counts
   fastify.get('/mine', async (request, reply) => {
     try {
       const squads = await squadService.getMySquads(request.user.id);
-      return reply.send({ success: true, data: squads });
+
+      // Calculer les messages non lus pour chaque squad
+      const squadsWithUnread = await Promise.all(
+        (squads as any[]).map(async (squad) => {
+          const membership = await prisma.squadMember.findFirst({
+            where: { squadId: squad.id, userId: request.user.id, isActive: true },
+            select: { lastReadAt: true },
+          });
+          const lastReadAt = membership?.lastReadAt ?? new Date(0);
+          const unreadCount = await prisma.squadMessage.count({
+            where: {
+              squadId: squad.id,
+              createdAt: { gt: lastReadAt },
+              userId: { not: request.user.id },
+              deletedForAll: false,
+            },
+          });
+          return { ...squad, unreadCount };
+        })
+      );
+
+      return reply.send({ success: true, data: squadsWithUnread });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
@@ -204,6 +245,24 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
         duration: body.duration,
         link: body.link,
       });
+
+      // Notifier tous les membres de la squad (sauf le créateur)
+      const members = await prisma.squadMember.findMany({
+        where: { squadId: id, isActive: true, userId: { not: request.user.id } },
+        select: { userId: true },
+      });
+      const squad = await prisma.squad.findUnique({ where: { id }, select: { name: true } });
+      const typeLabels: Record<string, string> = { MEETING: 'réunion', CALL: 'appel', WORKSHOP: 'atelier', EVENT: 'événement' };
+      const typeLabel = typeLabels[body.type || 'MEETING'] || 'événement';
+      for (const m of members) {
+        notificationService.createNotification(m.userId, {
+          type: 'SQUAD_EVENT',
+          title: `Nouvel ${typeLabel} planifié 📅`,
+          body: `${body.title} — ${squad?.name ?? 'votre escouade'}`,
+          actionUrl: `/squad?id=${id}`,
+        }).catch(() => {});
+      }
+
       return reply.status(201).send({ success: true, data: event });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -270,6 +329,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       emitToSquad(id, 'squad:new_message', message);
+      notifySquadMembersOfMessage(id, request.user.id, (message as any).user?.candidateProfile?.firstName ?? 'Un membre', '🎙️ Message vocal').catch(() => {});
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -294,6 +354,7 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
         replyToId: parsed.data.replyToId,
       });
       emitToSquad(id, 'squad:new_message', message);
+      notifySquadMembersOfMessage(id, request.user.id, (message as any).user?.candidateProfile?.firstName ?? 'Un membre', parsed.data.content).catch(() => {});
       return reply.status(201).send({ success: true, data: message });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -369,6 +430,21 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
         emitToSquad(id, 'squad:delete', { messageId, mode: 'FOR_ALL' });
       }
       return reply.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // PATCH /squads/:id/read — Marquer les messages comme lus
+  fastify.patch('/:id/read', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      await prisma.squadMember.updateMany({
+        where: { squadId: id, userId: request.user.id, isActive: true },
+        data: { lastReadAt: new Date() },
+      });
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;

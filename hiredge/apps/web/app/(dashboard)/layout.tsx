@@ -27,7 +27,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { profileApi, authApi, notificationsApi, clearTokens } from "@/lib/api"
+import { profileApi, authApi, notificationsApi, squadApi, clearTokens } from "@/lib/api"
 import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket"
 import { useTranslation } from "@/lib/i18n"
 
@@ -61,6 +61,7 @@ export default function DashboardLayout({
   const [searchQuery, setSearchQuery] = useState("")
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email: string; avatarUrl?: string | null; role?: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [squadUnreadTotal, setSquadUnreadTotal] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
@@ -95,6 +96,16 @@ export default function DashboardLayout({
       })
       .catch(() => {})
 
+    // Fetch unread squad messages count
+    squadApi.getMySquads()
+      .then(({ data }) => {
+        if (data.success && Array.isArray(data.data)) {
+          const total = data.data.reduce((sum: number, s: any) => sum + (s.unreadCount || 0), 0)
+          setSquadUnreadTotal(total)
+        }
+      })
+      .catch(() => {})
+
     // Listen for avatar updates from profile page
     const handleAvatarUpdate = (e: Event) => {
       const avatarUrl = (e as CustomEvent).detail?.avatarUrl
@@ -115,6 +126,12 @@ export default function DashboardLayout({
       socket.on('notification:all_read', () => {
         setUnreadCount(0)
       })
+      socket.on('squad:new_message', () => {
+        // Incrémenter le badge squad si on n'est pas sur la page squad
+        if (!window.location.pathname.startsWith('/squad')) {
+          setSquadUnreadTotal(prev => prev + 1)
+        }
+      })
     } catch {
       // Socket connection may fail if no token yet
     }
@@ -125,6 +142,7 @@ export default function DashboardLayout({
         socket.off('notification:new')
         socket.off('notification:read')
         socket.off('notification:all_read')
+        socket.off('squad:new_message')
       }
       // Disconnect socket when leaving the dashboard entirely
       disconnectSocket()
@@ -204,10 +222,14 @@ export default function DashboardLayout({
             <ul className="space-y-1">
               {sidebarItemKeys.map((item) => {
                 const isActive = pathname === item.href
+                const badge = item.href === '/squad' && squadUnreadTotal > 0 ? squadUnreadTotal : null
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={() => {
+                        if (item.href === '/squad') setSquadUnreadTotal(0)
+                      }}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
@@ -216,7 +238,12 @@ export default function DashboardLayout({
                       )}
                     >
                       <item.icon className="w-5 h-5" />
-                      {t(item.labelKey)}
+                      <span className="flex-1">{t(item.labelKey)}</span>
+                      {badge && (
+                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground px-1.5">
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )

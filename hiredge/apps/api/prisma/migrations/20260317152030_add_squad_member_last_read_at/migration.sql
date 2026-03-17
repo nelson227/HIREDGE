@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "squad_members" ADD COLUMN "lastReadAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;

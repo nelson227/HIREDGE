@@ -95,7 +95,7 @@ const notificationWorker = new Worker(
         },
       });
 
-      emitToUser(userId, 'notification', notification);
+      emitToUser(userId, 'notification:new', notification);
     }
 
     if (job.name === 'application-update') {
@@ -122,7 +122,7 @@ const notificationWorker = new Worker(
         },
       });
 
-      emitToUser(userId, 'notification', notification);
+      emitToUser(userId, 'notification:new', notification);
     }
 
     if (job.name === 'interview-reminder') {
@@ -136,7 +136,7 @@ const notificationWorker = new Worker(
         },
       });
 
-      emitToUser(userId, 'notification', notification);
+      emitToUser(userId, 'notification:new', notification);
     }
   },
   { connection, concurrency: 3 }

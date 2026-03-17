@@ -237,6 +237,12 @@ export default function SquadPage() {
   const selectSquad = useCallback(async (squadId: string) => {
     setSelectedSquadId(squadId)
     setMobileShowChat(true)
+
+    // Marquer les messages comme lus
+    squadApi.markAsRead(squadId).catch(() => {})
+    // Réinitialiser le badge unread pour cette squad
+    setSquads(prev => prev.map(s => s.id === squadId ? { ...s, unreadCount: 0 } : s))
+
     try {
       const [membersRes, messagesRes, eventsRes] = await Promise.all([
         squadApi.getMembers(squadId),
@@ -806,6 +812,7 @@ export default function SquadPage() {
             const isActive = sq.id === selectedSquadId
             const memberCount = sq._count?.members ?? sq.members?.length ?? 0
             const onlineCount = sq.members ? countOnline(sq.members) : 0
+            const unread = (sq as any).unreadCount || 0
 
             return (
               <button
@@ -821,7 +828,14 @@ export default function SquadPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm text-foreground truncate">{sq.name}</p>
-                    <span className="text-xs text-muted-foreground shrink-0 ml-2">{getLastMessageTime(sq)}</span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground">{getLastMessageTime(sq)}</span>
+                      {unread > 0 && !isActive && (
+                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground px-1.5">
+                          {unread > 99 ? '99+' : unread}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{getLastMessage(sq)}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
