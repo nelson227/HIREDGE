@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try { await connectSocket(); } catch {}
   },
 
-  register: async (email, password, role = 'candidate') => {
+  register: async (email, password, role = 'CANDIDATE') => {
     const { data } = await authApi.register({ email, password, role });
     if (!data.success) throw new Error(data.error?.message ?? 'Echec d\'inscription');
 
