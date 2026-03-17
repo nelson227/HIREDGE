@@ -111,6 +111,8 @@ export const searchJobsSchema = z.object({
 // --- Application Schemas ---
 export const createApplicationSchema = z.object({
   jobId: z.string().uuid(),
+  coverLetterContent: z.string().max(10000).optional(),
+  notes: z.string().max(5000).optional(),
 });
 
 export const updateApplicationSchema = z.object({

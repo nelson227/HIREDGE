@@ -28,8 +28,19 @@ import {
   CheckCircle2,
   Target,
   X,
+  Sparkles,
+  Send,
+  FileCheck,
 } from "lucide-react"
 import { jobsApi, applicationsApi, squadApi } from "@/lib/api"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Job {
   id: string
@@ -111,6 +122,12 @@ export default function JobDetailPage() {
   // Apply error feedback
   const [applyError, setApplyError] = useState<string | null>(null)
 
+  // One-click apply dialog state
+  const [showApplyDialog, setShowApplyDialog] = useState(false)
+  const [includeCoverLetter, setIncludeCoverLetter] = useState(true)
+  const [applyCoverLetter, setApplyCoverLetter] = useState<string | null>(null)
+  const [applyCoverLetterLoading, setApplyCoverLetterLoading] = useState(false)
+
   useEffect(() => {
     if (jobId) loadJob()
   }, [jobId])
@@ -180,12 +197,37 @@ export default function JobDetailPage() {
 
   const handleApply = async () => {
     if (!job || applying || applied) return
+    // Open confirmation dialog instead of applying directly
+    setShowApplyDialog(true)
+    // Auto-load cover letter for the dialog
+    if (!applyCoverLetter && !applyCoverLetterLoading) {
+      setApplyCoverLetterLoading(true)
+      try {
+        const res = await jobsApi.getCoverLetter(jobId)
+        if (res.data?.data?.coverLetter) {
+          setApplyCoverLetter(res.data.data.coverLetter)
+        }
+      } catch {
+        // Non-blocking — user can still apply without cover letter
+      } finally {
+        setApplyCoverLetterLoading(false)
+      }
+    }
+  }
+
+  const handleConfirmApply = async () => {
+    if (!job || applying || applied) return
     try {
       setApplying(true)
       setApplyError(null)
-      const response = await applicationsApi.create({ jobId: job.id })
+      const payload: { jobId: string; coverLetterContent?: string } = { jobId: job.id }
+      if (includeCoverLetter && applyCoverLetter) {
+        payload.coverLetterContent = applyCoverLetter
+      }
+      const response = await applicationsApi.create(payload)
       setApplied(true)
-      // Use squad suggestions from the application creation response (no separate call needed)
+      setShowApplyDialog(false)
+      // Use squad suggestions from the application creation response
       const appData = response.data?.data
       if (appData?.squadSuggestions?.length > 0) {
         setSquadSuggestions(appData.squadSuggestions)
@@ -194,8 +236,10 @@ export default function JobDetailPage() {
     } catch (err: any) {
       const msg = err.response?.data?.error?.message || "Erreur lors de la candidature"
       setApplyError(msg)
-      // If already applied, just mark as applied
-      if (err.response?.data?.error?.code === 'ALREADY_APPLIED') setApplied(true)
+      if (err.response?.data?.error?.code === 'ALREADY_APPLIED') {
+        setApplied(true)
+        setShowApplyDialog(false)
+      }
     } finally {
       setApplying(false)
     }
@@ -849,6 +893,128 @@ export default function JobDetailPage() {
           </div>
         </div>
       </Tabs>
+
+      {/* One-Click Apply Confirmation Dialog */}
+      <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Postuler avec EDGE
+            </DialogTitle>
+            <DialogDescription>
+              Confirmez l&apos;envoi de votre candidature
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Job Summary */}
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-foreground truncate">{job?.title}</h4>
+                  <p className="text-sm text-muted-foreground">{job?.company?.name ?? "Entreprise"}</p>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job?.location}</span>
+                    <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{job ? getContractLabel(job.contractType) : ""}</span>
+                    {salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{salary}</span>}
+                  </div>
+                </div>
+                {job?.matchScore != null && job.matchScore > 0 && (
+                  <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                    job.matchScore >= 80 ? "bg-success/10 text-success"
+                    : job.matchScore >= 50 ? "bg-primary/10 text-primary"
+                    : "bg-amber-500/10 text-amber-600"
+                  }`}>
+                    {job.matchScore}%
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cover Letter Toggle */}
+            <div className="rounded-xl border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Lettre de motivation IA</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIncludeCoverLetter(!includeCoverLetter)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    includeCoverLetter ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                    includeCoverLetter ? "translate-x-5" : "translate-x-0"
+                  }`} />
+                </button>
+              </div>
+              {includeCoverLetter && (
+                <div className="text-xs text-muted-foreground">
+                  {applyCoverLetterLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      EDGE rédige ta lettre personnalisée...
+                    </div>
+                  ) : applyCoverLetter ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1 text-success">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Lettre générée et prête à envoyer</span>
+                      </div>
+                      <div className="max-h-32 overflow-y-auto rounded-lg bg-muted/50 p-3 text-xs leading-relaxed text-foreground/70">
+                        {applyCoverLetter.substring(0, 300)}
+                        {applyCoverLetter.length > 300 && "..."}
+                      </div>
+                    </div>
+                  ) : (
+                    <p>La lettre sera générée et jointe à ta candidature.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* EDGE Tips */}
+            <div className="flex items-start gap-3 rounded-xl bg-primary/5 p-3">
+              <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                EDGE enregistre ta candidature et te notifiera des mises à jour. Tu pourras suivre l&apos;avancement depuis ton tableau de bord.
+              </p>
+            </div>
+
+            {/* Error display */}
+            {applyError && !applied && (
+              <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg">
+                {applyError}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowApplyDialog(false)} disabled={applying}>
+              Annuler
+            </Button>
+            <Button onClick={handleConfirmApply} disabled={applying || applied}>
+              {applying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Confirmer la candidature
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

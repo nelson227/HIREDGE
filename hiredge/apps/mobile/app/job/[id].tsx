@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Alert, Modal, Switch } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -97,6 +97,12 @@ export default function JobDetailScreen() {
   const [showSquadBanner, setShowSquadBanner] = useState(false);
   const [joiningSquad, setJoiningSquad] = useState<string | null>(null);
 
+  // One-click apply modal state
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [includeCoverLetter, setIncludeCoverLetter] = useState(true);
+  const [applyCoverLetter, setApplyCoverLetter] = useState<string | null>(null);
+  const [applyCoverLetterLoading, setApplyCoverLetterLoading] = useState(false);
+
   const { data: job, isLoading } = useQuery({
     queryKey: ['job', id],
     queryFn: async () => {
@@ -156,14 +162,38 @@ export default function JobDetailScreen() {
   }, [loadCoverLetter, loadCompanyAnalysis]);
 
   // ─── Apply ──────────────────────────────────────────────────
+  const handleOpenApplyModal = useCallback(async () => {
+    if (applied) return;
+    setShowApplyModal(true);
+    // Auto-load cover letter for the modal
+    if (!applyCoverLetter && !applyCoverLetterLoading) {
+      setApplyCoverLetterLoading(true);
+      try {
+        const res = await jobsApi.getCoverLetter(id!);
+        if (res.data?.data?.coverLetter) {
+          setApplyCoverLetter(res.data.data.coverLetter);
+        }
+      } catch {
+        // Non-blocking — user can still apply without cover letter
+      } finally {
+        setApplyCoverLetterLoading(false);
+      }
+    }
+  }, [id, applied, applyCoverLetter, applyCoverLetterLoading]);
+
   const applyMutation = useMutation({
     mutationFn: async () => {
-      const response = await applicationsApi.create({ jobId: id! });
+      const payload: { jobId: string; coverLetterContent?: string } = { jobId: id! };
+      if (includeCoverLetter && applyCoverLetter) {
+        payload.coverLetterContent = applyCoverLetter;
+      }
+      const response = await applicationsApi.create(payload);
       return response.data;
     },
     onSuccess: (data) => {
       setApplied(true);
       setApplyError(null);
+      setShowApplyModal(false);
       const appData = data?.data;
       if (appData?.squadSuggestions?.length > 0) {
         setSquadSuggestions(appData.squadSuggestions);
@@ -174,6 +204,7 @@ export default function JobDetailScreen() {
       const msg = err.response?.data?.error?.message || 'Erreur lors de la candidature';
       if (err.response?.data?.error?.code === 'ALREADY_APPLIED') {
         setApplied(true);
+        setShowApplyModal(false);
       } else {
         setApplyError(msg);
       }
@@ -707,7 +738,7 @@ export default function JobDetailScreen() {
           <Ionicons name="bookmark-outline" size={22} color="#6C5CE7" />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => { if (!applied) applyMutation.mutate(); }}
+          onPress={() => { if (!applied) handleOpenApplyModal(); }}
           disabled={applyMutation.isPending || applied}
           style={{
             flex: 1, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
@@ -722,6 +753,166 @@ export default function JobDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* ═══ One-Click Apply Confirmation Modal ═══ */}
+      <Modal visible={showApplyModal} transparent animationType="slide" onRequestClose={() => setShowApplyModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{
+            backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            paddingHorizontal: 20, paddingTop: 20, paddingBottom: 34, maxHeight: '80%',
+          }}>
+            {/* Handle */}
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#E9ECEF', alignSelf: 'center', marginBottom: 16 }} />
+
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="send" size={20} color="#6C5CE7" />
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#2D3436' }}>Postuler avec EDGE</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowApplyModal(false)}>
+                <Ionicons name="close" size={24} color="#868E96" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Job Summary */}
+              <View style={{
+                backgroundColor: '#F8F9FA', borderRadius: 16, padding: 14, marginBottom: 14,
+                borderWidth: 1, borderColor: '#E9ECEF',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#F0EEFF', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="business" size={20} color="#6C5CE7" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2D3436' }} numberOfLines={2}>{job.title}</Text>
+                    <Text style={{ fontSize: 13, color: '#868E96', marginTop: 2 }}>{job.company?.name ?? 'Entreprise'}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Ionicons name="location-outline" size={12} color="#868E96" />
+                        <Text style={{ fontSize: 11, color: '#868E96' }}>{job.location}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Ionicons name="briefcase-outline" size={12} color="#868E96" />
+                        <Text style={{ fontSize: 11, color: '#868E96' }}>{getContractLabel(job.contractType)}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  {job.matchScore != null && job.matchScore > 0 && (
+                    <View style={{
+                      backgroundColor: job.matchScore >= 70 ? '#00B89420' : '#6C5CE720',
+                      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
+                    }}>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: job.matchScore >= 70 ? '#00B894' : '#6C5CE7' }}>
+                        {job.matchScore}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Cover Letter Toggle */}
+              <View style={{
+                backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 14,
+                borderWidth: 1, borderColor: '#E9ECEF',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Ionicons name="document-text" size={18} color="#6C5CE7" />
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#2D3436' }}>Lettre de motivation IA</Text>
+                  </View>
+                  <Switch
+                    value={includeCoverLetter}
+                    onValueChange={setIncludeCoverLetter}
+                    trackColor={{ false: '#E9ECEF', true: '#6C5CE780' }}
+                    thumbColor={includeCoverLetter ? '#6C5CE7' : '#CED4DA'}
+                  />
+                </View>
+                {includeCoverLetter && (
+                  <View style={{ marginTop: 10 }}>
+                    {applyCoverLetterLoading ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <ActivityIndicator size="small" color="#6C5CE7" />
+                        <Text style={{ fontSize: 12, color: '#6C5CE7' }}>EDGE rédige ta lettre...</Text>
+                      </View>
+                    ) : applyCoverLetter ? (
+                      <View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                          <Ionicons name="checkmark-circle" size={14} color="#00B894" />
+                          <Text style={{ fontSize: 12, color: '#00B894', fontWeight: '600' }}>Lettre prête à envoyer</Text>
+                        </View>
+                        <View style={{ backgroundColor: '#F8F9FA', borderRadius: 10, padding: 10, maxHeight: 100 }}>
+                          <Text style={{ fontSize: 11, color: '#495057', lineHeight: 16 }} numberOfLines={5}>
+                            {applyCoverLetter}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: '#868E96' }}>
+                        La lettre sera générée et jointe à ta candidature.
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* EDGE tip */}
+              <View style={{
+                flexDirection: 'row', gap: 10, backgroundColor: '#F0EEFF', borderRadius: 12, padding: 12, marginBottom: 14,
+              }}>
+                <Ionicons name="sparkles" size={16} color="#6C5CE7" style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 12, color: '#6C5CE7', lineHeight: 18 }}>
+                  EDGE enregistre ta candidature et te notifiera des mises à jour. Suis l'avancement depuis ton tableau de bord.
+                </Text>
+              </View>
+
+              {/* Error display */}
+              {applyError && !applied && (
+                <View style={{ backgroundColor: '#FEE2E2', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+                  <Text style={{ color: '#DC2626', fontSize: 13 }}>{applyError}</Text>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Action buttons */}
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+              <TouchableOpacity
+                onPress={() => setShowApplyModal(false)}
+                disabled={applyMutation.isPending}
+                style={{
+                  flex: 1, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+                  borderWidth: 1.5, borderColor: '#E9ECEF', backgroundColor: '#fff',
+                }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#868E96' }}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => applyMutation.mutate()}
+                disabled={applyMutation.isPending || applied}
+                style={{
+                  flex: 2, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+                  backgroundColor: '#6C5CE7', opacity: applyMutation.isPending ? 0.7 : 1,
+                  flexDirection: 'row', gap: 8,
+                  shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+                }}
+              >
+                {applyMutation.isPending ? (
+                  <>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Envoi...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="send" size={16} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Confirmer</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

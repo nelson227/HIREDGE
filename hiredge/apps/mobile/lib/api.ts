@@ -154,7 +154,7 @@ export const jobsApi = {
 export const applicationsApi = {
   list: (params?: Record<string, string>) =>
     api.get('/applications', { params }),
-  create: (data: { jobId: string; coverLetter?: string; cv?: string }) =>
+  create: (data: { jobId: string; coverLetterContent?: string; coverLetter?: string; cv?: string }) =>
     api.post('/applications', data),
   getById: (id: string) => api.get(`/applications/${id}`),
   updateStatus: (id: string, status: string) =>

@@ -172,7 +172,7 @@ export const jobsApi = {
 export const applicationsApi = {
   list: (status?: string) =>
     api.get('/applications', { params: { status } }),
-  create: (data: { jobId: string; coverLetter?: string; cv?: string }) =>
+  create: (data: { jobId: string; coverLetterContent?: string; coverLetter?: string; cv?: string }) =>
     api.post('/applications', data),
   getById: (id: string) => api.get(`/applications/${id}`),
   updateStatus: (id: string, status: string) =>
