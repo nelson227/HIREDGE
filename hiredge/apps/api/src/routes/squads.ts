@@ -318,14 +318,24 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       const ext = data.mimetype === 'audio/webm' ? '.webm' : data.mimetype === 'audio/ogg' ? '.ogg' : data.mimetype === 'audio/mp4' ? '.m4a' : data.mimetype === 'audio/mpeg' ? '.mp3' : '.wav';
       const filename = `${request.user.id}_${Date.now()}${ext}`;
       const filePath = path.join(voiceDir, filename);
-      await fs.writeFile(filePath, buffer);
+      await fs.writeFile(filePath, buffer).catch(() => {}); // Best-effort disk save
 
       const voiceUrl = `/uploads/voice/${id}/${filename}`;
 
-      // Create message with VOICE type
-      const message = await squadService.sendMessage(request.user.id, id, {
-        content: voiceUrl,
-        type: 'VOICE',
+      // Create message with VOICE type — store binary in DB for persistence
+      const message = await prisma.squadMessage.create({
+        data: {
+          squadId: id,
+          userId: request.user.id,
+          content: voiceUrl,
+          type: 'VOICE',
+          audioData: buffer,
+          audioMimeType: data.mimetype,
+        },
+        include: {
+          user: { select: { id: true, candidateProfile: { select: { firstName: true, lastName: true, avatarUrl: true } } } },
+          replyTo: { select: { id: true, content: true, user: { select: { candidateProfile: { select: { firstName: true } } } } } },
+        },
       });
 
       emitToSquad(id, 'squad:new_message', message);
@@ -334,6 +344,46 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
       throw err;
+    }
+  });
+
+  // GET /squads/:id/voice/:messageId — Stream voice from DB
+  fastify.get('/:id/voice/:messageId', async (request, reply) => {
+    const { id, messageId } = request.params as { id: string; messageId: string };
+
+    // Verify membership
+    const membership = await prisma.squadMember.findFirst({
+      where: { squadId: id, userId: request.user.id, isActive: true },
+    });
+    if (!membership) {
+      return reply.status(403).send({ success: false, error: { code: 'NOT_MEMBER', message: 'Accès refusé' } });
+    }
+
+    const message = await prisma.squadMessage.findFirst({
+      where: { id: messageId, squadId: id, type: 'VOICE' },
+      select: { audioData: true, audioMimeType: true, content: true },
+    });
+
+    if (!message) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Message vocal introuvable' } });
+    }
+
+    // Serve from DB if available
+    if (message.audioData) {
+      return reply
+        .type(message.audioMimeType || 'audio/webm')
+        .header('Content-Disposition', 'inline')
+        .header('Cache-Control', 'public, max-age=31536000, immutable')
+        .send(Buffer.from(message.audioData));
+    }
+
+    // Fallback: try filesystem
+    const filePath = path.join(process.cwd(), message.content);
+    try {
+      await fs.access(filePath);
+      return reply.sendFile(path.basename(filePath), path.dirname(filePath));
+    } catch {
+      return reply.status(404).send({ success: false, error: { code: 'VOICE_UNAVAILABLE', message: 'Fichier vocal non disponible' } });
     }
   });
 

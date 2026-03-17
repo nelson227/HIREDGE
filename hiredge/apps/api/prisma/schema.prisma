@@ -301,6 +301,8 @@ model SquadMessage {
   userId      String
   content     String
   audioUrl    String?
+  audioData   Bytes?
+  audioMimeType String?
   type        String           @default("TEXT")
   replyToId   String?
   isPinned    Boolean          @default(false)
