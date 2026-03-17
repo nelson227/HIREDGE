@@ -1,9 +1,9 @@
 /**
  * Document Generator — Generates downloadable PDF and Word (.docx) files
  * Uses jsPDF for PDF and docx for Word generation, all client-side.
+ * Libraries are dynamically imported to avoid React Native crashes
+ * (jspdf uses TextDecoder('latin1') which RN doesn't support at module load).
  */
-import { jsPDF } from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, TabStopPosition, TabStopType } from 'docx';
 
 // ─── Structured CV Data ───────────────────────────────────────────────
 export interface CVData {
@@ -112,7 +112,8 @@ function getCountryConfig(country?: string): CountryConfig {
 }
 
 // ─── PDF Generation ───────────────────────────────────────────────────
-export function generatePDF(cv: CVData): Blob {
+export async function generatePDF(cv: CVData): Promise<Blob> {
+  const { jsPDF } = await import('jspdf');
   const cc = getCountryConfig(cv.targetCountry);
   const doc = new jsPDF({ unit: 'mm', format: cc.pageFormat });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -379,8 +380,9 @@ export function generatePDF(cv: CVData): Blob {
 
 // ─── Word (.docx) Generation ──────────────────────────────────────────
 export async function generateWord(cv: CVData): Promise<Blob> {
+  const { Document, Packer, Paragraph, TextRun, BorderStyle, TabStopPosition, TabStopType } = await import('docx');
   const cc = getCountryConfig(cv.targetCountry);
-  const children: Paragraph[] = [];
+  const children: InstanceType<typeof Paragraph>[] = [];
 
   // ── Header — clean black on white ──
   children.push(

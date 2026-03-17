@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../lib/api';
-import { generatePDF, generateWord, downloadBlob, type CVData } from '../../lib/document-generator';
+import { type CVData } from '../../lib/document-generator';
 import { colors } from '../../lib/theme';
 
 // Load PDF.js from CDN at runtime (avoids Metro bundler issues)
@@ -267,7 +267,8 @@ export default function EdgeScreen() {
     setDownloadingFormat('pdf');
     try {
       if (action.documentType === 'cv') {
-        const blob = generatePDF(action.data as CVData);
+        const { generatePDF, downloadBlob } = await import('../../lib/document-generator');
+        const blob = await generatePDF(action.data as CVData);
         const name = `${(action.data as CVData).personalInfo?.firstName ?? 'CV'}_${(action.data as CVData).personalInfo?.lastName ?? ''}_CV`.replace(/\s+/g, '_');
         downloadBlob(blob, `${name}.pdf`);
       } else {
@@ -284,7 +285,8 @@ export default function EdgeScreen() {
           doc.text(line, margin, y);
           y += 5.5;
         }
-        downloadBlob(doc.output('blob'), 'Lettre_de_motivation.pdf');
+        const { downloadBlob: dlBlob } = await import('../../lib/document-generator');
+        dlBlob(doc.output('blob'), 'Lettre_de_motivation.pdf');
       }
     } catch (err) {
       alert('Erreur lors de la génération du PDF. Réessaie.');
@@ -298,6 +300,7 @@ export default function EdgeScreen() {
     setDownloadingFormat('word');
     try {
       if (action.documentType === 'cv') {
+        const { generateWord, downloadBlob } = await import('../../lib/document-generator');
         const blob = await generateWord(action.data as CVData);
         const name = `${(action.data as CVData).personalInfo?.firstName ?? 'CV'}_${(action.data as CVData).personalInfo?.lastName ?? ''}_CV`.replace(/\s+/g, '_');
         downloadBlob(blob, `${name}.docx`);
@@ -309,7 +312,8 @@ export default function EdgeScreen() {
         );
         const docFile = new Document({ sections: [{ children: paragraphs }] });
         const blob = await Packer.toBlob(docFile);
-        downloadBlob(blob, 'Lettre_de_motivation.docx');
+        const { downloadBlob: dlBlob2 } = await import('../../lib/document-generator');
+        dlBlob2(blob, 'Lettre_de_motivation.docx');
       }
     } catch (err) {
       alert('Erreur lors de la génération du Word. Réessaie.');
