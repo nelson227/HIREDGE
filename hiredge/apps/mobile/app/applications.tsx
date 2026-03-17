@@ -59,7 +59,7 @@ export default function ApplicationsScreen() {
     setRefreshing(false);
   }, []);
 
-  const applications = data?.items ?? [];
+  const applications = data?.applications ?? data?.items ?? [];
 
   const handleWithdraw = (appId: string, jobTitle?: string) => {
     Alert.alert(t('applicationWithdrawTitle'), t('applicationWithdrawConfirm').replace('{title}', jobTitle ?? t('applicationPosition')), [

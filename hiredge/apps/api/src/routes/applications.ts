@@ -53,7 +53,7 @@ const applicationRoutes: FastifyPluginAsync = async (fastify) => {
         page: page ? parseInt(page) : undefined,
         limit: limit ? parseInt(limit) : undefined,
       });
-      return reply.send({ success: true, data: result.applications, pagination: result.pagination });
+      return reply.send({ success: true, data: { applications: result.applications, pagination: result.pagination } });
     } catch (err) {
       if (err instanceof AppError) {
         return reply.status(err.statusCode).send({
