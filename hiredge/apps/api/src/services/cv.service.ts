@@ -221,14 +221,14 @@ Règles :
         throw new AppError('CV_EMPTY', 'Le CV semble vide ou illisible. Veuillez vérifier le fichier.', 400);
       }
 
-      // 2. Save file
+      // 2. Save file to disk (best-effort, ephemeral on Railway)
       const cvUrl = await this.saveFile(userId, buffer, filename);
 
       // 3. Parse with AI
       const parsed = await this.parseWithAI(text);
 
-      // 4. Update profile with parsed data
-      const profile = await this.applyToProfile(userId, parsed, cvUrl);
+      // 4. Update profile with parsed data + store binary in DB
+      const profile = await this.applyToProfile(userId, parsed, cvUrl, buffer, mimetype);
 
       return { profile, parsed };
     } catch (err: any) {
@@ -240,7 +240,7 @@ Règles :
   /**
    * Apply parsed CV data to user profile
    */
-  private async applyToProfile(userId: string, parsed: ParsedCVData, cvUrl: string) {
+  private async applyToProfile(userId: string, parsed: ParsedCVData, cvUrl: string, cvBuffer?: Buffer, cvMimeType?: string) {
     // Ensure profile exists
     let profile = await prisma.candidateProfile.findUnique({ where: { userId } });
     if (!profile) {
@@ -252,6 +252,7 @@ Règles :
     // Replace ALL profile fields with CV data (keep existing or empty for non-nullable fields)
     const updateData: any = {
       cvUrl,
+      ...(cvBuffer ? { cvData: cvBuffer, cvMimeType: cvMimeType || 'application/pdf' } : {}),
       firstName: parsed.firstName || profile.firstName || '',
       lastName: parsed.lastName || profile.lastName || '',
       title: parsed.title || profile.title || '',
@@ -336,6 +337,15 @@ Règles :
       select: { cvUrl: true },
     });
     return profile?.cvUrl || null;
+  }
+
+  async getCvData(userId: string): Promise<{ data: Buffer; mimeType: string } | null> {
+    const profile = await prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { cvData: true, cvMimeType: true },
+    });
+    if (!profile?.cvData) return null;
+    return { data: Buffer.from(profile.cvData), mimeType: profile.cvMimeType || 'application/pdf' };
   }
 }
 

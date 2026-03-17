@@ -86,6 +86,8 @@ model CandidateProfile {
   completionScore  Int              @default(0)
   onboardingDone   Boolean          @default(false)
   cvUrl            String?
+  cvData           Bytes?
+  cvMimeType       String?
   escouadePreference       String   @default("ENABLED")
   escouadeDismissedAt      DateTime?
   applicationsSinceDismissal Int    @default(0)

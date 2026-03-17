@@ -282,6 +282,16 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /profile/cv/download — Download the user's CV file
   fastify.get('/cv/download', async (request, reply) => {
     try {
+      // Try serving from DB first (persistent across Railway deploys)
+      const cvData = await cvService.getCvData(request.user.id);
+      if (cvData) {
+        return reply
+          .type(cvData.mimeType)
+          .header('Content-Disposition', 'inline; filename="cv.pdf"')
+          .send(cvData.data);
+      }
+
+      // Fallback: try filesystem (works if same deploy as upload)
       const cvPath = await cvService.getCvPath(request.user.id);
       if (!cvPath) {
         return reply.status(404).send({
