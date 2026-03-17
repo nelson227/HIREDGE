@@ -30,7 +30,6 @@ export default function ScoutConversationScreen() {
       const { data } = await scoutsApi.getMessages(id!);
       return data.data;
     },
-    refetchInterval: 30000, // Fallback polling every 30s (WebSocket handles real-time)
   });
 
   // WebSocket listener for real-time messages

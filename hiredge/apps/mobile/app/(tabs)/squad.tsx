@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, TextInput, FlatList, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -7,6 +7,7 @@ import api, { squadApi } from '../../lib/api';
 import { useThemeColors } from '../../lib/theme';
 import { useAuthStore } from '../../stores/auth.store';
 import { useTranslation } from '@hiredge/shared';
+import { connectSocket, getSocket, joinSquadRoom, leaveSquadRoom } from '../../lib/socket';
 
 const REACTIONS = ['👍', '❤️', '😂', '🔥', '🎉', '💪', '👏', '🚀'];
 
@@ -257,8 +258,59 @@ function SquadDetailView({ squad, onLeft, colors, t }: { squad: any; onLeft: () 
       const { data } = await squadApi.getMessages(squad.id);
       return data.data?.items ?? [];
     },
-    refetchInterval: 5000,
   });
+
+  // WebSocket listeners for real-time squad updates
+  useEffect(() => {
+    let socket = getSocket();
+
+    function onNewMessage(payload: any) {
+      if (payload?.squadId === squad.id) refetch();
+    }
+    function onReaction(payload: any) {
+      if (payload?.squadId === squad.id) refetch();
+    }
+    function onPin(payload: any) {
+      if (payload?.squadId === squad.id) refetch();
+    }
+    function onDelete(payload: any) {
+      if (payload?.squadId === squad.id) refetch();
+    }
+
+    async function setup() {
+      try {
+        socket = await connectSocket();
+        joinSquadRoom(squad.id);
+        socket.on('squad:new_message', onNewMessage);
+        socket.on('squad:reaction', onReaction);
+        socket.on('squad:pin', onPin);
+        socket.on('squad:delete', onDelete);
+      } catch {
+        // Socket unavailable, initial fetch still works
+      }
+    }
+
+    if (socket?.connected) {
+      joinSquadRoom(squad.id);
+      socket.on('squad:new_message', onNewMessage);
+      socket.on('squad:reaction', onReaction);
+      socket.on('squad:pin', onPin);
+      socket.on('squad:delete', onDelete);
+    } else {
+      setup();
+    }
+
+    return () => {
+      const s = getSocket();
+      if (s) {
+        s.off('squad:new_message', onNewMessage);
+        s.off('squad:reaction', onReaction);
+        s.off('squad:pin', onPin);
+        s.off('squad:delete', onDelete);
+      }
+      leaveSquadRoom(squad.id);
+    };
+  }, [squad.id]);
 
   const { data: events } = useQuery({
     queryKey: ['squadEvents', squad.id],

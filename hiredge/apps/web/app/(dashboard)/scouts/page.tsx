@@ -63,15 +63,16 @@ export default function ScoutsPage() {
     if (!socket) return
 
     const refresh = () => loadScouts()
+    const onNotification = (n: any) => {
+      if (n.type === 'SCOUT') refresh()
+    }
 
     socket.on('scout:new_answer', refresh)
-    socket.on('notification:new', (n: any) => {
-      if (n.type === 'SCOUT') refresh()
-    })
+    socket.on('notification:new', onNotification)
 
     return () => {
-      socket.off('scout:new_answer', refresh)
-      socket.off('notification:new')
+      socket!.off('scout:new_answer', refresh)
+      socket!.off('notification:new', onNotification)
     }
   }, [selectedCompany])
 

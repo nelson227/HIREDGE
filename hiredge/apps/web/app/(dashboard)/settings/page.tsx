@@ -27,6 +27,7 @@ import {
   Monitor,
 } from "lucide-react"
 import { profileApi, authApi, paymentsApi } from "@/lib/api"
+import { disconnectSocket } from "@/lib/socket"
 import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n"
 
 const LOCALES: Locale[] = ['fr', 'en', 'de', 'es']
@@ -174,6 +175,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* no-op */ }
+    disconnectSocket()
     try { sessionStorage.removeItem('adminToken') } catch {}
     router.push("/login")
   }

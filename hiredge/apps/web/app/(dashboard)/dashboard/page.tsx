@@ -139,6 +139,8 @@ export default function DashboardPage() {
     socket.on('application:deleted', refresh)
     socket.on('interview:started', refresh)
     socket.on('interview:completed', refresh)
+    socket.on('notification:new', refresh)
+    socket.on('squad:new_message', refresh)
 
     return () => {
       socket.off('application:created', refresh)
@@ -146,6 +148,8 @@ export default function DashboardPage() {
       socket.off('application:deleted', refresh)
       socket.off('interview:started', refresh)
       socket.off('interview:completed', refresh)
+      socket.off('notification:new', refresh)
+      socket.off('squad:new_message', refresh)
     }
   }, [])
 

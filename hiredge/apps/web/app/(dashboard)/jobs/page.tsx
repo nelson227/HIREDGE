@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react"
 import { jobsApi, JobSearchParams } from "@/lib/api"
+import { connectSocket } from "@/lib/socket"
 import {
   Select,
   SelectContent,
@@ -104,6 +105,22 @@ export default function JobsPage() {
   useEffect(() => {
     loadJobs()
   }, [contractFilter, sortBy])
+
+  // Real-time WebSocket listeners — refresh when new applications affect job list
+  useEffect(() => {
+    let socket: ReturnType<typeof connectSocket> | null = null
+    try { socket = connectSocket() } catch { return }
+    if (!socket) return
+
+    const refresh = () => loadJobs()
+    socket.on('application:created', refresh)
+    socket.on('application:deleted', refresh)
+
+    return () => {
+      socket!.off('application:created', refresh)
+      socket!.off('application:deleted', refresh)
+    }
+  }, [])
 
   const loadJobs = async (params: JobSearchParams = {}, append = false) => {
     try {

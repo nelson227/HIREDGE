@@ -7,10 +7,23 @@ const SOCKET_URL =
 
 let socket: Socket | null = null;
 
+// Track which squad rooms should be active (for auto-rejoin after reconnect)
+const activeSquadRooms = new Set<string>();
+
 export function connectSocket(): Socket {
   if (socket?.connected) return socket;
 
-  // Clean up old disconnected socket if any
+  // If socket exists but disconnected, just reconnect — don't destroy listeners
+  if (socket && !socket.connected) {
+    const token = getAccessToken();
+    if (token) {
+      socket.auth = { token };
+      socket.connect();
+      return socket;
+    }
+  }
+
+  // First-time creation
   if (socket) {
     socket.removeAllListeners();
     socket.disconnect();
@@ -37,6 +50,13 @@ export function connectSocket(): Socket {
     }
   });
 
+  // After reconnect, automatically re-join all active squad rooms
+  socket.on('connect', () => {
+    activeSquadRooms.forEach((squadId) => {
+      socket?.emit('squad:join', squadId);
+    });
+  });
+
   return socket;
 }
 
@@ -48,26 +68,32 @@ export function getSocket(): Socket | null {
 export function updateSocketToken(newToken: string) {
   if (socket) {
     socket.auth = { token: newToken };
-    // If disconnected, reconnect with the new token
     if (!socket.connected) {
       socket.connect();
     }
   }
 }
 
+/**
+ * Fully disconnect and destroy the socket.
+ * Only call this on logout — NOT on page navigation.
+ */
 export function disconnectSocket() {
   if (socket) {
     socket.removeAllListeners();
     socket.disconnect();
     socket = null;
   }
+  activeSquadRooms.clear();
 }
 
 export function joinSquadRoom(squadId: string) {
+  activeSquadRooms.add(squadId);
   socket?.emit('squad:join', squadId);
 }
 
 export function leaveSquadRoom(squadId: string) {
+  activeSquadRooms.delete(squadId);
   socket?.emit('squad:leave', squadId);
 }
 

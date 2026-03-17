@@ -115,23 +115,21 @@ export default function DashboardLayout({
 
     // Connect WebSocket for real-time updates
     let socket: ReturnType<typeof getSocket> = null
+    const onNotificationNew = () => setUnreadCount(prev => prev + 1)
+    const onNotificationRead = () => setUnreadCount(prev => Math.max(0, prev - 1))
+    const onNotificationAllRead = () => setUnreadCount(0)
+    const onSquadNewMessage = () => {
+      if (!window.location.pathname.startsWith('/squad')) {
+        setSquadUnreadTotal(prev => prev + 1)
+      }
+    }
+
     try {
       socket = connectSocket()
-      socket.on('notification:new', () => {
-        setUnreadCount(prev => prev + 1)
-      })
-      socket.on('notification:read', () => {
-        setUnreadCount(prev => Math.max(0, prev - 1))
-      })
-      socket.on('notification:all_read', () => {
-        setUnreadCount(0)
-      })
-      socket.on('squad:new_message', () => {
-        // Incrémenter le badge squad si on n'est pas sur la page squad
-        if (!window.location.pathname.startsWith('/squad')) {
-          setSquadUnreadTotal(prev => prev + 1)
-        }
-      })
+      socket.on('notification:new', onNotificationNew)
+      socket.on('notification:read', onNotificationRead)
+      socket.on('notification:all_read', onNotificationAllRead)
+      socket.on('squad:new_message', onSquadNewMessage)
     } catch {
       // Socket connection may fail if no token yet
     }
@@ -139,13 +137,13 @@ export default function DashboardLayout({
     return () => {
       window.removeEventListener('avatar-updated', handleAvatarUpdate)
       if (socket) {
-        socket.off('notification:new')
-        socket.off('notification:read')
-        socket.off('notification:all_read')
-        socket.off('squad:new_message')
+        socket.off('notification:new', onNotificationNew)
+        socket.off('notification:read', onNotificationRead)
+        socket.off('notification:all_read', onNotificationAllRead)
+        socket.off('squad:new_message', onSquadNewMessage)
       }
-      // Disconnect socket when leaving the dashboard entirely
-      disconnectSocket()
+      // Do NOT call disconnectSocket() here — other pages still need the socket.
+      // disconnectSocket() is only called on logout.
     }
   }, [])
 
@@ -167,6 +165,7 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* logout failure is non-blocking */ }
+    disconnectSocket()
     clearTokens()
     try { sessionStorage.removeItem('adminToken') } catch {}
     window.location.href = '/login'
