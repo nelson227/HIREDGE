@@ -1,18 +1,25 @@
 import { Resend } from 'resend';
 import { config } from '../config/env';
 
-const resend = new Resend(config.email.resendApiKey);
+let resend: Resend | null = null;
 const FROM = config.email.fromEmail;
 const APP_NAME = 'HIREDGE';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://hiredge.app';
 
+function getResendClient(): Resend | null {
+  if (!config.email.resendApiKey) return null;
+  if (!resend) resend = new Resend(config.email.resendApiKey);
+  return resend;
+}
+
 export class EmailService {
   private async send(to: string, subject: string, html: string) {
-    if (!config.email.resendApiKey) {
+    const client = getResendClient();
+    if (!client) {
       console.warn('[EmailService] RESEND_API_KEY not set — skipping email');
       return;
     }
-    await resend.emails.send({ from: FROM, to, subject, html });
+    await client.emails.send({ from: FROM, to, subject, html });
   }
 
   async sendEmailVerification(to: string, token: string) {
