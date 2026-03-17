@@ -105,6 +105,7 @@ export default function ApplicationsPage() {
   const [showCvViewer, setShowCvViewer] = useState(false)
   const [cvBlobUrl, setCvBlobUrl] = useState<string | null>(null)
   const [cvLoading, setCvLoading] = useState(false)
+  const [cvError, setCvError] = useState(false)
 
   const MAX_VISIBLE_CARDS = 3
 
@@ -242,6 +243,7 @@ export default function ApplicationsPage() {
     setSelectedApp(app)
     setDetailLoading(true)
     setShowCvViewer(false)
+    setCvError(false)
     if (cvBlobUrl) { URL.revokeObjectURL(cvBlobUrl); setCvBlobUrl(null) }
     try {
       const [appRes, profileRes] = await Promise.allSettled([
@@ -265,13 +267,15 @@ export default function ApplicationsPage() {
     }
     try {
       setCvLoading(true)
+      setCvError(false)
       const res = await profileApi.downloadCv()
       const blob = new Blob([res.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       setCvBlobUrl(url)
       setShowCvViewer(true)
-    } catch { /* CV non disponible */ }
-    finally { setCvLoading(false) }
+    } catch {
+      setCvError(true)
+    } finally { setCvLoading(false) }
   }
 
   const totalApplications = Object.values(applications).flat().length
@@ -532,7 +536,7 @@ export default function ApplicationsPage() {
       </Dialog>
 
       {/* Dialog "Voir ma candidature" — détails complets */}
-      <Dialog open={selectedApp !== null} onOpenChange={() => { setSelectedApp(null); setDetailData(null); setDetailProfile(null); setShowCvViewer(false); if (cvBlobUrl) { URL.revokeObjectURL(cvBlobUrl); setCvBlobUrl(null) } }}>
+      <Dialog open={selectedApp !== null} onOpenChange={() => { setSelectedApp(null); setDetailData(null); setDetailProfile(null); setShowCvViewer(false); setCvError(false); if (cvBlobUrl) { URL.revokeObjectURL(cvBlobUrl); setCvBlobUrl(null) } }}>
         <DialogContent className={`${showCvViewer ? 'max-w-4xl' : 'max-w-lg'} max-h-[85vh] flex flex-col transition-all duration-300`}>
           <DialogHeader>
             <DialogTitle>Ma candidature</DialogTitle>
@@ -623,6 +627,18 @@ export default function ApplicationsPage() {
                         className="w-full h-[500px]"
                         title="CV"
                       />
+                    </div>
+                  )}
+                  {cvError && (
+                    <div className="bg-destructive/10 rounded-lg p-3 text-sm space-y-2">
+                      <p className="text-destructive">CV non disponible. Veuillez le ré-uploader depuis votre profil.</p>
+                      <Link
+                        href="/settings"
+                        className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 text-sm font-medium"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Aller dans les paramètres
+                      </Link>
                     </div>
                   )}
                 </div>
