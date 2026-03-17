@@ -101,7 +101,7 @@ export const colors = lightColors;
 interface ThemeContextType {
   mode: ThemeMode;
   isDark: boolean;
-  colors: typeof lightColors;
+  colors: typeof lightColors | typeof darkColors;
   setMode: (mode: ThemeMode) => void;
 }
 
@@ -142,6 +142,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useThemeColors() {
+  return useContext(ThemeContext).colors;
+}
+
+export function useTheme() {
   return useContext(ThemeContext);
 }
 

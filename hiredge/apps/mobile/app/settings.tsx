@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth.store';
 import { profileApi, authApi } from '../lib/api';
-import { useThemeColors, type ThemeMode } from '../lib/theme';
+import { useTheme, type ThemeMode } from '../lib/theme';
 import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from '../lib/i18n';
 
 const LOCALES: Locale[] = ['fr', 'en', 'de', 'es'];
@@ -16,7 +16,7 @@ const THEME_OPTIONS: { id: ThemeMode; icon: string }[] = [
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
-  const { colors, mode, setMode, isDark } = useThemeColors();
+  const { colors, mode, setMode, isDark } = useTheme();
   const { t, locale, setLocale } = useTranslation();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
