@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (email, password, role = 'candidate') => {
-    const { data } = await api.post('/auth/register', { email, password, role });
+    const { data } = await authApi.register({ email, password, role });
     if (!data.success) throw new Error(data.error?.message ?? 'Echec d\'inscription');
 
     await storage.setItem('accessToken', data.data.accessToken);

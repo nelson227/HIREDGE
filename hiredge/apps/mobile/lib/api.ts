@@ -18,7 +18,7 @@ const API_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
+  timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
@@ -104,9 +104,9 @@ api.interceptors.response.use(
 // ─── Auth ────────────────────────────────────────────────────────
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
-  register: (data: { email: string; password: string; firstName: string; lastName: string }) =>
-    api.post('/auth/register', data),
+    api.post('/auth/login', { email, password }, { timeout: 45000 }),
+  register: (data: { email: string; password: string; role?: string; firstName?: string; lastName?: string }) =>
+    api.post('/auth/register', data, { timeout: 45000 }),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
 };

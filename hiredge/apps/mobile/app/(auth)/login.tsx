@@ -22,7 +22,10 @@ export default function LoginScreen() {
       await login(email.trim(), password);
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Erreur', err.message ?? 'Impossible de se connecter');
+      const msg = err.code === 'ECONNABORTED'
+        ? 'Le serveur met du temps à répondre. Réessaie dans quelques secondes.'
+        : err.response?.data?.error?.message ?? err.message ?? 'Impossible de se connecter';
+      Alert.alert('Erreur', msg);
     } finally {
       setLoading(false);
     }
