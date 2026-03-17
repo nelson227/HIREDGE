@@ -228,17 +228,19 @@ Règles :
       });
     }
 
-    // Update basic info (only overwrite if parsed data is non-empty)
-    const updateData: any = { cvUrl };
-    if (parsed.firstName) updateData.firstName = parsed.firstName;
-    if (parsed.lastName) updateData.lastName = parsed.lastName;
-    if (parsed.title) updateData.title = parsed.title;
-    if (parsed.bio) updateData.bio = parsed.bio;
-    if (parsed.phone) updateData.phone = parsed.phone;
-    if (parsed.city) updateData.city = parsed.city;
-    if (parsed.country) updateData.country = parsed.country;
-    if (parsed.linkedinUrl) updateData.linkedinUrl = parsed.linkedinUrl;
-    if (parsed.portfolioUrl) updateData.portfolioUrl = parsed.portfolioUrl;
+    // Replace ALL profile fields with CV data (null if absent in new CV)
+    const updateData: any = {
+      cvUrl,
+      firstName: parsed.firstName || profile.firstName || '',
+      lastName: parsed.lastName || profile.lastName || '',
+      title: parsed.title || null,
+      bio: parsed.bio || null,
+      phone: parsed.phone || null,
+      city: parsed.city || null,
+      country: parsed.country || null,
+      linkedinUrl: parsed.linkedinUrl || null,
+      portfolioUrl: parsed.portfolioUrl || null,
+    };
 
     await prisma.candidateProfile.update({
       where: { userId },
