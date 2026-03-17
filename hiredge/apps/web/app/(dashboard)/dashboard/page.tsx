@@ -171,7 +171,8 @@ export default function DashboardPage() {
       }
 
       if (appsRes.status === 'fulfilled' && appsRes.value.data.success) {
-        setApplications(appsRes.value.data.data || [])
+        const appsData = appsRes.value.data.data
+        setApplications(Array.isArray(appsData) ? appsData : appsData?.applications || [])
       }
 
       if (interviewsRes.status === 'fulfilled' && interviewsRes.value.data.success) {
@@ -189,7 +190,7 @@ export default function DashboardPage() {
 
   // Calculate stats
   const activeApplications = applications.filter(a => 
-    ['DRAFT', 'SENT', 'VIEWED', 'INTERVIEW_SCHEDULED'].includes(a.status)
+    ['DRAFT', 'APPLIED', 'VIEWED', 'INTERVIEW_SCHEDULED'].includes(a.status)
   ).length
   
   const upcomingInterviews = interviews.filter(i => 
@@ -197,7 +198,7 @@ export default function DashboardPage() {
   )
 
   const respondedApplications = applications.filter(a => 
-    ['VIEWED', 'INTERVIEW_SCHEDULED', 'OFFER', 'ACCEPTED'].includes(a.status)
+    ['VIEWED', 'INTERVIEW_SCHEDULED', 'OFFER_RECEIVED', 'ACCEPTED'].includes(a.status)
   ).length
   const responseRate = applications.length > 0 
     ? Math.round((respondedApplications / applications.length) * 100) 
