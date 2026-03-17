@@ -166,16 +166,12 @@ export const applicationsApi = {
 export const profileApi = {
   get: () => api.get('/profile'),
   update: (data: any) => api.patch('/profile', data),
-  uploadAvatar: (file: any) => {
-    const formData = new FormData();
-    formData.append('avatar', file);
+  uploadAvatar: (formData: FormData) => {
     return api.post('/profile/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  uploadCv: (file: any) => {
-    const formData = new FormData();
-    formData.append('cv', file);
+  uploadCv: (formData: FormData) => {
     return api.post('/profile/cv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000,
