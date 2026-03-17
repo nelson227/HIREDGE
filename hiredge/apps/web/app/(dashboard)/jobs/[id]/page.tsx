@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,7 @@ import {
   Sparkles,
   Send,
   FileCheck,
+  Upload,
 } from "lucide-react"
 import { jobsApi, applicationsApi, squadApi } from "@/lib/api"
 import {
@@ -128,6 +129,12 @@ export default function JobDetailPage() {
   const [applyCoverLetter, setApplyCoverLetter] = useState<string | null>(null)
   const [applyCoverLetterLoading, setApplyCoverLetterLoading] = useState(false)
 
+  // Import cover letter state
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importText, setImportText] = useState("")
+  const [isCustomLetter, setIsCustomLetter] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (jobId) loadJob()
   }, [jobId])
@@ -154,7 +161,10 @@ export default function JobDetailPage() {
       setCoverLetterLoading(true)
       setCoverLetterError(null)
       const res = await jobsApi.getCoverLetter(jobId)
-      if (res.data?.data) setCoverLetter(res.data.data)
+      if (res.data?.data) {
+        setCoverLetter(res.data.data)
+        setApplyCoverLetter(res.data.data.coverLetter)
+      }
     } catch (err: any) {
       setCoverLetterError(err.response?.data?.error?.message || "Erreur lors de la génération")
     } finally {
@@ -166,9 +176,13 @@ export default function JobDetailPage() {
     setCoverLetter(null)
     setCoverLetterLoading(true)
     setCoverLetterError(null)
+    setIsCustomLetter(false)
     try {
       const res = await jobsApi.getCoverLetter(jobId, true)
-      if (res.data?.data) setCoverLetter(res.data.data)
+      if (res.data?.data) {
+        setCoverLetter(res.data.data)
+        setApplyCoverLetter(res.data.data.coverLetter)
+      }
     } catch (err: any) {
       setCoverLetterError(err.response?.data?.error?.message || "Erreur lors de la génération")
     } finally {
@@ -197,10 +211,11 @@ export default function JobDetailPage() {
 
   const handleApply = async () => {
     if (!job || applying || applied) return
-    // Open confirmation dialog instead of applying directly
     setShowApplyDialog(true)
-    // Auto-load cover letter for the dialog
-    if (!applyCoverLetter && !applyCoverLetterLoading) {
+    // Use the current cover letter (generated, regenerated, or imported)
+    if (coverLetter?.coverLetter) {
+      setApplyCoverLetter(coverLetter.coverLetter)
+    } else if (!applyCoverLetter && !applyCoverLetterLoading) {
       setApplyCoverLetterLoading(true)
       try {
         const res = await jobsApi.getCoverLetter(jobId)
@@ -213,6 +228,34 @@ export default function JobDetailPage() {
         setApplyCoverLetterLoading(false)
       }
     }
+  }
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string
+      if (text) {
+        setImportText(text)
+        setShowImportDialog(true)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ""
+  }
+
+  const handleConfirmImport = () => {
+    if (!importText.trim()) return
+    const imported: CoverLetterData = {
+      coverLetter: importText.trim(),
+      generatedAt: new Date().toISOString(),
+    }
+    setCoverLetter(imported)
+    setApplyCoverLetter(imported.coverLetter)
+    setIsCustomLetter(true)
+    setShowImportDialog(false)
+    setImportText("")
   }
 
   const handleConfirmApply = async () => {
@@ -652,6 +695,9 @@ export default function JobDetailPage() {
                           <Button variant="outline" size="sm" onClick={regenerateCoverLetter}>
                             <RefreshCw className="w-4 h-4 mr-1" /> Régénérer
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+                            <Upload className="w-4 h-4 mr-1" /> Importer
+                          </Button>
                         </>
                       )}
                     </div>
@@ -674,17 +720,30 @@ export default function JobDetailPage() {
                     </div>
                   )}
                   {coverLetter && !coverLetterLoading && (
-                    <div className="bg-muted/30 rounded-xl p-6">
-                      <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-foreground">
-                        {coverLetter.coverLetter}
+                    <div className="space-y-3">
+                      {isCustomLetter && (
+                        <div className="flex items-center gap-1.5 text-xs text-primary">
+                          <Upload className="w-3 h-3" />
+                          <span>Lettre personnelle importée</span>
+                        </div>
+                      )}
+                      <div className="bg-muted/30 rounded-xl p-6">
+                        <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-foreground">
+                          {coverLetter.coverLetter}
+                        </div>
                       </div>
                     </div>
                   )}
                   {!coverLetter && !coverLetterLoading && !coverLetterError && (
                     <div className="text-center py-8">
                       <Mail className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                      <p className="text-muted-foreground mb-4">Clique pour générer une lettre de motivation personnalisée</p>
-                      <Button onClick={loadCoverLetter}>Générer la lettre</Button>
+                      <p className="text-muted-foreground mb-4">Génère une lettre IA ou importe la tienne</p>
+                      <div className="flex items-center justify-center gap-3">
+                        <Button onClick={loadCoverLetter}>Générer la lettre</Button>
+                        <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+                          <Upload className="w-4 h-4 mr-1" /> Importer
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -940,7 +999,7 @@ export default function JobDetailPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Lettre de motivation IA</span>
+                  <span className="text-sm font-medium">{isCustomLetter ? "Lettre de motivation importée" : "Lettre de motivation IA"}</span>
                 </div>
                 <button
                   type="button"
@@ -965,7 +1024,7 @@ export default function JobDetailPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-1 text-success">
                         <CheckCircle2 className="w-3 h-3" />
-                        <span>Lettre générée et prête à envoyer</span>
+                        <span>{isCustomLetter ? "Lettre importée et prête à envoyer" : "Lettre générée et prête à envoyer"}</span>
                       </div>
                       <div className="max-h-32 overflow-y-auto rounded-lg bg-muted/50 p-3 text-xs leading-relaxed text-foreground/70">
                         {applyCoverLetter.substring(0, 300)}
@@ -1011,6 +1070,50 @@ export default function JobDetailPage() {
                   Confirmer la candidature
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Cover Letter Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              Importer ta lettre de motivation
+            </DialogTitle>
+            <DialogDescription>
+              Colle ton texte ou importe un fichier texte (.txt)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <textarea
+              className="w-full min-h-[200px] rounded-lg border bg-muted/30 p-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+              placeholder="Colle ta lettre de motivation ici..."
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 mr-1" /> Charger un fichier .txt
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,text/plain"
+                className="hidden"
+                onChange={handleImportFile}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => { setShowImportDialog(false); setImportText("") }}>
+              Annuler
+            </Button>
+            <Button onClick={handleConfirmImport} disabled={!importText.trim()}>
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Utiliser cette lettre
             </Button>
           </DialogFooter>
         </DialogContent>
