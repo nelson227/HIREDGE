@@ -192,7 +192,16 @@ export class SquadService {
       orderBy: { joinedAt: 'desc' },
     });
 
-    return memberships.map((m) => m.squad);
+    const squads = memberships.map((m) => m.squad);
+
+    // Sort by most recent activity: last message timestamp, then squad creation date
+    squads.sort((a, b) => {
+      const aTime = a.messages?.[0]?.createdAt ?? a.createdAt;
+      const bTime = b.messages?.[0]?.createdAt ?? b.createdAt;
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
+    });
+
+    return squads;
   }
 
   // Keep legacy single-squad method for backwards compat
