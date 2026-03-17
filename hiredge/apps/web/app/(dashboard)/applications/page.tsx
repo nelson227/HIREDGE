@@ -13,9 +13,25 @@ import {
   ArrowRight,
   Loader2,
   Briefcase,
+  ChevronDown,
+  Eye,
+  FileText,
+  Mail,
+  X,
+  ExternalLink,
+  User,
+  Phone,
+  MapPin,
 } from "lucide-react"
-import { applicationsApi } from "@/lib/api"
+import { applicationsApi, profileApi } from "@/lib/api"
 import { connectSocket } from "@/lib/socket"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 // Statuts UI du Kanban (frontend)
 type KanbanStatus = "draft" | "applied" | "screening" | "interview" | "offer" | "rejected"
@@ -50,6 +66,9 @@ interface Application {
   nextStep?: string
   status: KanbanStatus
   jobId: string
+  coverLetterContent?: string | null
+  notes?: string | null
+  location?: string
 }
 
 const columns: { id: KanbanStatus; label: string; color: string }[] = [
@@ -74,6 +93,17 @@ export default function ApplicationsPage() {
   const [draggedItem, setDraggedItem] = useState<Application | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<KanbanStatus | null>(null)
   const [feedbackMsg, setFeedbackMsg] = useState("")
+
+  // "Voir plus" dialog
+  const [expandedColumn, setExpandedColumn] = useState<KanbanStatus | null>(null)
+
+  // Application detail dialog
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null)
+  const [detailData, setDetailData] = useState<any>(null)
+  const [detailProfile, setDetailProfile] = useState<any>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  const MAX_VISIBLE_CARDS = 3
 
   // Charger les candidatures depuis l'API
   useEffect(() => {
@@ -147,6 +177,9 @@ export default function ApplicationsPage() {
               : undefined,
             status: kanbanStatus,
             jobId: app.jobId,
+            coverLetterContent: app.coverLetterContent,
+            notes: app.notes,
+            location: app.job?.location,
           })
         })
       }
@@ -200,6 +233,20 @@ export default function ApplicationsPage() {
   const handleDragEnd = () => {
     setDraggedItem(null)
     setDragOverColumn(null)
+  }
+
+  const viewApplicationDetail = async (app: Application) => {
+    setSelectedApp(app)
+    setDetailLoading(true)
+    try {
+      const [appRes, profileRes] = await Promise.allSettled([
+        applicationsApi.getById(app.id),
+        profileApi.get(),
+      ])
+      if (appRes.status === "fulfilled") setDetailData(appRes.value.data?.data)
+      if (profileRes.status === "fulfilled") setDetailProfile(profileRes.value.data?.data)
+    } catch { /* handled by UI */ }
+    finally { setDetailLoading(false) }
   }
 
   const totalApplications = Object.values(applications).flat().length
@@ -286,7 +333,7 @@ export default function ApplicationsPage() {
                     dragOverColumn === column.id ? "bg-primary/10" : "bg-muted/50"
                   }`}
                 >
-                  {applications[column.id].map((app) => (
+                  {applications[column.id].slice(0, MAX_VISIBLE_CARDS).map((app) => (
                     <Card
                       key={app.id}
                       draggable
@@ -319,13 +366,19 @@ export default function ApplicationsPage() {
                                 <button className="text-muted-foreground hover:text-foreground">
                                   <MoreHorizontal className="w-4 h-4" />
                                 </button>
-                                <div className="absolute right-0 top-6 z-10 w-40 rounded-lg border border-border bg-background shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                <div className="absolute right-0 top-6 z-10 w-48 rounded-lg border border-border bg-background shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                                   <Link
                                     href={`/jobs/${app.jobId}`}
                                     className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded-t-lg"
                                   >
-                                    Voir l'offre
+                                    Voir l&apos;offre
                                   </Link>
+                                  <button
+                                    onClick={() => viewApplicationDetail(app)}
+                                    className="block w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted"
+                                  >
+                                    Voir ma candidature
+                                  </button>
                                   <button
                                     onClick={async () => {
                                       if (confirm('Retirer cette candidature ?')) {
@@ -360,6 +413,16 @@ export default function ApplicationsPage() {
                     </Card>
                   ))}
 
+                  {applications[column.id].length > MAX_VISIBLE_CARDS && (
+                    <button
+                      onClick={() => setExpandedColumn(column.id)}
+                      className="w-full flex items-center justify-center gap-2 py-3 text-sm text-primary hover:text-primary/80 hover:bg-primary/5 rounded-lg transition-colors"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                      Voir plus ({applications[column.id].length - MAX_VISIBLE_CARDS} de plus)
+                    </button>
+                  )}
+
                   {applications[column.id].length === 0 && (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <p className="text-sm text-muted-foreground">Aucune candidature</p>
@@ -374,6 +437,196 @@ export default function ApplicationsPage() {
           </div>
         </div>
       )}
+
+      {/* Dialog "Voir plus" — toutes les candidatures d'une colonne */}
+      <Dialog open={expandedColumn !== null} onOpenChange={() => setExpandedColumn(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {expandedColumn && (
+                <>
+                  <div className={`w-2.5 h-2.5 rounded-full ${columns.find(c => c.id === expandedColumn)?.color}`} />
+                  {columns.find(c => c.id === expandedColumn)?.label}
+                  <span className="text-muted-foreground font-normal text-sm">
+                    ({expandedColumn ? applications[expandedColumn].length : 0})
+                  </span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>Toutes les candidatures de cette colonne</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {expandedColumn && applications[expandedColumn].map((app) => (
+              <Card key={app.id} className="hover:border-primary/30">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <Link
+                            href={`/jobs/${app.jobId}`}
+                            className="font-medium text-foreground hover:text-primary truncate block"
+                          >
+                            {app.role}
+                          </Link>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground truncate">{app.company}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => { setExpandedColumn(null); viewApplicationDetail(app) }}
+                            className="text-muted-foreground hover:text-primary p-1"
+                            title="Voir ma candidature"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <Link href={`/jobs/${app.jobId}`} className="text-muted-foreground hover:text-primary p-1" title="Voir l'offre">
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{app.date}</span>
+                      </div>
+                      {app.nextStep && (
+                        <div className="flex items-center gap-1.5 mt-2 text-xs">
+                          <ArrowRight className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-foreground">{app.nextStep}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog "Voir ma candidature" — détails complets */}
+      <Dialog open={selectedApp !== null} onOpenChange={() => { setSelectedApp(null); setDetailData(null); setDetailProfile(null) }}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Ma candidature</DialogTitle>
+            <DialogDescription>
+              {selectedApp?.role} — {selectedApp?.company}
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto space-y-5 pr-1">
+              {/* Infos du poste */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" /> Poste
+                </h4>
+                <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                  <p className="font-medium">{selectedApp?.role}</p>
+                  <p className="text-muted-foreground">{selectedApp?.company}</p>
+                  {selectedApp?.location && (
+                    <p className="text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" /> {selectedApp.location}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" /> Candidature envoyée le {selectedApp?.date}
+                  </p>
+                </div>
+              </div>
+
+              {/* Infos du candidat */}
+              {detailProfile && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <User className="w-4 h-4" /> Informations candidat
+                  </h4>
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1.5">
+                    {(detailProfile.firstName || detailProfile.lastName) && (
+                      <p className="font-medium">
+                        {detailProfile.firstName} {detailProfile.lastName}
+                      </p>
+                    )}
+                    {detailProfile.email && (
+                      <p className="text-muted-foreground flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5" /> {detailProfile.email}
+                      </p>
+                    )}
+                    {detailProfile.phone && (
+                      <p className="text-muted-foreground flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5" /> {detailProfile.phone}
+                      </p>
+                    )}
+                    {detailProfile.city && (
+                      <p className="text-muted-foreground flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5" /> {detailProfile.city}{detailProfile.country ? `, ${detailProfile.country}` : ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* CV */}
+              {detailProfile?.cvUrl && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> CV
+                  </h4>
+                  <a
+                    href={detailProfile.cvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-muted/50 rounded-lg p-3 text-sm text-primary hover:bg-muted transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Voir / Télécharger le CV
+                    <ExternalLink className="w-3.5 h-3.5 ml-auto" />
+                  </a>
+                </div>
+              )}
+
+              {/* Lettre de motivation */}
+              {(detailData?.coverLetterContent || selectedApp?.coverLetterContent) && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Lettre de motivation
+                  </h4>
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+                    {detailData?.coverLetterContent || selectedApp?.coverLetterContent}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {(detailData?.notes || selectedApp?.notes) && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Notes
+                  </h4>
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                    {detailData?.notes || selectedApp?.notes}
+                  </div>
+                </div>
+              )}
+
+              {/* Lien vers l'offre */}
+              <Link
+                href={`/jobs/${selectedApp?.jobId}`}
+                className="flex items-center justify-center gap-2 py-2.5 text-sm text-primary hover:text-primary/80 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Voir l&apos;offre d&apos;emploi
+              </Link>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
