@@ -1,5 +1,4 @@
 import { FastifyPluginAsync } from 'fastify';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { adminService } from '../services/admin.service';
 import { requireRole } from '../middleware/auth';
@@ -11,7 +10,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
-  // POST /admin/verify-access — Admin panel login (no ADMIN role preHandler)
+  // POST /admin/verify-access — Public route (no auth required)
   fastify.post('/verify-access', async (request, reply) => {
     const { email, password } = request.body as { email?: string; password?: string };
     if (!email || !password) {
@@ -24,11 +23,13 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ success: true, data: { adminToken } });
   });
 
-  // All other admin routes require ADMIN role
-  fastify.addHook('preHandler', requireRole('ADMIN'));
+  // All other admin routes require ADMIN role — isolated in a sub-scope
+  // so the preHandler hook does NOT apply to /verify-access
+  await fastify.register(async (protectedScope) => {
+    protectedScope.addHook('preHandler', requireRole('ADMIN'));
 
-  // GET /admin/stats — Platform statistics
-  fastify.get('/stats', async (_request, reply) => {
+    // GET /admin/stats — Platform statistics
+    protectedScope.get('/stats', async (_request, reply) => {
     try {
       const stats = await adminService.getStats();
       return reply.send({ success: true, data: stats });
@@ -40,8 +41,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /admin/users — List users with pagination/filters
-  fastify.get('/users', async (request, reply) => {
+    // GET /admin/users — List users with pagination/filters
+    protectedScope.get('/users', async (request, reply) => {
     const { page, limit, search, role, subscriptionTier, sortBy, sortOrder } = request.query as {
       page?: string;
       limit?: string;
@@ -71,8 +72,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /admin/users/:id — User details
-  fastify.get('/users/:id', async (request, reply) => {
+    // GET /admin/users/:id — User details
+    protectedScope.get('/users/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
       const user = await adminService.getUserDetail(id);
@@ -85,8 +86,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // PATCH /admin/users/:id/role — Change user role
-  fastify.patch('/users/:id/role', async (request, reply) => {
+    // PATCH /admin/users/:id/role — Change user role
+    protectedScope.patch('/users/:id/role', async (request, reply) => {
     const { id } = request.params as { id: string };
     const { role } = request.body as { role: string };
 
@@ -105,8 +106,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // PATCH /admin/users/:id/subscription — Change subscription tier
-  fastify.patch('/users/:id/subscription', async (request, reply) => {
+    // PATCH /admin/users/:id/subscription — Change subscription tier
+    protectedScope.patch('/users/:id/subscription', async (request, reply) => {
     const { id } = request.params as { id: string };
     const { subscriptionTier } = request.body as { subscriptionTier: string };
 
@@ -125,19 +126,20 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // DELETE /admin/users/:id — Delete user account
-  fastify.delete('/users/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    try {
-      await adminService.deleteUser(id);
-      return reply.send({ success: true, data: { message: 'Utilisateur supprimé' } });
-    } catch (err) {
-      if (err instanceof AppError) {
-        return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+    // DELETE /admin/users/:id — Delete user account
+    protectedScope.delete('/users/:id', async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        await adminService.deleteUser(id);
+        return reply.send({ success: true, data: { message: 'Utilisateur supprimé' } });
+      } catch (err) {
+        if (err instanceof AppError) {
+          return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+        }
+        throw err;
       }
-      throw err;
-    }
-  });
+    });
+  }); // end protectedScope register
 };
 
 export default adminRoutes;
