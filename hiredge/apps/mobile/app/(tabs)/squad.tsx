@@ -29,7 +29,7 @@ export default function SquadScreen() {
   const { data: mySquad, isLoading, refetch } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
-      try { const { data } = await squadApi.getMySquad(); return data.data; } catch { return null; }
+      try { const { data } = await squadApi.getMySquad(); const squads = data.data; return Array.isArray(squads) ? squads[0] ?? null : squads ?? null; } catch { return null; }
     },
   });
 
