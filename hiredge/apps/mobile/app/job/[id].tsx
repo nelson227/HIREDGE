@@ -7,6 +7,7 @@ import * as Clipboard from 'expo-clipboard';
 import { jobsApi, applicationsApi, squadApi } from '../../lib/api';
 import { useThemeColors } from '../../lib/theme';
 import { useTranslation } from '../../lib/i18n';
+import type { TranslationKey } from '@hiredge/shared/src/i18n/translations';
 
 // ─── Types ───────────────────────────────────────────────────────
 interface CoverLetterData { coverLetter: string; generatedAt: string }
@@ -28,7 +29,7 @@ function cleanDescription(text: string): string {
     .trim();
 }
 
-function formatSalary(min?: number, max?: number, currency?: string, t?: (k: string) => string): string {
+function formatSalary(min?: number, max?: number, currency?: string, t?: (k: TranslationKey) => string): string {
   if (!min && !max) return '';
   const cur = currency ?? 'EUR';
   const symbol = cur === 'CAD' ? 'CA$' : cur === 'USD' ? '$' : '€';
@@ -39,7 +40,7 @@ function formatSalary(min?: number, max?: number, currency?: string, t?: (k: str
   return '';
 }
 
-function formatLevel(level: string, t?: (k: string) => string): string {
+function formatLevel(level: string, t?: (k: TranslationKey) => string): string {
   if (!t) {
     const map: Record<string, string> = { junior: 'Junior', mid: 'Confirmé', senior: 'Senior', lead: 'Lead' };
     return map[level?.toLowerCase()] ?? level;
@@ -58,7 +59,7 @@ function getMatchColor(score: number): string {
   return '#FF7675';
 }
 
-function getContractLabel(type: string, t?: (k: string) => string): string {
+function getContractLabel(type: string, t?: (k: TranslationKey) => string): string {
   if (!t) {
     const labels: Record<string, string> = {
       CDI: 'CDI', CDD: 'CDD', FREELANCE: 'Freelance', STAGE: 'Stage',
@@ -69,22 +70,22 @@ function getContractLabel(type: string, t?: (k: string) => string): string {
   }
   const labels: Record<string, string> = {
     CDI: t('jobContractCDI'), CDD: t('jobContractCDD'), FREELANCE: t('jobContractFreelance'),
-    STAGE: t('jobContractIntern'), ALTERNANCE: t('jobContractAlternance'),
+    STAGE: t('jobContractStage'), ALTERNANCE: t('jobContractAlternance'),
     TEMPS_PARTIEL: t('jobContractPartTime'), FULL_TIME: t('jobContractFullTime'),
     PART_TIME: t('jobContractPartTime'), CONTRACT: t('jobContractContract'),
   };
   return labels[type] || type;
 }
 
-function formatDate(dateString: string, t?: (k: string) => string): string {
+function formatDate(dateString: string, t?: (k: TranslationKey) => string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (diffHours < 1) return t?.('jobJustNow') ?? "\u00c0 l'instant";
-  if (diffHours < 24) return `${t?.('jobAgo') ?? 'Il y a'} ${diffHours}h`;
-  if (diffDays < 7) return `${t?.('jobAgo') ?? 'Il y a'} ${diffDays}${t?.('jobDaysShort') ?? 'j'}`;
+  if (diffHours < 24) return t?.('jobHoursAgo')?.replace('{n}', String(diffHours)) ?? `Il y a ${diffHours}h`;
+  if (diffDays < 7) return t?.('jobDaysAgo')?.replace('{n}', String(diffDays)) ?? `Il y a ${diffDays}j`;
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
@@ -294,7 +295,7 @@ export default function JobDetailScreen() {
           </View>
 
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', lineHeight: 28 }}>{job.title}</Text>
-          <Text style={{ color: '#C9C3FF', fontSize: 16, marginTop: 6, fontWeight: '500' }}>{job.company?.name ?? t('jobCompany')}</Text>
+          <Text style={{ color: '#C9C3FF', fontSize: 16, marginTop: 6, fontWeight: '500' }}>{job.company?.name ?? t('jobCompanyFallback')}</Text>
 
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <InfoBadge icon="location-outline" text={`${job.location}${job.remote ? ` (${t('jobRemote')})` : ''}`} />
@@ -339,8 +340,8 @@ export default function JobDetailScreen() {
                   <Ionicons name="people" size={20} color="#fff" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E3A5F' }}>{t('jobApplicationSent')}</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{t('jobJoinSquad')}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E3A5F' }}>{t('jobSquadBannerTitle')}</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{t('jobSquadBannerSubtitle')}</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowSquadBanner(false)}>
