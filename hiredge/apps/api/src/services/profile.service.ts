@@ -42,19 +42,32 @@ export class ProfileService {
     salaryMax?: number;
     salaryCurrency?: string;
     availableFrom?: string;
+    notificationPrefs?: Record<string, boolean>;
+    privacyPrefs?: Record<string, boolean>;
   }) {
     const profile = await prisma.candidateProfile.findUnique({ where: { userId } });
     if (!profile) {
       throw new AppError('PROFILE_NOT_FOUND', 'Profil introuvable', 404);
     }
 
+    // Merge notification/privacy prefs with existing values
+    const { notificationPrefs, privacyPrefs, ...profileData } = data;
+    const mergedNotifPrefs = notificationPrefs
+      ? { ...((profile.notificationPrefs as Record<string, boolean>) ?? {}), ...notificationPrefs }
+      : undefined;
+    const mergedPrivacyPrefs = privacyPrefs
+      ? { ...((profile.privacyPrefs as Record<string, boolean>) ?? {}), ...privacyPrefs }
+      : undefined;
+
     return prisma.candidateProfile.update({
       where: { userId },
       data: {
-        ...data,
-        remotePreference: data.remotePreference as any,
-        availableFrom: data.availableFrom ? new Date(data.availableFrom) : undefined,
-        completionScore: this.calculateCompletion({ ...profile, ...data }),
+        ...profileData,
+        remotePreference: profileData.remotePreference as any,
+        availableFrom: profileData.availableFrom ? new Date(profileData.availableFrom) : undefined,
+        completionScore: this.calculateCompletion({ ...profile, ...profileData }),
+        ...(mergedNotifPrefs && { notificationPrefs: mergedNotifPrefs }),
+        ...(mergedPrivacyPrefs && { privacyPrefs: mergedPrivacyPrefs }),
       },
     });
   }

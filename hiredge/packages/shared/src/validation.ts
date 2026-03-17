@@ -37,6 +37,21 @@ export const refreshTokenSchema = z.object({
 });
 
 // --- Profile Schemas ---
+export const notificationPrefsSchema = z.object({
+  new_matches: z.boolean(),
+  application_updates: z.boolean(),
+  squad_activity: z.boolean(),
+  interview_reminders: z.boolean(),
+  weekly_digest: z.boolean(),
+  marketing: z.boolean(),
+}).partial();
+
+export const privacyPrefsSchema = z.object({
+  profile_visibility: z.boolean(),
+  anonymous_mode: z.boolean(),
+  data_sharing: z.boolean(),
+}).partial();
+
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
@@ -49,6 +64,8 @@ export const updateProfileSchema = z.object({
   salaryMax: z.number().positive().optional(),
   salaryCurrency: z.string().length(3).default('EUR').optional(),
   yearsExperience: z.number().min(0).max(50).optional(),
+  notificationPrefs: notificationPrefsSchema.optional(),
+  privacyPrefs: privacyPrefsSchema.optional(),
 });
 
 export const addSkillSchema = z.object({

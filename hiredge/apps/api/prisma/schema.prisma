@@ -85,6 +85,8 @@ model CandidateProfile {
   escouadePreference       String   @default("ENABLED")
   escouadeDismissedAt      DateTime?
   applicationsSinceDismissal Int    @default(0)
+  notificationPrefs        Json     @default("{\"new_matches\":true,\"application_updates\":true,\"squad_activity\":true,\"interview_reminders\":true,\"weekly_digest\":false,\"marketing\":false}")
+  privacyPrefs             Json     @default("{\"profile_visibility\":true,\"anonymous_mode\":false,\"data_sharing\":true}")
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 

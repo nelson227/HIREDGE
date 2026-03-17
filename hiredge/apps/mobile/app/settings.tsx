@@ -1,8 +1,9 @@
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth.store';
+import { profileApi } from '../lib/api';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
@@ -11,6 +12,36 @@ export default function SettingsScreen() {
   const [jobAlerts, setJobAlerts] = useState(true);
   const [squadNotifs, setSquadNotifs] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const { data } = await profileApi.get();
+      if (data.success && data.data) {
+        const prefs = data.data.notificationPrefs as Record<string, boolean> | null;
+        if (prefs) {
+          setPushEnabled(prefs.new_matches ?? true);
+          setEmailEnabled(prefs.application_updates ?? true);
+          setJobAlerts(prefs.interview_reminders ?? true);
+          setSquadNotifs(prefs.squad_activity ?? true);
+        }
+      }
+    } catch { /* no-op */ }
+  };
+
+  const updateNotifPref = async (key: string, value: boolean) => {
+    try {
+      await profileApi.update({ notificationPrefs: { [key]: value } });
+    } catch { /* no-op */ }
+  };
+
+  const togglePush = (v: boolean) => { setPushEnabled(v); updateNotifPref('new_matches', v); };
+  const toggleEmail = (v: boolean) => { setEmailEnabled(v); updateNotifPref('application_updates', v); };
+  const toggleJobAlerts = (v: boolean) => { setJobAlerts(v); updateNotifPref('interview_reminders', v); };
+  const toggleSquadNotifs = (v: boolean) => { setSquadNotifs(v); updateNotifPref('squad_activity', v); };
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -54,13 +85,13 @@ export default function SettingsScreen() {
         {/* Notifications */}
         <SectionTitle title="Notifications" />
         <SettingCard>
-          <ToggleRow icon="notifications-outline" label="Notifications push" value={pushEnabled} onToggle={setPushEnabled} />
+          <ToggleRow icon="notifications-outline" label="Notifications push" value={pushEnabled} onToggle={togglePush} />
           <Divider />
-          <ToggleRow icon="mail-outline" label="Notifications email" value={emailEnabled} onToggle={setEmailEnabled} />
+          <ToggleRow icon="mail-outline" label="Notifications email" value={emailEnabled} onToggle={toggleEmail} />
           <Divider />
-          <ToggleRow icon="briefcase-outline" label="Alertes offres d'emploi" value={jobAlerts} onToggle={setJobAlerts} />
+          <ToggleRow icon="briefcase-outline" label="Alertes offres d'emploi" value={jobAlerts} onToggle={toggleJobAlerts} />
           <Divider />
-          <ToggleRow icon="people-outline" label="Messages escouade" value={squadNotifs} onToggle={setSquadNotifs} />
+          <ToggleRow icon="people-outline" label="Messages escouade" value={squadNotifs} onToggle={toggleSquadNotifs} />
         </SettingCard>
 
         {/* Apparence */}

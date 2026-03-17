@@ -109,13 +109,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfile()
-    // Restore saved preferences from localStorage
-    try {
-      const savedNotifs = localStorage.getItem('hiredge_notification_prefs')
-      if (savedNotifs) setNotifications(JSON.parse(savedNotifs))
-      const savedPrivacy = localStorage.getItem('hiredge_privacy_prefs')
-      if (savedPrivacy) setPrivacy(JSON.parse(savedPrivacy))
-    } catch { /* no-op */ }
   }, [])
 
   const loadProfile = async () => {
@@ -136,6 +129,19 @@ export default function SettingsPage() {
           city: p.city || "",
           country: p.country || "",
         })
+        // Load notification & privacy prefs from backend
+        if (p.notificationPrefs) {
+          setNotifications(prev => prev.map(n => ({
+            ...n,
+            enabled: (p.notificationPrefs as Record<string, boolean>)[n.id] ?? n.enabled,
+          })))
+        }
+        if (p.privacyPrefs) {
+          setPrivacy(prev => prev.map(pr => ({
+            ...pr,
+            enabled: (p.privacyPrefs as Record<string, boolean>)[pr.id] ?? pr.enabled,
+          })))
+        }
       }
     } catch { /* no-op */ }
     finally { setLoading(false) }
@@ -190,20 +196,30 @@ export default function SettingsPage() {
     router.push("/login")
   }
 
-  const toggleNotification = (id: string) => {
+  const toggleNotification = async (id: string) => {
     const updated = notifications.map(n => 
       n.id === id ? { ...n, enabled: !n.enabled } : n
     )
     setNotifications(updated)
-    try { localStorage.setItem('hiredge_notification_prefs', JSON.stringify(updated)) } catch { /* no-op */ }
+    const target = updated.find(n => n.id === id)
+    if (target) {
+      try {
+        await profileApi.update({ notificationPrefs: { [id]: target.enabled } })
+      } catch { /* no-op */ }
+    }
   }
 
-  const togglePrivacy = (id: string) => {
+  const togglePrivacy = async (id: string) => {
     const updated = privacy.map(p => 
       p.id === id ? { ...p, enabled: !p.enabled } : p
     )
     setPrivacy(updated)
-    try { localStorage.setItem('hiredge_privacy_prefs', JSON.stringify(updated)) } catch { /* no-op */ }
+    const target = updated.find(p => p.id === id)
+    if (target) {
+      try {
+        await profileApi.update({ privacyPrefs: { [id]: target.enabled } })
+      } catch { /* no-op */ }
+    }
   }
 
   return (
