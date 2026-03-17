@@ -183,19 +183,20 @@ Règles :
   }
 
   /**
-   * Save uploaded CV file to disk
+   * Save uploaded CV file to disk (best-effort, ephemeral on Railway)
    */
   async saveFile(userId: string, buffer: Buffer, filename: string): Promise<string> {
-    const userDir = path.join(UPLOADS_DIR, userId);
-    await fs.mkdir(userDir, { recursive: true });
-
     // Sanitize filename to prevent path traversal
     const safeName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
     const ext = path.extname(safeName) || '.pdf';
     const finalName = `cv_${Date.now()}${ext}`;
-    const filePath = path.join(userDir, finalName);
 
-    await fs.writeFile(filePath, buffer);
+    // Best-effort disk write — may fail on Railway (ephemeral filesystem)
+    try {
+      const userDir = path.join(UPLOADS_DIR, userId);
+      await fs.mkdir(userDir, { recursive: true });
+      await fs.writeFile(path.join(userDir, finalName), buffer);
+    } catch { /* ignore — DB is the source of truth */ }
 
     // Return relative path for storage
     return `/uploads/cv/${userId}/${finalName}`;

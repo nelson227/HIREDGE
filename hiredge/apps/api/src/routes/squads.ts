@@ -312,13 +312,15 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const voiceDir = path.join(process.cwd(), 'uploads', 'voice', id);
-      await fs.mkdir(voiceDir, { recursive: true });
-
       const ext = data.mimetype === 'audio/webm' ? '.webm' : data.mimetype === 'audio/ogg' ? '.ogg' : data.mimetype === 'audio/mp4' ? '.m4a' : data.mimetype === 'audio/mpeg' ? '.mp3' : '.wav';
       const filename = `${request.user.id}_${Date.now()}${ext}`;
-      const filePath = path.join(voiceDir, filename);
-      await fs.writeFile(filePath, buffer).catch(() => {}); // Best-effort disk save
+
+      // Best-effort disk write — may fail on Railway (ephemeral filesystem)
+      try {
+        const voiceDir = path.join(process.cwd(), 'uploads', 'voice', id);
+        await fs.mkdir(voiceDir, { recursive: true });
+        await fs.writeFile(path.join(voiceDir, filename), buffer);
+      } catch { /* ignore — DB is the source of truth */ }
 
       const voiceUrl = `/uploads/voice/${id}/${filename}`;
 
