@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '../db/prisma';
 import redis from '../lib/redis';
 import { RegisterInput, LoginInput } from '@hiredge/shared';
+import { emailService } from './email.service';
 
 const SALT_ROUNDS = 12;
 
@@ -114,6 +116,78 @@ export class AuthService {
     await prisma.session.deleteMany({ where: { userId } });
     // Delete user — cascade handles related records (profile, applications, etc.)
     await prisma.user.delete({ where: { id: userId } });
+  }
+
+  // ── Password Reset ──────────────────────────────────────────
+  async requestPasswordReset(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    // Always return success to prevent email enumeration
+    if (!user) return;
+
+    // Invalidate previous tokens
+    await prisma.passwordReset.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await prisma.passwordReset.create({
+      data: { userId: user.id, token, expiresAt },
+    });
+
+    await emailService.sendPasswordReset(email, token);
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const record = await prisma.passwordReset.findUnique({ where: { token } });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new AppError('INVALID_TOKEN', 'Lien de réinitialisation invalide ou expiré', 400);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+      prisma.passwordReset.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+      prisma.session.deleteMany({ where: { userId: record.userId } }), // logout everywhere
+    ]);
+  }
+
+  // ── Email Verification ──────────────────────────────────────
+  async createEmailVerification(userId: string, email: string) {
+    // Invalidate previous tokens
+    await prisma.emailVerification.updateMany({
+      where: { userId, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.emailVerification.create({
+      data: { userId, token, expiresAt },
+    });
+
+    await emailService.sendEmailVerification(email, token);
+  }
+
+  async verifyEmail(token: string) {
+    const record = await prisma.emailVerification.findUnique({ where: { token } });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new AppError('INVALID_TOKEN', 'Lien de vérification invalide ou expiré', 400);
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: record.userId }, data: { isEmailVerified: true } }),
+      prisma.emailVerification.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+    ]);
+
+    // Clear user cache so middleware picks up the change
+    try { await redis.del(`auth:user:${record.userId}`); } catch {}
   }
 
   async blacklistAccessToken(token: string, expiresInSeconds: number) {

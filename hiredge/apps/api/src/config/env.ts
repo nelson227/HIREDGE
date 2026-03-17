@@ -46,6 +46,12 @@ export const config = {
     fromEmail: process.env.FROM_EMAIL || 'noreply@hiredge.app',
   },
 
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    priceId: process.env.STRIPE_PRICE_ID || '', // monthly premium price
+  },
+
   adzuna: {
     appId: process.env.ADZUNA_APP_ID || '',
     appKey: process.env.ADZUNA_APP_KEY || '',

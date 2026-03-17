@@ -130,7 +130,12 @@ export const authApi = {
   me: () => api.get('/auth/me'),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/auth/password', { currentPassword, newPassword }),
-  deleteAccount: () => api.delete('/auth/account'),
+  deleteAccount: (password: string) => api.delete('/auth/account', { data: { password } }),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, newPassword }),
+  verifyEmail: (token: string) => api.post('/auth/verify-email', { token }),
+  resendVerification: () => api.post('/auth/resend-verification'),
 };
 
 // ─── EDGE AI ─────────────────────────────────────────────────────
@@ -302,6 +307,13 @@ export const adminApi = {
   updateUserSubscription: (id: string, subscriptionTier: string) =>
     api.patch(`/admin/users/${id}/subscription`, { subscriptionTier }),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+};
+
+// ─── Payments ────────────────────────────────────────────────────
+export const paymentsApi = {
+  createCheckout: () => api.post('/payments/create-checkout'),
+  createPortal: () => api.post('/payments/portal'),
+  getStatus: () => api.get('/payments/status'),
 };
 
 export default api;

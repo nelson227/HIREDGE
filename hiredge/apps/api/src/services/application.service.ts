@@ -13,6 +13,18 @@ export class ApplicationService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AppError('USER_NOT_FOUND', 'Utilisateur introuvable', 404);
 
+    // Enforce FREE tier limit: 50 applications max
+    if (user.subscriptionTier !== 'PREMIUM') {
+      const applicationCount = await prisma.application.count({ where: { userId } });
+      if (applicationCount >= 50) {
+        throw new AppError(
+          'APPLICATION_LIMIT_REACHED',
+          'Vous avez atteint la limite de 50 candidatures. Passez en Premium pour des candidatures illimitées.',
+          403,
+        );
+      }
+    }
+
     // Check if already applied
     const existing = await prisma.application.findFirst({
       where: { userId: userId, jobId: data.jobId },

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth.store';
-import { profileApi, authApi } from '../lib/api';
+import { profileApi, authApi, paymentsApi } from '../lib/api';
 import { useTheme, type ThemeMode } from '../lib/theme';
 import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from '../lib/i18n';
 
@@ -22,10 +22,20 @@ export default function SettingsScreen() {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
   const [squadNotifs, setSquadNotifs] = useState(true);
+  const [subscription, setSubscription] = useState<{ tier: string; applicationsUsed: number; applicationsLimit: number } | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => {
     loadPreferences();
+    loadSubscription();
   }, []);
+
+  const loadSubscription = async () => {
+    try {
+      const { data } = await paymentsApi.getStatus();
+      if (data.success) setSubscription(data.data);
+    } catch { /* no-op */ }
+  };
 
   const loadPreferences = async () => {
     try {
@@ -54,17 +64,21 @@ export default function SettingsScreen() {
   const toggleSquadNotifs = (v: boolean) => { setSquadNotifs(v); updateNotifPref('squad_activity', v); };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    Alert.prompt(
       t('settingsDeleteAccount'),
-      t('settingsDeleteConfirm'),
+      'Entrez votre mot de passe pour confirmer la suppression définitive de votre compte.',
       [
         { text: t('cancel'), style: 'cancel' },
         {
           text: t('delete'),
           style: 'destructive',
-          onPress: async () => {
+          onPress: async (password) => {
+            if (!password) {
+              Alert.alert(t('error'), 'Veuillez entrer votre mot de passe');
+              return;
+            }
             try {
-              await authApi.deleteAccount();
+              await authApi.deleteAccount(password);
               logout();
               router.replace('/(auth)/login');
             } catch {
@@ -72,7 +86,8 @@ export default function SettingsScreen() {
             }
           },
         },
-      ]
+      ],
+      'secure-text'
     );
   };
 
@@ -234,6 +249,80 @@ export default function SettingsScreen() {
           <ActionRow icon="information-circle-outline" label={t('settingsVersion')} value="1.0.0 (build 1)" colors={colors} />
           <Divider color={colors.border} />
           <ActionRow icon="chatbubble-outline" label={t('settingsContact')} onPress={() => Linking.openURL('mailto:support@hiredge.app')} chevron colors={colors} />
+        </SettingCard>
+
+        {/* Abonnement */}
+        <SectionTitle title="Abonnement" color={colors.mutedForeground} />
+        <SettingCard bg={colors.card} border={colors.border}>
+          {subscription ? (
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: subscription.tier === 'PREMIUM' ? '#f59e0b20' : colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name={subscription.tier === 'PREMIUM' ? 'star' : 'star-outline'} size={22} color={subscription.tier === 'PREMIUM' ? '#f59e0b' : colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>
+                    {subscription.tier === 'PREMIUM' ? 'Premium' : 'Gratuit'}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+                    {subscription.tier === 'PREMIUM' ? '19,99 $ CAD / mois' : 'Plan de base'}
+                  </Text>
+                </View>
+              </View>
+              <View style={{ backgroundColor: colors.background, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13, color: colors.foreground }}>Candidatures</Text>
+                  <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+                    {subscription.applicationsUsed} / {subscription.applicationsLimit === -1 ? '∞' : subscription.applicationsLimit}
+                  </Text>
+                </View>
+                {subscription.applicationsLimit !== -1 && (
+                  <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden' }}>
+                    <View style={{ height: '100%', backgroundColor: colors.primary, borderRadius: 3, width: `${Math.min((subscription.applicationsUsed / subscription.applicationsLimit) * 100, 100)}%` }} />
+                  </View>
+                )}
+              </View>
+              {subscription.tier !== 'PREMIUM' ? (
+                <TouchableOpacity
+                  disabled={billingLoading}
+                  onPress={async () => {
+                    setBillingLoading(true);
+                    try {
+                      const { data } = await paymentsApi.createCheckout();
+                      if (data.data?.url) Linking.openURL(data.data.url);
+                    } catch { Alert.alert(t('error'), 'Erreur lors de la création du paiement'); }
+                    finally { setBillingLoading(false); }
+                  }}
+                  style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 12, alignItems: 'center' }}
+                >
+                  <Text style={{ color: colors.primaryForeground, fontWeight: '600', fontSize: 14 }}>
+                    {billingLoading ? 'Chargement...' : 'Passer en Premium'}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  disabled={billingLoading}
+                  onPress={async () => {
+                    setBillingLoading(true);
+                    try {
+                      const { data } = await paymentsApi.createPortal();
+                      if (data.data?.url) Linking.openURL(data.data.url);
+                    } catch { Alert.alert(t('error'), 'Erreur lors de l\'ouverture du portail'); }
+                    finally { setBillingLoading(false); }
+                  }}
+                  style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingVertical: 12, alignItems: 'center' }}
+                >
+                  <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 14 }}>
+                    {billingLoading ? 'Chargement...' : 'Gérer l\'abonnement'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ color: colors.mutedForeground }}>Chargement...</Text>
+            </View>
+          )}
         </SettingCard>
 
         {/* Danger Zone */}

@@ -21,6 +21,7 @@ import edgeRoutes from './routes/edge';
 import interviewRoutes from './routes/interviews';
 import notificationRoutes from './routes/notifications';
 import adminRoutes from './routes/admin';
+import paymentRoutes from './routes/payments';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -58,7 +59,9 @@ async function buildServer() {
   });
 
   await app.register(rateLimit, {
-    global: false,
+    global: true,
+    max: 100,
+    timeWindow: '1 minute',
   });
 
   await app.register(multipart, {
@@ -82,6 +85,17 @@ async function buildServer() {
   app.decorate('authenticate', authenticate);
   app.decorate('optionalAuthenticate', optionalAuthenticate);
   app.decorate('prisma', prisma);
+
+  // Raw body support for Stripe webhooks
+  app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    try {
+      (req as any).rawBody = body;
+      const json = JSON.parse(body.toString());
+      done(null, json);
+    } catch (err: any) {
+      done(err, undefined);
+    }
+  });
 
   // Root
   app.get('/', async () => ({
@@ -109,6 +123,7 @@ async function buildServer() {
   await app.register(interviewRoutes, { prefix: '/api/v1/interviews' });
   await app.register(notificationRoutes, { prefix: '/api/v1/notifications' });
   await app.register(adminRoutes, { prefix: '/api/v1/admin' });
+  await app.register(paymentRoutes, { prefix: '/api/v1/payments' });
 
   // Global error handler
   app.setErrorHandler((error: any, request, reply) => {

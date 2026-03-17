@@ -1,6 +1,7 @@
 import { FastifyPluginAsync, FastifyReply } from 'fastify';
 import { registerSchema, loginSchema } from '@hiredge/shared';
 import { authService, AppError } from '../services/auth.service';
+import { emailService } from '../services/email.service';
 import { env } from '../config/env';
 import prisma from '../db/prisma';
 
@@ -68,6 +69,10 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       );
 
       setTokenCookies(reply, accessToken, refreshToken);
+
+      // Send verification email and welcome email (non-blocking)
+      authService.createEmailVerification(user.id, parsed.data.email).catch(() => {});
+      emailService.sendWelcome(parsed.data.email, (parsed.data as any).firstName || '').catch(() => {});
 
       return reply.status(201).send({
         success: true,
@@ -268,6 +273,23 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   // DELETE /auth/account — Delete account (authenticated)
   fastify.delete('/account', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     try {
+      const { password } = request.body as { password?: string };
+      if (!password) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Mot de passe requis pour supprimer le compte' },
+        });
+      }
+      // Verify password before deleting
+      const user = await prisma.user.findUnique({ where: { id: request.user.id } });
+      if (!user) {
+        return reply.status(404).send({ success: false, error: { code: 'USER_NOT_FOUND', message: 'Utilisateur introuvable' } });
+      }
+      const bcrypt = await import('bcryptjs');
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return reply.status(400).send({ success: false, error: { code: 'INVALID_PASSWORD', message: 'Mot de passe incorrect' } });
+      }
       // Blacklist the current access token
       const token = request.headers.authorization?.replace('Bearer ', '');
       if (token) {
@@ -282,6 +304,83 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
       throw err;
     }
+  });
+
+  // ── Password Reset ──────────────────────────────────────────
+
+  // POST /auth/forgot-password
+  fastify.post('/forgot-password', authRateLimit, async (request, reply) => {
+    const { email } = request.body as { email?: string };
+    if (!email) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Email requis' },
+      });
+    }
+    // Always succeed to prevent email enumeration
+    await authService.requestPasswordReset(email).catch(() => {});
+    return reply.send({ success: true, data: { message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.' } });
+  });
+
+  // POST /auth/reset-password
+  fastify.post('/reset-password', authRateLimit, async (request, reply) => {
+    const { token, newPassword } = request.body as { token?: string; newPassword?: string };
+    if (!token || !newPassword) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Token et nouveau mot de passe requis' },
+      });
+    }
+    if (newPassword.length < 8) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Le mot de passe doit faire au moins 8 caractères' },
+      });
+    }
+    try {
+      await authService.resetPassword(token, newPassword);
+      return reply.send({ success: true, data: { message: 'Mot de passe réinitialisé avec succès' } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      }
+      throw err;
+    }
+  });
+
+  // ── Email Verification ──────────────────────────────────────
+
+  // POST /auth/verify-email
+  fastify.post('/verify-email', authRateLimit, async (request, reply) => {
+    const { token } = request.body as { token?: string };
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Token requis' },
+      });
+    }
+    try {
+      await authService.verifyEmail(token);
+      return reply.send({ success: true, data: { message: 'Email vérifié avec succès' } });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      }
+      throw err;
+    }
+  });
+
+  // POST /auth/resend-verification (authenticated)
+  fastify.post('/resend-verification', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const user = await prisma.user.findUnique({ where: { id: request.user.id } });
+    if (!user) {
+      return reply.status(404).send({ success: false, error: { code: 'USER_NOT_FOUND', message: 'Utilisateur introuvable' } });
+    }
+    if (user.isEmailVerified) {
+      return reply.status(400).send({ success: false, error: { code: 'ALREADY_VERIFIED', message: 'Email déjà vérifié' } });
+    }
+    await authService.createEmailVerification(user.id, user.email);
+    return reply.send({ success: true, data: { message: 'Email de vérification envoyé' } });
   });
 };
 

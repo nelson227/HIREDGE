@@ -26,7 +26,7 @@ import {
   Languages,
   Monitor,
 } from "lucide-react"
-import { profileApi, authApi } from "@/lib/api"
+import { profileApi, authApi, paymentsApi } from "@/lib/api"
 import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n"
 
 const LOCALES: Locale[] = ['fr', 'en', 'de', 'es']
@@ -45,6 +45,11 @@ export default function SettingsPage() {
   const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" })
   const [message, setMessage] = useState("")
   const [pwLoading, setPwLoading] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [subscription, setSubscription] = useState<{ tier: string; applicationsUsed: number; applicationsLimit: number } | null>(null)
+  const [billingLoading, setBillingLoading] = useState(false)
 
   useEffect(() => {
     setNotifications([
@@ -73,7 +78,15 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfile()
+    loadSubscription()
   }, [])
+
+  const loadSubscription = async () => {
+    try {
+      const { data } = await paymentsApi.getStatus()
+      if (data.success) setSubscription(data.data)
+    } catch { /* no-op */ }
+  }
 
   const loadProfile = async () => {
     try {
@@ -143,13 +156,19 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) return
-    if (!confirm("Dernière confirmation : toutes vos données seront supprimées définitivement.")) return
+    if (!deletePassword) {
+      setMessage("Veuillez entrer votre mot de passe pour confirmer la suppression")
+      return
+    }
+    setDeleteLoading(true)
     try {
-      await authApi.deleteAccount()
+      await authApi.deleteAccount(deletePassword)
       router.push("/login")
-    } catch {
-      setMessage(t('settingsDeleteError'))
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message || t('settingsDeleteError')
+      setMessage(msg)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -300,14 +319,31 @@ export default function SettingsPage() {
                   <CardDescription>{t('settingsDangerZoneDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5">
-                    <div>
-                      <p className="font-medium text-foreground">{t('settingsDeleteAccount')}</p>
-                      <p className="text-sm text-muted-foreground">{t('settingsDeleteAccountDesc')}</p>
+                  <div className="p-4 rounded-lg bg-destructive/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">{t('settingsDeleteAccount')}</p>
+                        <p className="text-sm text-muted-foreground">{t('settingsDeleteAccountDesc')}</p>
+                      </div>
+                      {!deleteConfirmOpen && (
+                        <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
+                          <Trash2 className="w-4 h-4 mr-2" />{t('delete')}
+                        </Button>
+                      )}
                     </div>
-                    <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
-                      <Trash2 className="w-4 h-4 mr-2" />{t('delete')}
-                    </Button>
+                    {deleteConfirmOpen && (
+                      <div className="space-y-2 pt-2 border-t border-destructive/20">
+                        <p className="text-sm text-destructive font-medium">Entrez votre mot de passe pour confirmer la suppression :</p>
+                        <Input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Mot de passe" />
+                        <div className="flex gap-2">
+                          <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={deleteLoading}>
+                            {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                            Supprimer définitivement
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => { setDeleteConfirmOpen(false); setDeletePassword("") }}>Annuler</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
                     <div>
@@ -516,16 +552,70 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('settingsBilling')}</CardTitle>
-                <CardDescription>{t('settingsBillingDesc')}</CardDescription>
+                <CardDescription>Gérez votre abonnement et votre facturation</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">{t('comingSoon')}</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    {t('settingsBillingComingSoon')}
-                  </p>
-                </div>
+              <CardContent className="space-y-6">
+                {subscription ? (
+                  <>
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${subscription.tier === 'PREMIUM' ? 'bg-yellow-500/10' : 'bg-primary/10'}`}>
+                          <CreditCard className={`w-6 h-6 ${subscription.tier === 'PREMIUM' ? 'text-yellow-500' : 'text-primary'}`} />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-lg">
+                            {subscription.tier === 'PREMIUM' ? 'Premium' : 'Gratuit'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription.tier === 'PREMIUM' ? '19,99 $ CAD / mois' : 'Plan de base'}
+                          </p>
+                        </div>
+                      </div>
+                      {subscription.tier === 'PREMIUM' ? (
+                        <Button variant="outline" size="sm" disabled={billingLoading} onClick={async () => {
+                          setBillingLoading(true)
+                          try {
+                            const { data } = await paymentsApi.createPortal()
+                            if (data.data?.url) window.location.href = data.data.url
+                          } catch { setMessage('Erreur lors de l\'ouverture du portail') }
+                          finally { setBillingLoading(false) }
+                        }}>
+                          {billingLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                          Gérer l'abonnement
+                        </Button>
+                      ) : (
+                        <Button size="sm" disabled={billingLoading} onClick={async () => {
+                          setBillingLoading(true)
+                          try {
+                            const { data } = await paymentsApi.createCheckout()
+                            if (data.data?.url) window.location.href = data.data.url
+                          } catch { setMessage('Erreur lors de la création du paiement') }
+                          finally { setBillingLoading(false) }
+                        }}>
+                          {billingLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                          Passer en Premium
+                        </Button>
+                      )}
+                    </div>
+                    <div className="p-4 rounded-xl bg-muted">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-medium text-foreground">Candidatures</p>
+                        <p className="text-sm text-muted-foreground">
+                          {subscription.applicationsUsed} / {subscription.applicationsLimit === -1 ? '∞' : subscription.applicationsLimit}
+                        </p>
+                      </div>
+                      {subscription.applicationsLimit !== -1 && (
+                        <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min((subscription.applicationsUsed / subscription.applicationsLimit) * 100, 100)}%` }} />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
