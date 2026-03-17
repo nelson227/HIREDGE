@@ -84,14 +84,16 @@ export class CVService {
 
     const trimmedText = text.slice(0, 50000); // safety limit (50KB)
 
-    const response = await openai.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Tu es un expert en extraction de données de CV. Analyse le texte du CV fourni et extrais les informations structurées.
+    let response;
+    try {
+      response = await openai.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `Tu es un expert en extraction de données de CV. Analyse le texte du CV fourni et extrais les informations structurées.
 
 Retourne un objet JSON avec cette structure EXACTE :
 {
@@ -140,20 +142,28 @@ Règles :
 - Pour le level des compétences, estime en fonction du contexte du CV (années d'expérience, poste)
 - Le bio doit être un résumé professionnel concis basé sur le profil global
 - Si une information n'est pas trouvée, utilise null (pas de chaîne vide)`,
-        },
-        {
-          role: 'user',
-          content: `Voici le texte extrait du CV :\n\n${trimmedText}`,
-        },
-      ],
-    });
+          },
+          {
+            role: 'user',
+            content: `Voici le texte extrait du CV :\n\n${trimmedText}`,
+          },
+        ],
+      });
+    } catch (err: any) {
+      throw new AppError('AI_SERVICE_ERROR', `Erreur du service IA lors de l'analyse du CV : ${err.message || 'service indisponible'}`, 502);
+    }
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new AppError('PARSE_FAILED', 'Impossible d\'analyser le CV. Veuillez réessayer.', 500);
     }
 
-    const parsed = JSON.parse(content);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      throw new AppError('PARSE_FAILED', 'L\'IA a renvoyé un format invalide. Veuillez réessayer.', 500);
+    }
 
     // Validate and clean the parsed data
     return {
@@ -198,22 +208,33 @@ Règles :
     profile: any;
     parsed: ParsedCVData;
   }> {
-    // 1. Extract text
-    const text = await this.extractText(buffer, mimetype);
-    if (!text || text.trim().length < 50) {
-      throw new AppError('CV_EMPTY', 'Le CV semble vide ou illisible. Veuillez vérifier le fichier.', 400);
+    try {
+      // 1. Extract text
+      let text: string;
+      try {
+        text = await this.extractText(buffer, mimetype);
+      } catch (err: any) {
+        if (err instanceof AppError) throw err;
+        throw new AppError('EXTRACT_FAILED', 'Impossible de lire le fichier. Veuillez vérifier que le PDF/DOCX n\'est pas corrompu.', 400);
+      }
+      if (!text || text.trim().length < 50) {
+        throw new AppError('CV_EMPTY', 'Le CV semble vide ou illisible. Veuillez vérifier le fichier.', 400);
+      }
+
+      // 2. Save file
+      const cvUrl = await this.saveFile(userId, buffer, filename);
+
+      // 3. Parse with AI
+      const parsed = await this.parseWithAI(text);
+
+      // 4. Update profile with parsed data
+      const profile = await this.applyToProfile(userId, parsed, cvUrl);
+
+      return { profile, parsed };
+    } catch (err: any) {
+      if (err instanceof AppError) throw err;
+      throw new AppError('CV_UPLOAD_FAILED', `Erreur lors du traitement du CV : ${err.message || 'erreur interne'}`, 500);
     }
-
-    // 2. Save file
-    const cvUrl = await this.saveFile(userId, buffer, filename);
-
-    // 3. Parse with AI
-    const parsed = await this.parseWithAI(text);
-
-    // 4. Update profile with parsed data
-    const profile = await this.applyToProfile(userId, parsed, cvUrl);
-
-    return { profile, parsed };
   }
 
   /**
@@ -228,12 +249,12 @@ Règles :
       });
     }
 
-    // Replace ALL profile fields with CV data (null if absent in new CV)
+    // Replace ALL profile fields with CV data (keep existing or empty for non-nullable fields)
     const updateData: any = {
       cvUrl,
       firstName: parsed.firstName || profile.firstName || '',
       lastName: parsed.lastName || profile.lastName || '',
-      title: parsed.title || null,
+      title: parsed.title || profile.title || '',
       bio: parsed.bio || null,
       phone: parsed.phone || null,
       city: parsed.city || null,
@@ -263,32 +284,37 @@ Règles :
       });
     }
 
-    // Add parsed experiences
+    // Add parsed experiences (skip entries with invalid dates)
     for (const exp of parsed.experiences) {
+      const startDate = exp.startDate ? new Date(exp.startDate) : null;
+      if (!startDate || isNaN(startDate.getTime())) continue;
+      const endDate = exp.endDate ? new Date(exp.endDate) : null;
       await prisma.experience.create({
         data: {
           profileId: profile.id,
           company: exp.company,
           title: exp.title,
           description: exp.description || null,
-          startDate: new Date(exp.startDate),
-          endDate: exp.endDate ? new Date(exp.endDate) : null,
+          startDate,
+          endDate: endDate && !isNaN(endDate.getTime()) ? endDate : null,
           current: exp.current ?? false,
           location: exp.location || null,
         },
       });
     }
 
-    // Add parsed educations
+    // Add parsed educations (skip entries with invalid dates)
     for (const edu of parsed.educations) {
+      const startDate = edu.startDate ? new Date(edu.startDate) : null;
+      const endDate = edu.endDate ? new Date(edu.endDate) : null;
       await prisma.education.create({
         data: {
           profileId: profile.id,
           institution: edu.institution,
           degree: edu.degree,
           field: edu.field || null,
-          startDate: new Date(edu.startDate),
-          endDate: edu.endDate ? new Date(edu.endDate) : null,
+          startDate: startDate && !isNaN(startDate.getTime()) ? startDate : null,
+          endDate: endDate && !isNaN(endDate.getTime()) ? endDate : null,
           current: edu.current ?? false,
         },
       });
