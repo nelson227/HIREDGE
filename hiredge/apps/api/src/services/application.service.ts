@@ -1,6 +1,9 @@
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
 import { squadMatchingService } from './squad-matching.service';
+import { collectiveService } from './collective.service';
+import { scheduleFollowUp } from '../workers/follow-up.worker';
+import { gamificationService } from './gamification.service';
 
 export class ApplicationService {
   async createApplication(userId: string, data: {
@@ -54,6 +57,13 @@ export class ApplicationService {
 
     // Post-application: increment counter for squad cooldown tracking
     await squadMatchingService.incrementApplicationsSinceDismissal(userId).catch(() => {});
+
+    // Schedule follow-up reminder in 7 days
+    scheduleFollowUp(userId, application.id).catch(() => {});
+
+    // Check gamification badges + update streak
+    gamificationService.checkApplicationBadges(userId).catch(() => {});
+    gamificationService.updateStreak(userId).catch(() => {});
 
     // Check if we should suggest squads
     let squadSuggestions = null;
@@ -144,6 +154,16 @@ export class ApplicationService {
         },
       },
     });
+
+    // Feed collective intelligence (fire-and-forget)
+    collectiveService.onApplicationStatusChange(applicationId, data.status).catch(() => {});
+
+    // Gamification: check badge milestones based on new status
+    if (data.status === 'INTERVIEW_SCHEDULED') {
+      gamificationService.checkInterviewBadges(updated.userId).catch(() => {});
+    } else if (data.status === 'OFFERED') {
+      gamificationService.checkOfferBadge(updated.userId).catch(() => {});
+    }
 
     return updated;
   }

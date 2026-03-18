@@ -3,6 +3,8 @@ import prisma from '../db/prisma';
 import redis from '../lib/redis';
 import { env } from '../config/env';
 import { AppError } from './auth.service';
+import { memoryService } from './memory.service';
+import { toneAdapterService } from './tone-adapter.service';
 
 // LLM is optional — app runs in smart fallback mode without a key
 const isLLMEnabled =
@@ -48,6 +50,8 @@ interface EdgeContext {
   userProfile: any;
   recentMessages: any[];
   intentData?: any;
+  memoryContext?: string;
+  toneInstructions?: string;
 }
 
 export class EdgeService {
@@ -88,7 +92,15 @@ export class EdgeService {
     // 4. Save messages
     await this.saveMessages(userId, message, response.message, convId);
 
-    // 5. Auto-title new conversations
+    // 5. Update working memory (fire-and-forget)
+    memoryService.setWorkingMemory(userId, convId, {
+      currentTopic: intent.intent,
+      detectedMood: undefined,
+      mentionedCompanies: intent.entities.company ? [intent.entities.company] : undefined,
+      lastIntentType: intent.intent,
+    }).catch(() => {});
+
+    // 6. Auto-title new conversations
     this.autoTitleConversation(convId, message).catch((err) => { console.error('[EdgeService] autoTitle failed:', err); });
 
     return { ...response, conversationId: convId };
@@ -292,16 +304,19 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
   }
 
   private async buildContext(userId: string, intent: DetectedIntent, conversationId?: string): Promise<EdgeContext> {
-    const profile = await prisma.candidateProfile.findUnique({
-      where: { userId },
-      include: {
-        skills: true,
-        experiences: { take: 5, orderBy: { startDate: 'desc' } },
-        educations: { take: 3, orderBy: { startDate: 'desc' } },
-      },
-    });
-
-    const recentMessages = await this.getRecentMessages(userId, this.MAX_CONTEXT_MESSAGES, conversationId);
+    const [profile, recentMessages, memoryContext, toneInstructions] = await Promise.all([
+      prisma.candidateProfile.findUnique({
+        where: { userId },
+        include: {
+          skills: true,
+          experiences: { take: 5, orderBy: { startDate: 'desc' } },
+          educations: { take: 3, orderBy: { startDate: 'desc' } },
+        },
+      }),
+      this.getRecentMessages(userId, this.MAX_CONTEXT_MESSAGES, conversationId),
+      memoryService.buildMemoryContext(userId, conversationId ?? undefined),
+      toneAdapterService.getToneInstructions(userId),
+    ]);
 
     let intentData: any = null;
 
@@ -368,6 +383,8 @@ Réponds UNIQUEMENT avec le JSON, sans markdown.`,
       } : null,
       recentMessages,
       intentData,
+      memoryContext: memoryContext || undefined,
+      toneInstructions: toneInstructions || undefined,
     };
   }
 
@@ -582,6 +599,14 @@ Formation: ${(context.userProfile.education ?? []).join(', ') || 'Non renseigné
 
     if (context.intentData) {
       prompt += `\nDONNÉES PERTINENTES :\n${JSON.stringify(context.intentData, null, 2)}\n`;
+    }
+
+    if (context.memoryContext) {
+      prompt += `\nMÉMOIRE (conversations passées et préférences) :\n${context.memoryContext}\n`;
+    }
+
+    if (context.toneInstructions) {
+      prompt += `\n${context.toneInstructions}\n`;
     }
 
     prompt += `\nINTENTION DÉTECTÉE : ${intent.intent} (confiance: ${intent.confidence})
@@ -906,6 +931,19 @@ RÈGLES CRITIQUES DU JSON :
         { userId, role: 'assistant', content: assistantMessage, conversationId },
       ],
     });
+
+    // Create episode after 10+ messages in conversation (fire-and-forget)
+    if (conversationId) {
+      const count = await prisma.edgeChatMessage.count({ where: { conversationId } });
+      if (count >= 10 && count % 10 === 0) {
+        memoryService.createEpisode(userId, conversationId).catch(() => {});
+      }
+    }
+  }
+
+  /** Create memory episode for a conversation (called on conversation close/delete) */
+  async createEpisode(userId: string, conversationId: string) {
+    return memoryService.createEpisode(userId, conversationId);
   }
 }
 

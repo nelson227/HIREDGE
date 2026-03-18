@@ -4,11 +4,6 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   
-  // Ignorer les erreurs TypeScript pendant le build (conflit de types React 19)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
   // Variables d'environnement exposées au client
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083',

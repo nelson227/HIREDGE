@@ -2,6 +2,19 @@ import { Queue, Worker, Job, ConnectionOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import { prisma } from '../db/prisma';
 import { contentQueue } from './index';
+import OpenAI from 'openai';
+import { env } from '../config/env';
+
+const redisInstance = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = redisInstance as unknown as ConnectionOptions;
+
+const isLLMEnabled =
+  env.OPENAI_API_KEY.length > 20 &&
+  !env.OPENAI_API_KEY.startsWith('sk-...');
+
+const openai = isLLMEnabled
+  ? new OpenAI({ apiKey: env.OPENAI_API_KEY, baseURL: 'https://api.groq.com/openai/v1' })
+  : null;
 
 const redisInstance = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
 const connection = redisInstance as unknown as ConnectionOptions;
@@ -227,12 +240,20 @@ async function generateCoverLetter(userId: string, jobId: string, data: any): Pr
 
   if (!user || !job) throw new Error('User or job not found');
 
-  // En production: appel OpenAI / Anthropic avec prompt optimisé (cf. PROMPTS.md)
-  // Ici, structure du pipeline avec placeholder
   const prompt = buildCoverLetterPrompt(user, job, data);
 
-  // TODO: const response = await openai.chat.completions.create({ ... });
-  // return humanize(response.choices[0].message.content);
+  if (openai) {
+    const completion = await openai.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 1000,
+      messages: [
+        { role: 'system', content: 'Tu es un expert en rédaction de lettres de motivation en français. Écris de manière naturelle, pas robotique. Ne commence jamais par "Madame, Monsieur" de façon générique. Adapte chaque lettre au poste spécifique.' },
+        { role: 'user', content: prompt },
+      ],
+    });
+    return completion.choices[0]?.message?.content ?? `Lettre de motivation pour ${job.title}`;
+  }
 
   return `Lettre de motivation générée pour ${job.title} chez ${data?.companyName ?? 'entreprise'}`;
 }
@@ -246,12 +267,75 @@ async function adaptCV(userId: string, jobId: string, data: any): Promise<string
 
   if (!user || !job) throw new Error('User or job not found');
 
-  // TODO: Appel LLM pour adapter le CV aux compétences recherchées
+  if (openai) {
+    const profile = user.candidateProfile;
+    const skills = profile?.skills?.map((s: any) => `${s.name} (${s.level})`).join(', ') ?? '';
+    const experiences = profile?.experiences?.map((e: any) =>
+      `${e.title} chez ${e.company} (${e.startDate?.toISOString().slice(0, 7)} — ${e.current ? 'present' : e.endDate?.toISOString().slice(0, 7) ?? 'N/A'}): ${e.description ?? ''}`
+    ).join('\n') ?? '';
+    const educations = profile?.educations?.map((e: any) =>
+      `${e.degree} en ${e.field ?? 'N/A'} à ${e.institution}`
+    ).join('\n') ?? '';
+
+    const requiredSkills = (() => { try { return JSON.parse(job.requiredSkills || '[]').join(', '); } catch { return ''; } })();
+
+    const completion = await openai.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.5,
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un expert en adaptation de CV. Adapte le CV du candidat pour le poste mentionné.
+Mets en avant les compétences et expériences les plus pertinentes.
+N'invente JAMAIS de compétences ou d'expériences que le candidat n'a pas.
+Réorganise et reformule pour maximiser l'impact.
+Retourne le CV adapté en texte structuré (pas de markdown).`,
+        },
+        {
+          role: 'user',
+          content: `PROFIL:\nNom: ${profile?.firstName ?? ''} ${profile?.lastName ?? ''}\nTitre: ${profile?.title ?? ''}\nCompétences: ${skills}\nExpériences:\n${experiences}\nFormation:\n${educations}\n\nPOSTE CIBLÉ:\nTitre: ${job.title}\nCompétences demandées: ${requiredSkills}\nDescription: ${job.description?.substring(0, 500) ?? ''}\n\nAdapte le CV pour ce poste.`,
+        },
+      ],
+    });
+    return completion.choices[0]?.message?.content ?? `CV adapté pour ${job.title}`;
+  }
+
   return `CV adapté pour ${job.title}`;
 }
 
 async function generateFollowUpEmail(userId: string, jobId: string, data: any): Promise<string> {
-  // TODO: Appel LLM pour générer un email de relance
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { candidateProfile: { select: { firstName: true, lastName: true, title: true } } },
+  });
+  const job = await prisma.job.findUnique({ where: { id: jobId }, include: { company: true } });
+
+  if (!user || !job) throw new Error('User or job not found');
+
+  if (openai) {
+    const profile = user.candidateProfile;
+    const daysSinceApply = data?.daysSinceApply ?? 7;
+    const completion = await openai.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.6,
+      max_tokens: 500,
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un expert en communication professionnelle. Génère un email de relance professionnel mais humain.
+L'email doit être court (max 150 mots), poli et montrer un intérêt sincère.
+Ne sois pas insistant. Mentionne le poste et l'entreprise. Termine par une note positive.`,
+        },
+        {
+          role: 'user',
+          content: `Candidat: ${profile?.firstName ?? ''} ${profile?.lastName ?? ''} (${profile?.title ?? ''})\nPoste: ${job.title}\nEntreprise: ${job.company?.name ?? ''}\nJours depuis candidature: ${daysSinceApply}\n\nGénère un email de relance.`,
+        },
+      ],
+    });
+    return completion.choices[0]?.message?.content ?? `Email de relance pour ${job.title}`;
+  }
+
   return `Email de relance pour candidature ${jobId}`;
 }
 
@@ -259,8 +343,42 @@ async function generateCompanyBrief(companyId: string): Promise<string> {
   const company = await prisma.company.findUnique({ where: { id: companyId } });
   if (!company) throw new Error('Company not found');
 
-  // TODO: Appel LLM + données scraping pour brief entreprise
-  return `Brief entreprise: ${company.name}`;
+  // Get collective insights for this company
+  const insights = await prisma.collectiveInsight.findMany({
+    where: { companyId },
+  });
+  const insightData = insights.map(i => `${i.insightType}: ${i.contentJson}`).join('\n');
+
+  // Get recent job postings
+  const recentJobs = await prisma.job.findMany({
+    where: { companyId, status: 'ACTIVE' },
+    select: { title: true, contractType: true, salaryMin: true, salaryMax: true },
+    take: 5,
+  });
+  const jobsList = recentJobs.map(j => `${j.title} (${j.contractType}, ${j.salaryMin ?? '?'}-${j.salaryMax ?? '?'}€)`).join('\n');
+
+  if (openai) {
+    const completion = await openai.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.5,
+      max_tokens: 800,
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un analyste d'entreprises pour HIREDGE. Génère un brief concis et utile pour un candidat.
+Inclus : présentation, culture, processus de recrutement probable, conseils pour postuler.
+Base-toi UNIQUEMENT sur les données fournies. Ne fabrique pas d'informations.`,
+        },
+        {
+          role: 'user',
+          content: `Entreprise: ${company.name}\nSecteur: ${company.industry ?? 'Non renseigné'}\nTaille: ${company.sizeRange ?? 'Non renseigné'}\nSite: ${company.website ?? 'Non renseigné'}\nNote Glassdoor: ${company.glassdoorRating ?? 'N/A'}\n\nInsights collectifs:\n${insightData || 'Pas encore de données'}\n\nPostes ouverts:\n${jobsList || 'Aucun poste récent'}\n\nGénère un brief entreprise.`,
+        },
+      ],
+    });
+    return completion.choices[0]?.message?.content ?? `Brief: ${company.name}`;
+  }
+
+  return `Brief entreprise: ${company.name} — ${company.industry ?? 'secteur non renseigné'}, ${company.sizeRange ?? 'taille non renseignée'}. ${recentJobs.length} postes ouverts.`;
 }
 
 function buildCoverLetterPrompt(user: any, job: any, data: any): string {

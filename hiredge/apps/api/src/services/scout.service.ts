@@ -1,6 +1,7 @@
 import prisma from '../db/prisma';
 import { AppError } from './auth.service';
 import { SCOUT_CREDITS } from '@hiredge/shared';
+import { anonymizationService } from './anonymization.service';
 
 export class ScoutService {
   async registerAsScout(userId: string, data: {
@@ -117,13 +118,22 @@ export class ScoutService {
       throw new AppError('NOT_PARTICIPANT', 'Vous ne participez pas à cette conversation', 403);
     }
 
+    // Anonymize scout messages before storing
+    let finalContent = content;
+    let isAnonymized = false;
+    if (isScout) {
+      const result = await anonymizationService.anonymize(content);
+      finalContent = result.anonymized;
+      isAnonymized = true;
+    }
+
     const message = await prisma.scoutMessage.create({
       data: {
         conversationId,
         senderId: userId,
         senderType: isScout ? 'SCOUT' : 'CANDIDATE',
-        content,
-        isAnonymized: isScout,
+        content: finalContent,
+        isAnonymized,
       },
     });
 

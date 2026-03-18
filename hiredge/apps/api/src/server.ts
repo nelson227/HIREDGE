@@ -144,6 +144,12 @@ async function start() {
 
     await app.listen({ port: env.PORT, host: '0.0.0.0' });
     app.log.info(`🚀 HIREDGE API + WebSocket running on port ${env.PORT}`);
+
+    // Seed gamification badges (idempotent)
+    const { gamificationService } = await import('./services/gamification.service');
+    gamificationService.seedBadges().catch((err) =>
+      app.log.error(`Badge seed failed: ${err instanceof Error ? err.message : err}`)
+    );
   } catch (err: unknown) {
     app.log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);

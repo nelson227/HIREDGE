@@ -220,6 +220,9 @@ export const profileApi = {
     api.post('/profile/educations', data),
   removeEducation: (eduId: string) =>
     api.delete(`/profile/educations/${eduId}`),
+  getBadges: () => api.get('/profile/badges'),
+  getStreak: () => api.get('/profile/streak'),
+  exportData: () => api.get('/profile/export'),
 };
 
 // ─── Interviews ──────────────────────────────────────────────────

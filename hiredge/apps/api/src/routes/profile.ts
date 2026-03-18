@@ -3,6 +3,7 @@ import { updateProfileSchema, addSkillSchema, addExperienceSchema } from '@hired
 import { profileService } from '../services/profile.service';
 import { cvService } from '../services/cv.service';
 import { AppError } from '../services/auth.service';
+import { gamificationService } from '../services/gamification.service';
 import path from 'path';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
@@ -311,6 +312,96 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
       }
       throw err;
     }
+  });
+
+  // ─── Gamification endpoints ───
+
+  // GET /profile/badges
+  fastify.get('/badges', async (request, reply) => {
+    const badges = await gamificationService.getUserBadges(request.user.id);
+    return reply.send({ success: true, data: badges });
+  });
+
+  // GET /profile/streak
+  fastify.get('/streak', async (request, reply) => {
+    const streak = await gamificationService.getUserStreak(request.user.id);
+    return reply.send({ success: true, data: streak });
+  });
+
+  // ─── GDPR data export ───
+
+  // GET /profile/export — Full RGPD data export
+  fastify.get('/export', async (request, reply) => {
+    const userId = request.user.id;
+
+    const [user, profile, applications, conversations, edgeConversations, edgeMessages, notifications, squadMemberships, scouts, badges, streak] = await Promise.all([
+      fastify.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true, subscriptionTier: true, createdAt: true, updatedAt: true },
+      }),
+      fastify.prisma.candidateProfile.findUnique({
+        where: { userId },
+        include: { skills: true, experiences: true, educations: true, languages: true },
+      }),
+      fastify.prisma.application.findMany({
+        where: { userId },
+        include: { job: { select: { title: true, company: { select: { name: true } } } } },
+      }),
+      fastify.prisma.scoutConversation.findMany({
+        where: { candidateId: userId },
+        include: { messages: { select: { senderType: true, content: true, createdAt: true } } },
+      }),
+      fastify.prisma.edgeConversation.findMany({
+        where: { userId },
+        select: { id: true, title: true, createdAt: true },
+      }),
+      fastify.prisma.edgeChatMessage.findMany({
+        where: { userId },
+        select: { role: true, content: true, createdAt: true, conversationId: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      fastify.prisma.notification.findMany({
+        where: { userId },
+        select: { type: true, title: true, body: true, readAt: true, createdAt: true },
+      }),
+      fastify.prisma.squadMember.findMany({
+        where: { userId },
+        include: { squad: { select: { name: true, status: true } } },
+      }),
+      fastify.prisma.scout.findMany({
+        where: { userId },
+        include: { company: { select: { name: true } } },
+      }),
+      gamificationService.getUserBadges(userId),
+      gamificationService.getUserStreak(userId),
+    ]);
+
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      user,
+      profile,
+      applications: applications.map((a: any) => ({
+        jobTitle: a.job?.title,
+        company: a.job?.company?.name,
+        status: a.status,
+        appliedAt: a.createdAt,
+        updatedAt: a.updatedAt,
+        notes: a.notes,
+      })),
+      scoutConversations: conversations,
+      edgeConversations: edgeConversations.map((c: any) => ({
+        ...c,
+        messages: edgeMessages.filter((m: any) => m.conversationId === c.id),
+      })),
+      notifications,
+      squads: squadMemberships,
+      scoutProfiles: scouts,
+      gamification: { badges, streak },
+    };
+
+    reply.header('Content-Type', 'application/json');
+    reply.header('Content-Disposition', `attachment; filename="hiredge-export-${userId.slice(0, 8)}.json"`);
+    return reply.send(exportData);
   });
 };
 

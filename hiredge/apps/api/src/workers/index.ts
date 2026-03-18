@@ -151,13 +151,20 @@ notificationWorker.on('failed', (job, err) => {
   console.error(JSON.stringify({ level: 'error', worker: 'notifications', jobId: job?.id, error: err.message }));
 });
 
-export { matchingWorker, notificationWorker };
+// ─── Follow-Up Worker (imported for side-effects: registers itself) ───
+import { followUpWorker, scheduleFollowUpJobs } from './follow-up.worker';
+scheduleFollowUpJobs().catch((err) =>
+  console.error(JSON.stringify({ level: 'error', msg: 'Failed to schedule follow-up jobs', error: err.message }))
+);
+
+export { matchingWorker, notificationWorker, followUpWorker };
 
 // ─── Graceful shutdown ───
 const shutdown = async () => {
   await Promise.allSettled([
     matchingWorker.close(),
     notificationWorker.close(),
+    followUpWorker.close(),
   ]);
   process.exit(0);
 };

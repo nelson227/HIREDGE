@@ -15,13 +15,32 @@ import {
   Loader2,
   BarChart3,
   CheckCircle2,
+  Award,
+  Flame,
+  Download,
 } from "lucide-react"
-import { applicationsApi, interviewsApi, jobsApi } from "@/lib/api"
+import { applicationsApi, interviewsApi, jobsApi, profileApi } from "@/lib/api"
 import { connectSocket } from "@/lib/socket"
 
 interface ApplicationStats {
   total: number
   byStatus: Record<string, number>
+}
+
+interface Badge {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: string
+  earned: boolean
+  earnedAt?: string
+}
+
+interface StreakData {
+  currentStreak: number
+  longestStreak: number
+  lastActivityDate?: string
 }
 
 interface Stats {
@@ -32,6 +51,8 @@ interface Stats {
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [badges, setBadges] = useState<Badge[]>([])
+  const [streak, setStreak] = useState<StreakData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -66,11 +87,17 @@ export default function AnalyticsPage() {
       setLoading(true)
       
       // Charger les données en parallèle
-      const [applicationsRes, interviewsRes, jobsRes] = await Promise.all([
+      const [applicationsRes, interviewsRes, jobsRes, badgesRes, streakRes] = await Promise.all([
         applicationsApi.list().catch(() => ({ data: { data: { applications: [], pagination: { total: 0 } } } })),
         interviewsApi.list().catch(() => ({ data: { data: [] } })),
-        jobsApi.getRecommended(1).catch(() => ({ data: { data: { pagination: { total: 0 } } } }))
+        jobsApi.getRecommended(1).catch(() => ({ data: { data: { pagination: { total: 0 } } } })),
+        profileApi.getBadges().catch(() => ({ data: { data: [] } })),
+        profileApi.getStreak().catch(() => ({ data: { data: null } })),
       ])
+
+      // Badges & Streak
+      setBadges(badgesRes.data?.data || [])
+      setStreak(streakRes.data?.data || null)
 
       // Compter les candidatures par statut
       const applications = applicationsRes.data?.data?.applications || []
@@ -306,6 +333,58 @@ export default function AnalyticsPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Streak */}
+          {streak && (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                    <Flame className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-foreground">{streak.currentStreak}</p>
+                    <p className="text-xs text-muted-foreground">jours consécutifs</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Record : {streak.longestStreak} jour{streak.longestStreak > 1 ? "s" : ""}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Badges */}
+          {badges.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  Badges ({badges.filter(b => b.earned).length}/{badges.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2">
+                  {badges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-lg text-center transition-all ${
+                        badge.earned
+                          ? "bg-primary/10"
+                          : "bg-muted/50 opacity-40 grayscale"
+                      }`}
+                      title={badge.description}
+                    >
+                      <span className="text-xl">{badge.icon}</span>
+                      <span className="text-[10px] leading-tight text-muted-foreground line-clamp-2">
+                        {badge.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Tips */}
           <Card>
             <CardHeader>
@@ -357,6 +436,25 @@ export default function AnalyticsPage() {
                   Voir mes candidatures
                 </Button>
               </Link>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={async () => {
+                  try {
+                    const res = await profileApi.exportData()
+                    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'hiredge-export.json'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  } catch {}
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exporter mes données (RGPD)
+              </Button>
             </CardContent>
           </Card>
         </div>

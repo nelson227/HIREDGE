@@ -37,6 +37,8 @@ const edgeRoutes: FastifyPluginAsync = async (fastify) => {
   // DELETE /edge/conversations/:id — Delete a conversation
   fastify.delete('/conversations/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    // Create memory episode before deleting (fire-and-forget)
+    edgeService.createEpisode(request.user.id, id).catch(() => {});
     await fastify.prisma.edgeConversation.deleteMany({
       where: { id, userId: request.user.id },
     });
