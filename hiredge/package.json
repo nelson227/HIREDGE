@@ -26,7 +26,6 @@
     "docker:logs": "docker compose logs -f api"
   },
   "devDependencies": {
-    "@prisma/engines": "^7.5.0",
     "@types/jsonwebtoken": "^9.0.10",
     "jsonwebtoken": "^9.0.3",
     "run-parallel": "^1.2.0",
