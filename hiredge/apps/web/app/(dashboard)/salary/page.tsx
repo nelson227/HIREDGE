@@ -9,33 +9,29 @@ import {
   TrendingUp,
   Loader2,
   BarChart3,
-  MessageSquare,
-  ArrowRight,
   Search,
+  AlertCircle,
+  Info,
 } from "lucide-react"
 import { salaryApi } from "@/lib/api"
 
 export default function SalaryPage() {
-  const [tab, setTab] = useState<"data" | "negotiate" | "contribute">("data")
+  const [tab, setTab] = useState<"data" | "contribute">("data")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
 
   // Data tab
-  const [dataForm, setDataForm] = useState({ jobFamily: "", location: "", experienceLevel: "" })
-
-  // Negotiate tab
-  const [negForm, setNegForm] = useState({
-    jobTitle: "", company: "", currentOffer: "", targetSalary: "", context: "",
-  })
+  const [dataForm, setDataForm] = useState({ title: "", jobFamily: "", location: "", experienceLevel: "" })
 
   // Contribute tab
   const [contribForm, setContribForm] = useState({
     jobTitle: "", jobFamily: "", location: "", country: "CA", experienceLevel: "", salary: "",
   })
   const [contributed, setContributed] = useState(false)
+  const [contribError, setContribError] = useState<string | null>(null)
 
   const searchSalary = async () => {
-    if (!dataForm.jobFamily) return
+    if (!dataForm.title && !dataForm.jobFamily) return
     setLoading(true)
     setResult(null)
     try {
@@ -45,46 +41,37 @@ export default function SalaryPage() {
     finally { setLoading(false) }
   }
 
-  const negotiate = async () => {
-    if (!negForm.jobTitle || !negForm.company || !negForm.currentOffer) return
-    setLoading(true)
-    setResult(null)
-    try {
-      const { data } = await salaryApi.negotiate({
-        ...negForm,
-        currentOffer: parseInt(negForm.currentOffer),
-        targetSalary: parseInt(negForm.targetSalary) || parseInt(negForm.currentOffer) * 1.15,
-      })
-      if (data.success) setResult(data.data)
-    } catch { /* no-op */ }
-    finally { setLoading(false) }
-  }
-
   const contribute = async () => {
-    if (!contribForm.jobTitle || !contribForm.salary) return
+    if (!contribForm.jobTitle || !contribForm.salary || !contribForm.location) return
     setLoading(true)
+    setContribError(null)
     try {
-      await salaryApi.contribute({
+      const resp = await salaryApi.contribute({
         ...contribForm,
         salary: parseInt(contribForm.salary),
         experienceLevel: contribForm.experienceLevel || "mid",
       })
-      setContributed(true)
-    } catch { /* no-op */ }
-    finally { setLoading(false) }
+      if (resp.data.success) setContributed(true)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message
+      if (err?.response?.status === 422 && msg) {
+        setContribError(msg)
+      } else {
+        setContribError("Une erreur est survenue. Veuillez réessayer.")
+      }
+    } finally { setLoading(false) }
   }
 
   const tabs = [
     { id: "data", label: "Explorer les salaires", icon: BarChart3 },
-    { id: "negotiate", label: "Simuler une négo", icon: MessageSquare },
     { id: "contribute", label: "Contribuer", icon: TrendingUp },
   ] as const
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Salaires & Négociation</h1>
-        <p className="text-muted-foreground mt-1">Explorez les données salariales et préparez vos négociations</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Explorateur de Salaires</h1>
+        <p className="text-muted-foreground mt-1">Données salariales en temps réel basées sur le marché et la communauté</p>
       </div>
 
       {/* Tabs */}
@@ -92,7 +79,7 @@ export default function SalaryPage() {
         {tabs.map((t) => (
           <button
             key={t.id}
-            onClick={() => { setTab(t.id); setResult(null) }}
+            onClick={() => { setTab(t.id); setResult(null); setContribError(null) }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
@@ -109,11 +96,19 @@ export default function SalaryPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Search className="w-5 h-5" /> Rechercher</CardTitle>
-              <CardDescription>Consultez les données salariales par métier et localisation</CardDescription>
+              <CardDescription>Consultez les données salariales par poste et localisation</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Famille de métier *</label>
+                <label className="text-sm font-medium">Titre de poste</label>
+                <Input
+                  value={dataForm.title}
+                  onChange={(e) => setDataForm({...dataForm, title: e.target.value})}
+                  placeholder="Ex: Software Engineer, Product Manager"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Famille de métier</label>
                 <Input
                   value={dataForm.jobFamily}
                   onChange={(e) => setDataForm({...dataForm, jobFamily: e.target.value})}
@@ -125,7 +120,7 @@ export default function SalaryPage() {
                 <Input
                   value={dataForm.location}
                   onChange={(e) => setDataForm({...dataForm, location: e.target.value})}
-                  placeholder="Ex: Montréal, Paris, Remote"
+                  placeholder="Ex: Montréal, Toronto, Remote"
                 />
               </div>
               <div className="space-y-2">
@@ -142,7 +137,7 @@ export default function SalaryPage() {
                   <option value="lead">Lead/Staff (10+ ans)</option>
                 </select>
               </div>
-              <Button onClick={searchSalary} disabled={loading || !dataForm.jobFamily} className="w-full">
+              <Button onClick={searchSalary} disabled={loading || (!dataForm.title && !dataForm.jobFamily)} className="w-full">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
                 Rechercher
               </Button>
@@ -171,97 +166,18 @@ export default function SalaryPage() {
                         <p className="text-xs text-muted-foreground">Maximum</p>
                       </div>
                     </div>
+                    {result.sources && result.sources.length > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
+                        <Info className="w-3 h-3" />
+                        Sources : {result.sources.join(", ")}
+                      </div>
+                    )}
                     <p className="text-sm text-muted-foreground text-center">
-                      Basé sur {result.sampleSize || 0} données
+                      Basé sur {result.sampleSize || 0} données • {result.currency || "CAD"}
                     </p>
                   </>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">Aucune donnée trouvée pour ces critères</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* Negotiate Tab */}
-      {tab === "negotiate" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><MessageSquare className="w-5 h-5" /> Simulation</CardTitle>
-              <CardDescription>Préparez votre négociation salariale avec l&apos;IA</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Poste *</label>
-                <Input
-                  value={negForm.jobTitle}
-                  onChange={(e) => setNegForm({...negForm, jobTitle: e.target.value})}
-                  placeholder="Ex: Senior Developer"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Entreprise *</label>
-                <Input
-                  value={negForm.company}
-                  onChange={(e) => setNegForm({...negForm, company: e.target.value})}
-                  placeholder="Ex: Shopify"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Offre actuelle ($) *</label>
-                  <Input
-                    type="number"
-                    value={negForm.currentOffer}
-                    onChange={(e) => setNegForm({...negForm, currentOffer: e.target.value})}
-                    placeholder="85000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Objectif ($)</label>
-                  <Input
-                    type="number"
-                    value={negForm.targetSalary}
-                    onChange={(e) => setNegForm({...negForm, targetSalary: e.target.value})}
-                    placeholder="95000"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Contexte (optionnel)</label>
-                <Input
-                  value={negForm.context}
-                  onChange={(e) => setNegForm({...negForm, context: e.target.value})}
-                  placeholder="Ex: 5 ans d'expérience, offre d'un concurrent..."
-                />
-              </div>
-              <Button onClick={negotiate} disabled={loading || !negForm.jobTitle || !negForm.currentOffer} className="w-full">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />}
-                Lancer la simulation
-              </Button>
-            </CardContent>
-          </Card>
-
-          {result && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Stratégie de négociation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-                  {result.reply || result.strategy || result.message || JSON.stringify(result, null, 2)}
-                </div>
-                {result.tips && result.tips.length > 0 && (
-                  <div className="mt-4 space-y-2 border-t border-border pt-4">
-                    <p className="text-sm font-medium text-foreground">Conseils :</p>
-                    {result.tips.map((tip: string, i: number) => (
-                      <p key={i} className="text-sm text-muted-foreground flex gap-2">
-                        <ArrowRight className="w-4 h-4 shrink-0 mt-0.5 text-primary" />{tip}
-                      </p>
-                    ))}
-                  </div>
                 )}
               </CardContent>
             </Card>
@@ -275,7 +191,7 @@ export default function SalaryPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Contribuer</CardTitle>
-              <CardDescription>Partagez anonymement votre salaire pour enrichir la communauté</CardDescription>
+              <CardDescription>Partagez anonymement votre salaire pour enrichir la communauté. Votre contribution sera validée par rapport aux données du marché.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {contributed ? (
@@ -285,20 +201,29 @@ export default function SalaryPage() {
                   </div>
                   <h3 className="text-lg font-semibold">Merci pour votre contribution !</h3>
                   <p className="text-sm text-muted-foreground">Vos données aident toute la communauté HIREDGE.</p>
+                  <Button variant="outline" onClick={() => { setContributed(false); setContribForm({ jobTitle: "", jobFamily: "", location: "", country: "CA", experienceLevel: "", salary: "" }) }}>
+                    Contribuer à nouveau
+                  </Button>
                 </div>
               ) : (
                 <>
+                  {contribError && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                      <p className="text-sm text-destructive">{contribError}</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Titre de poste *</label>
                     <Input value={contribForm.jobTitle} onChange={(e) => setContribForm({...contribForm, jobTitle: e.target.value})} placeholder="Senior Developer" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Famille de métier *</label>
+                    <label className="text-sm font-medium">Famille de métier</label>
                     <Input value={contribForm.jobFamily} onChange={(e) => setContribForm({...contribForm, jobFamily: e.target.value})} placeholder="Développement" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Ville</label>
+                      <label className="text-sm font-medium">Ville *</label>
                       <Input value={contribForm.location} onChange={(e) => setContribForm({...contribForm, location: e.target.value})} placeholder="Montréal" />
                     </div>
                     <div className="space-y-2">
@@ -326,11 +251,11 @@ export default function SalaryPage() {
                       <Input type="number" value={contribForm.salary} onChange={(e) => setContribForm({...contribForm, salary: e.target.value})} placeholder="90000" />
                     </div>
                   </div>
-                  <Button onClick={contribute} disabled={loading || !contribForm.jobTitle || !contribForm.salary} className="w-full">
+                  <Button onClick={contribute} disabled={loading || !contribForm.jobTitle || !contribForm.salary || !contribForm.location} className="w-full">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <DollarSign className="w-4 h-4 mr-2" />}
                     Contribuer anonymement
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">Toutes les données sont anonymisées et agrégées.</p>
+                  <p className="text-xs text-muted-foreground text-center">Toutes les données sont anonymisées et agrégées. Les contributions hors marché seront refusées.</p>
                 </>
               )}
             </CardContent>

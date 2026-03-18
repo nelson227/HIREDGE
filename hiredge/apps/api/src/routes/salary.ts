@@ -30,47 +30,14 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /salary/negotiate — Launch a salary negotiation simulation
-  fastify.post('/negotiate', {
-    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
-  }, async (request, reply) => {
-    const body = request.body as {
-      jobTitle: string;
-      company: string;
-      currentOffer: number;
-      targetSalary: number;
-      context?: string;
-    };
-
-    if (!body.jobTitle || !body.currentOffer) {
-      return reply.status(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Titre du poste et offre actuelle requis' },
-      });
-    }
-
-    try {
-      const result = await salaryService.simulateNegotiation(request.user.id, {
-        jobTitle: body.jobTitle,
-        companyName: body.company,
-        currentOffer: body.currentOffer,
-        targetSalary: body.targetSalary,
-        message: body.context || `Je souhaite négocier pour le poste de ${body.jobTitle}`,
-      });
-      return reply.send({ success: true, data: result });
-    } catch (err) {
-      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
-      throw err;
-    }
-  });
-
-  // POST /salary/contribute — Contribute salary data (collective intelligence)
+  // POST /salary/contribute — Contribute salary data (validated against market range)
   fastify.post('/contribute', async (request, reply) => {
     const body = request.body as {
       jobTitle: string;
+      jobFamily?: string;
       location: string;
       salary: number;
-      company?: string;
+      country?: string;
     };
 
     if (!body.jobTitle || !body.salary || !body.location) {
@@ -80,14 +47,29 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
+    if (body.salary < 0 || body.salary > 1000000) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Le salaire doit être entre 0 et 1 000 000 $' },
+      });
+    }
+
     try {
       const result = await salaryService.contributeSalary({
-        jobFamily: body.jobTitle,
+        jobFamily: body.jobFamily || body.jobTitle,
         title: body.jobTitle,
         location: body.location,
-        salaryMin: body.salary,
-        salaryMax: body.salary,
+        country: body.country,
+        salary: body.salary,
       });
+
+      if (!result.accepted) {
+        return reply.status(422).send({
+          success: false,
+          error: { code: 'OUT_OF_RANGE', message: result.message },
+        });
+      }
+
       return reply.send({ success: true, data: result });
     } catch (err) {
       throw err;
