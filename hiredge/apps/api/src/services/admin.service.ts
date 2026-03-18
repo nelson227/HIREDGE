@@ -1,4 +1,5 @@
 import prisma from '../db/prisma';
+import redis from '../lib/redis';
 import { AppError } from './auth.service';
 
 export class AdminService {
@@ -179,11 +180,16 @@ export class AdminService {
       throw new AppError('CANNOT_DOWNGRADE_SELF', 'Impossible de rétrograder votre propre rôle administrateur', 400);
     }
 
-    return prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id: userId },
       data: { role },
       select: { id: true, email: true, role: true },
     });
+
+    // Invalidate Redis cache so the auth middleware picks up the new role immediately
+    try { await redis.del(`auth:user:${userId}`); } catch {}
+
+    return updated;
   }
 
   async updateUserSubscription(userId: string, subscriptionTier: string) {

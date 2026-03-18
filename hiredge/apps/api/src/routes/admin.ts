@@ -5,6 +5,7 @@ import { requireRole } from '../middleware/auth';
 import { AppError } from '../services/auth.service';
 import { env } from '../config/env';
 import prisma from '../db/prisma';
+import redis from '../lib/redis';
 
 // Admin panel credentials from environment variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -25,6 +26,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     const adminUser = await prisma.user.findUnique({ where: { email } });
     if (adminUser && adminUser.role !== 'ADMIN') {
       await prisma.user.update({ where: { id: adminUser.id }, data: { role: 'ADMIN' } });
+      // Invalidate Redis cache so the auth middleware picks up the new role immediately
+      try { await redis.del(`auth:user:${adminUser.id}`); } catch {}
     }
 
     const adminToken = jwt.sign({ adminAccess: true, email }, env.JWT_SECRET, { expiresIn: '2h' });
