@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,6 +44,12 @@ interface CompareResult {
   recommendation?: string
 }
 
+function getCompanyName(company: any): string {
+  if (!company) return 'N/A'
+  if (typeof company === 'string') return company
+  return company.name || 'N/A'
+}
+
 export default function ComparePage() {
   const [jobIds, setJobIds] = useState<string[]>(["", ""])
   const [jobInfoMap, setJobInfoMap] = useState<Record<string, SelectedJobInfo>>({})
@@ -52,8 +58,58 @@ export default function ComparePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const addJobId = (job: { id: string; title: string; company?: string; location?: string }) => {
+  // Autocomplete: debounced search as user types
+  const searchJobs = useCallback(async (query: string) => {
+    if (!query.trim() || query.trim().length < 1) {
+      setSearchResults([])
+      setShowDropdown(false)
+      return
+    }
+    setSearching(true)
+    try {
+      const { data } = await jobsApi.search({ q: query, limit: 8 })
+      const jobs = Array.isArray(data.data) ? data.data : (data.data?.jobs || [])
+      setSearchResults(jobs)
+      setShowDropdown(jobs.length > 0)
+    } catch {
+      setSearchResults([])
+      setShowDropdown(false)
+    } finally {
+      setSearching(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      setShowDropdown(false)
+      return
+    }
+    debounceRef.current = setTimeout(() => {
+      searchJobs(searchQuery)
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchQuery, searchJobs])
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  const addJobId = (job: { id: string; title: string; company?: any; location?: string }) => {
     if (jobIds.includes(job.id)) return
     const emptyIndex = jobIds.findIndex((j) => !j)
     if (emptyIndex !== -1) {
@@ -63,25 +119,16 @@ export default function ComparePage() {
     } else {
       setJobIds([...jobIds, job.id])
     }
-    setJobInfoMap((prev) => ({ ...prev, [job.id]: { title: job.title, company: job.company || 'N/A', location: job.location } }))
+    setJobInfoMap((prev) => ({ ...prev, [job.id]: { title: job.title, company: getCompanyName(job.company), location: job.location } }))
     setSearchResults([])
     setSearchQuery("")
+    setShowDropdown(false)
   }
 
   const removeJobId = (index: number) => {
     const updated = [...jobIds]
     updated[index] = ""
     setJobIds(updated)
-  }
-
-  const searchJobs = async () => {
-    if (!searchQuery.trim()) return
-    setSearching(true)
-    try {
-      const { data } = await jobsApi.search({ q: searchQuery, limit: 5 })
-      setSearchResults(data.data?.jobs || [])
-    } catch { /* no-op */ }
-    finally { setSearching(false) }
   }
 
   const compare = async () => {
@@ -112,37 +159,46 @@ export default function ComparePage() {
           <CardDescription>Recherchez et ajoutez au moins 2 offres à comparer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && searchJobs()}
-              placeholder="Rechercher une offre par titre, entreprise..."
-              className="flex-1"
-            />
-            <Button onClick={searchJobs} disabled={searching || !searchQuery.trim()}>
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            </Button>
-          </div>
-
-          {/* Search results */}
-          {searchResults.length > 0 && (
-            <div className="space-y-2 border border-border rounded-lg p-3">
-              {searchResults.map((job: any) => (
-                <button
-                  key={job.id}
-                  onClick={() => addJobId({ id: job.id, title: job.title, company: job.company, location: job.location })}
-                  className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{job.title}</p>
-                    <p className="text-xs text-muted-foreground">{job.company} · {job.location}</p>
-                  </div>
-                  <Check className="w-4 h-4 text-primary" />
-                </button>
-              ))}
+          <div className="relative">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { if (searchResults.length > 0) setShowDropdown(true) }}
+                placeholder="Tapez pour rechercher une offre par titre, entreprise..."
+                className="flex-1"
+              />
+              {searching && (
+                <div className="flex items-center pr-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Autocomplete dropdown */}
+            {showDropdown && searchResults.length > 0 && (
+              <div ref={dropdownRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                {searchResults.map((job: any) => (
+                  <button
+                    key={job.id}
+                    onClick={() => addJobId({ id: job.id, title: job.title, company: job.company, location: job.location })}
+                    className="w-full text-left px-4 py-3 hover:bg-muted transition-colors flex items-center justify-between border-b border-border last:border-b-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{job.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{getCompanyName(job.company)}{job.location ? ` · ${job.location}` : ''}</p>
+                    </div>
+                    {jobIds.includes(job.id) ? (
+                      <span className="text-xs text-muted-foreground ml-2 shrink-0">Déjà ajouté</span>
+                    ) : (
+                      <Check className="w-4 h-4 text-primary ml-2 shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Selected jobs */}
           <div className="space-y-2">
