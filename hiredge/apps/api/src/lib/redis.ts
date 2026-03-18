@@ -117,6 +117,30 @@ const redis = {
       return 0;
     }
   },
+  async hset(key: string, field: string, value: string): Promise<void> {
+    if (!rawRedis || !redisAvailable) return;
+    try {
+      await rawRedis.hset(key, field, value);
+    } catch {
+      // ignore
+    }
+  },
+  async hget(key: string, field: string): Promise<string | null> {
+    if (!rawRedis || !redisAvailable) return null;
+    try {
+      return await rawRedis.hget(key, field);
+    } catch {
+      return null;
+    }
+  },
+  async hgetall(key: string): Promise<Record<string, string>> {
+    if (!rawRedis || !redisAvailable) return {};
+    try {
+      return await rawRedis.hgetall(key) ?? {};
+    } catch {
+      return {};
+    }
+  },
 };
 
 export { redis };

@@ -21,9 +21,6 @@ const followUpWorker = new Worker(
       case 'check_pre_interview':
         await processPreInterviewBriefs();
         break;
-      case 'send_follow_up':
-        await sendFollowUp(job.data.reminderId);
-        break;
     }
   },
   { connection, concurrency: 3 },
