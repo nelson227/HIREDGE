@@ -17,14 +17,27 @@ import {
 } from "lucide-react"
 import { analyticsApi, jobsApi } from "@/lib/api"
 
+interface SelectedJobInfo {
+  title: string
+  company: string
+  location?: string
+}
+
 interface CompareResult {
   jobs: Array<{
     id: string
     title: string
     company: string
     location?: string
-    salary?: string
+    contractType?: string
+    salary?: { min?: number | null; max?: number | null; currency?: string }
+    remote?: boolean
+    skills?: string[]
+    postedAt?: string
+    source?: string
     matchScore?: number
+    matchingSkills?: number
+    totalRequiredSkills?: number
     pros?: string[]
     cons?: string[]
   }>
@@ -33,21 +46,24 @@ interface CompareResult {
 
 export default function ComparePage() {
   const [jobIds, setJobIds] = useState<string[]>(["", ""])
+  const [jobInfoMap, setJobInfoMap] = useState<Record<string, SelectedJobInfo>>({})
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<CompareResult | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
 
-  const addJobId = (id: string) => {
+  const addJobId = (job: { id: string; title: string; company?: string; location?: string }) => {
+    if (jobIds.includes(job.id)) return
     const emptyIndex = jobIds.findIndex((j) => !j)
     if (emptyIndex !== -1) {
       const updated = [...jobIds]
-      updated[emptyIndex] = id
+      updated[emptyIndex] = job.id
       setJobIds(updated)
     } else {
-      setJobIds([...jobIds, id])
+      setJobIds([...jobIds, job.id])
     }
+    setJobInfoMap((prev) => ({ ...prev, [job.id]: { title: job.title, company: job.company || 'N/A', location: job.location } }))
     setSearchResults([])
     setSearchQuery("")
   }
@@ -115,7 +131,7 @@ export default function ComparePage() {
               {searchResults.map((job: any) => (
                 <button
                   key={job.id}
-                  onClick={() => addJobId(job.id)}
+                  onClick={() => addJobId({ id: job.id, title: job.title, company: job.company, location: job.location })}
                   className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between"
                 >
                   <div>
@@ -133,12 +149,22 @@ export default function ComparePage() {
             <p className="text-sm font-medium text-foreground">Offres sélectionnées ({filledCount})</p>
             {jobIds.map((id, i) => (
               <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={id}
-                  onChange={(e) => { const u = [...jobIds]; u[i] = e.target.value; setJobIds(u) }}
-                  placeholder={`ID de l'offre ${i + 1}`}
-                  className="flex-1 font-mono text-xs"
-                />
+                {id && jobInfoMap[id] ? (
+                  <div className="flex-1 flex items-center gap-2 rounded-lg border border-border px-3 py-2 bg-muted/50">
+                    <Briefcase className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{jobInfoMap[id].title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{jobInfoMap[id].company}{jobInfoMap[id].location ? ` · ${jobInfoMap[id].location}` : ""}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Input
+                    value={id}
+                    onChange={(e) => { const u = [...jobIds]; u[i] = e.target.value; setJobIds(u) }}
+                    placeholder={`ID de l'offre ${i + 1}`}
+                    className="flex-1 font-mono text-xs"
+                  />
+                )}
                 {id && (
                   <Button variant="ghost" size="icon" onClick={() => removeJobId(i)}>
                     <X className="w-4 h-4" />
@@ -146,7 +172,7 @@ export default function ComparePage() {
                 )}
               </div>
             ))}
-            {jobIds.length < 4 && (
+            {jobIds.length < 5 && (
               <Button variant="outline" size="sm" onClick={() => setJobIds([...jobIds, ""])}>
                 + Ajouter une offre
               </Button>
@@ -172,14 +198,31 @@ export default function ComparePage() {
                   <CardDescription className="space-y-1">
                     <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{job.company}</span>
                     {job.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>}
-                    {job.salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{job.salary}</span>}
+                    {job.salary && (job.salary.min || job.salary.max) && (
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        {job.salary.min?.toLocaleString() || '?'} - {job.salary.max?.toLocaleString() || '?'} {job.salary.currency || '$'}
+                      </span>
+                    )}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {job.contractType && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{job.contractType}</span>}
+                      {job.remote && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500">Remote</span>}
+                    </div>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {job.matchScore !== undefined && (
                     <div className="text-center p-3 rounded-xl bg-primary/10">
                       <p className="text-2xl font-bold text-primary">{job.matchScore}%</p>
-                      <p className="text-xs text-muted-foreground">Match</p>
+                      <p className="text-xs text-muted-foreground">Match{job.matchingSkills !== undefined ? ` · ${job.matchingSkills}/${job.totalRequiredSkills} compétences` : ''}</p>
+                    </div>
+                  )}
+                  {job.skills && job.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {job.skills.slice(0, 6).map((skill, si) => (
+                        <span key={si} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{skill}</span>
+                      ))}
+                      {job.skills.length > 6 && <span className="text-xs text-muted-foreground">+{job.skills.length - 6}</span>}
                     </div>
                   )}
                   {job.pros && job.pros.length > 0 && (

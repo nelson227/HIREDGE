@@ -155,24 +155,24 @@ export default function SalaryPage() {
                 <CardTitle className="flex items-center gap-2"><DollarSign className="w-5 h-5" /> Résultats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {result.aggregated ? (
+                {result.salaryMin != null ? (
                   <>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center p-4 rounded-xl bg-muted">
-                        <p className="text-2xl font-bold text-foreground">{result.aggregated.min?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-foreground">{result.salaryMin?.toLocaleString()} $</p>
                         <p className="text-xs text-muted-foreground">Minimum</p>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-primary/10 border border-primary/20">
-                        <p className="text-2xl font-bold text-primary">{result.aggregated.median?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-primary">{result.salaryMedian?.toLocaleString()} $</p>
                         <p className="text-xs text-muted-foreground">Médiane</p>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-muted">
-                        <p className="text-2xl font-bold text-foreground">{result.aggregated.max?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-foreground">{result.salaryMax?.toLocaleString()} $</p>
                         <p className="text-xs text-muted-foreground">Maximum</p>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground text-center">
-                      Basé sur {result.aggregated.sampleSize || 0} données
+                      Basé sur {result.sampleSize || 0} données
                     </p>
                   </>
                 ) : (
@@ -251,8 +251,18 @@ export default function SalaryPage() {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-                  {result.strategy || result.message || JSON.stringify(result, null, 2)}
+                  {result.reply || result.strategy || result.message || JSON.stringify(result, null, 2)}
                 </div>
+                {result.tips && result.tips.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-border pt-4">
+                    <p className="text-sm font-medium text-foreground">Conseils :</p>
+                    {result.tips.map((tip: string, i: number) => (
+                      <p key={i} className="text-sm text-muted-foreground flex gap-2">
+                        <ArrowRight className="w-4 h-4 shrink-0 mt-0.5 text-primary" />{tip}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

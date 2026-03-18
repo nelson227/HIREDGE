@@ -7,21 +7,22 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /salary/data — Get salary data for a job title/location
   fastify.get('/data', async (request, reply) => {
-    const { title, location, experienceLevel } = request.query as {
+    const { title, jobFamily, location, experienceLevel } = request.query as {
       title?: string;
+      jobFamily?: string;
       location?: string;
       experienceLevel?: string;
     };
 
-    if (!title) {
+    if (!title && !jobFamily) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Le titre du poste est requis' },
+        error: { code: 'VALIDATION_ERROR', message: 'Le titre du poste ou la famille de métier est requis' },
       });
     }
 
     try {
-      const data = await salaryService.getSalaryData({ title, location });
+      const data = await salaryService.getSalaryData({ title, jobFamily, location });
       return reply.send({ success: true, data });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
