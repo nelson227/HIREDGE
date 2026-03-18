@@ -31,7 +31,7 @@ import { profileApi, authApi, notificationsApi, squadApi, clearTokens } from "@/
 import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket"
 import { useTranslation } from "@/lib/i18n"
 
-type NavItem = { labelKey: string; href: string; icon: any }
+type NavItem = { labelKey: any; href: string; icon: any }
 
 const sidebarItemKeys: NavItem[] = [
   { labelKey: "navDashboard", href: "/dashboard", icon: LayoutDashboard },
