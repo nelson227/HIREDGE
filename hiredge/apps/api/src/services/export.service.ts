@@ -8,7 +8,7 @@ export class ExportService {
     const applications = await prisma.application.findMany({
       where: { userId },
       include: { job: { include: { company: true } } },
-      orderBy: { appliedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     const headers = [
@@ -25,7 +25,7 @@ export class ExportService {
     ];
 
     const rows = applications.map((app) => [
-      app.appliedAt.toISOString().split('T')[0],
+      app.createdAt.toISOString().split('T')[0],
       this.escapeCsv(app.job?.company?.name || 'N/A'),
       this.escapeCsv(app.job?.title || 'N/A'),
       this.escapeCsv(app.job?.location || 'N/A'),
@@ -33,7 +33,7 @@ export class ExportService {
       app.job?.salaryMin?.toString() || '',
       app.job?.salaryMax?.toString() || '',
       app.status,
-      this.escapeCsv(app.source || 'manual'),
+      this.escapeCsv(app.job?.source || 'manual'),
       this.escapeCsv(app.notes || ''),
     ]);
 
@@ -53,7 +53,7 @@ export class ExportService {
     const applications = await prisma.application.findMany({
       where: { userId },
       include: { job: { include: { company: true } } },
-      orderBy: { appliedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     const profile = await prisma.candidateProfile.findUnique({
@@ -75,9 +75,9 @@ export class ExportService {
       stats.byStatus[app.status] = (stats.byStatus[app.status] || 0) + 1;
       if (app.status !== 'APPLIED' && app.status !== 'PENDING') {
         responded++;
-        if (app.updatedAt && app.appliedAt) {
+        if (app.updatedAt && app.createdAt) {
           const days = Math.floor(
-            (app.updatedAt.getTime() - app.appliedAt.getTime()) / (1000 * 60 * 60 * 24)
+            (app.updatedAt.getTime() - app.createdAt.getTime()) / (1000 * 60 * 60 * 24)
           );
           responseDaysTotal += days;
           responseDaysCount++;
@@ -96,7 +96,7 @@ export class ExportService {
       },
       stats,
       applications: applications.map((app) => ({
-        date: app.appliedAt.toISOString().split('T')[0],
+        date: app.createdAt.toISOString().split('T')[0],
         company: app.job?.company?.name || 'N/A',
         title: app.job?.title || 'N/A',
         location: app.job?.location || 'N/A',
@@ -105,7 +105,7 @@ export class ExportService {
           ? `${app.job.salaryMin}€ - ${app.job?.salaryMax || '?'}€`
           : 'N/A',
         status: app.status,
-        source: app.source || 'manual',
+        source: app.job?.source || 'manual',
       })),
     };
   }

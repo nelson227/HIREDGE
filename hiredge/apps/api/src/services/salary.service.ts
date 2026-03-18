@@ -37,8 +37,8 @@ export class SalaryService {
       return this.estimateFromJobs(params);
     }
 
-    const avgMin = Math.round(data.reduce((s, d) => s + d.salaryMin, 0) / data.length);
-    const avgMax = Math.round(data.reduce((s, d) => s + d.salaryMax, 0) / data.length);
+    const avgMin = Math.round(data.reduce((s: number, d) => s + d.salaryMin, 0) / data.length);
+    const avgMax = Math.round(data.reduce((s: number, d) => s + d.salaryMax, 0) / data.length);
     const avgMedian = Math.round((avgMin + avgMax) / 2);
 
     return {
@@ -46,8 +46,8 @@ export class SalaryService {
       salaryMax: avgMax,
       salaryMedian: avgMedian,
       currency: data[0]?.currency || 'CAD',
-      sampleSize: data.reduce((s, d) => s + d.sampleSize, 0),
-      sources: [...new Set(data.map(d => d.source))],
+      sampleSize: data.reduce((s: number, d) => s + d.sampleSize, 0),
+      sources: [...new Set(data.map((d) => d.source))],
       details: data,
     };
   }

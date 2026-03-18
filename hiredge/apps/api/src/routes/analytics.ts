@@ -13,7 +13,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       // Applications stats
       const applications = await fastify.prisma.application.findMany({
         where: { userId },
-        select: { status: true, appliedAt: true, updatedAt: true, source: true },
+        select: { status: true, createdAt: true, updatedAt: true },
       });
 
       const total = applications.length;
@@ -27,14 +27,14 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         byStatus[app.status] = (byStatus[app.status] || 0) + 1;
         if (app.status !== 'APPLIED' && app.status !== 'PENDING') {
           responded++;
-          if (app.updatedAt && app.appliedAt) {
-            const days = Math.floor((app.updatedAt.getTime() - app.appliedAt.getTime()) / (86400000));
+          if (app.updatedAt && app.createdAt) {
+            const days = Math.floor((app.updatedAt.getTime() - app.createdAt.getTime()) / (86400000));
             responseDaysSum += days;
             responseDaysCount++;
           }
         }
         // Weekly aggregate
-        const weekKey = new Date(app.appliedAt).toISOString().slice(0, 10);
+        const weekKey = new Date(app.createdAt).toISOString().slice(0, 10);
         weeklyData[weekKey] = (weeklyData[weekKey] || 0) + 1;
       }
 

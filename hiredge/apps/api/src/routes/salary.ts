@@ -21,7 +21,7 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const data = await salaryService.getSalaryData(title, location, experienceLevel);
+      const data = await salaryService.getSalaryData({ title, location });
       return reply.send({ success: true, data });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -49,7 +49,13 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const result = await salaryService.simulateNegotiation(request.user.id, body);
+      const result = await salaryService.simulateNegotiation(request.user.id, {
+        jobTitle: body.jobTitle,
+        companyName: body.company,
+        currentOffer: body.currentOffer,
+        targetSalary: body.targetSalary,
+        message: body.context || `Je souhaite négocier pour le poste de ${body.jobTitle}`,
+      });
       return reply.send({ success: true, data: result });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
@@ -74,7 +80,13 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const result = await salaryService.contributeSalary(request.user.id, body);
+      const result = await salaryService.contributeSalary({
+        jobFamily: body.jobTitle,
+        title: body.jobTitle,
+        location: body.location,
+        salaryMin: body.salary,
+        salaryMax: body.salary,
+      });
       return reply.send({ success: true, data: result });
     } catch (err) {
       throw err;

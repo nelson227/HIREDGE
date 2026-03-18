@@ -89,14 +89,16 @@ Si NON, retourne: {"isJob": false}`,
       // Find or create company
       let companyId: string | undefined;
       if (result.company) {
-        const company = await prisma.company.upsert({
+        let company = await prisma.company.findFirst({
           where: { name: result.company },
-          update: {},
-          create: {
-            name: result.company,
-            description: `Offre détectée sur ${post.source}`,
-          },
         });
+        if (!company) {
+          company = await prisma.company.create({
+            data: {
+              name: result.company,
+            },
+          });
+        }
         companyId = company.id;
       }
 
@@ -108,11 +110,11 @@ Si NON, retourne: {"isJob": false}`,
           contractType: result.contractType || 'CDI',
           source: `social-${post.source}`,
           externalId: `social-${post.source}-${post.externalId}`,
-          externalUrl: result.contactValue || '',
-          companyId,
+          sourceUrl: result.contactValue || '',
+          companyId: companyId!,
+          requiredSkills: JSON.stringify(result.skills || []),
           status: 'ACTIVE',
           postedAt: new Date(),
-          skills: result.skills || [],
         },
       });
 

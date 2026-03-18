@@ -73,7 +73,7 @@ export class FcmService {
         });
 
         if (response.ok) {
-          const result = await response.json();
+          const result = await response.json() as { success?: boolean; results?: { error?: string }[] };
           if (result.success) {
             sent++;
           } else {

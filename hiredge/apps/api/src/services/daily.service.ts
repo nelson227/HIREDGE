@@ -50,7 +50,7 @@ export class DailyService {
       return null;
     }
 
-    const room = await response.json();
+    const room = await response.json() as { url: string; name: string };
     return { url: room.url, name: room.name };
   }
 
@@ -84,7 +84,7 @@ export class DailyService {
 
     if (!response.ok) return null;
 
-    const data = await response.json();
+    const data = await response.json() as { token: string };
     return data.token;
   }
 
