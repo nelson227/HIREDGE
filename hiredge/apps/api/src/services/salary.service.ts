@@ -29,6 +29,7 @@ export class SalaryService {
 
   constructor() {
     this.apiKey = config.openwebninja.apiKey;
+    console.log(`[Salary] OpenWebNinja API key loaded: ${this.apiKey ? `${this.apiKey.substring(0, 8)}... (${this.apiKey.length} chars)` : 'MISSING'}`);
   }
 
   /**
@@ -196,6 +197,8 @@ export class SalaryService {
     company?: string;
   }) {
     const searchTitle = params.title || params.jobFamily || '';
+    console.log(`[Salary] getSalaryData called: title="${searchTitle}", location="${params.location}", company="${params.company || 'none'}"`);
+    console.log(`[Salary] API key available: ${!!this.apiKey && this.apiKey.length >= 10}`);
 
     // 1. Try company-specific API if company provided
     let externalData: { min: number; max: number; median: number; currency: string; source: string; sampleSize: number; confidence?: string; company?: string } | null = null;
@@ -217,11 +220,23 @@ export class SalaryService {
       });
     }
 
-    // 3. Get collective contributions
-    const collectiveEntries = await this.getCollectiveData(params);
+    // 3. Get collective contributions (non-blocking)
+    let collectiveEntries: any[] = [];
+    try {
+      collectiveEntries = await this.getCollectiveData(params);
+    } catch (err) {
+      console.error('[Salary] Failed to get collective data (DB issue):', (err as Error).message);
+    }
 
-    // 4. Fallback to job postings if no external data
-    const jobEstimate = !externalData ? await this.estimateFromJobs(params) : null;
+    // 4. Fallback to job postings if no external data (non-blocking)
+    let jobEstimate: { min: number; max: number | null; median: number; currency: string; sampleSize: number; source: string } | null = null;
+    if (!externalData) {
+      try {
+        jobEstimate = await this.estimateFromJobs(params);
+      } catch (err) {
+        console.error('[Salary] Failed to estimate from jobs (DB issue):', (err as Error).message);
+      }
+    }
 
     // Base salary range from API or job postings
     const baseMin = externalData?.min ?? jobEstimate?.min ?? null;

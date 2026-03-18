@@ -23,7 +23,12 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const data = await salaryService.getSalaryData({ title, jobFamily, location, company });
+      const data = await salaryService.getSalaryData({
+        title: title || undefined,
+        jobFamily: jobFamily || undefined,
+        location: location || undefined,
+        company: company || undefined,
+      });
       return reply.send({ success: true, data });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });

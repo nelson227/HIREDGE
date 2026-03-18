@@ -19,6 +19,7 @@ export default function SalaryPage() {
   const [tab, setTab] = useState<"data" | "contribute">("data")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [searchError, setSearchError] = useState<string | null>(null)
 
   // Data tab
   const [dataForm, setDataForm] = useState({ title: "", jobFamily: "", location: "", experienceLevel: "", company: "" })
@@ -34,11 +35,18 @@ export default function SalaryPage() {
     if (!dataForm.title && !dataForm.jobFamily) return
     setLoading(true)
     setResult(null)
+    setSearchError(null)
     try {
       const { data } = await salaryApi.getData(dataForm)
-      if (data.success) setResult(data.data)
-    } catch { /* no-op */ }
-    finally { setLoading(false) }
+      if (data.success) {
+        setResult(data.data)
+      } else {
+        setSearchError(data.error?.message || "Erreur lors de la recherche")
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message || err?.message || "Erreur de connexion au serveur"
+      setSearchError(msg)
+    } finally { setLoading(false) }
   }
 
   const contribute = async () => {
@@ -152,13 +160,18 @@ export default function SalaryPage() {
             </CardContent>
           </Card>
 
-          {result && (
+          {(result || searchError) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><DollarSign className="w-5 h-5" /> Résultats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {result.salaryMin != null ? (
+                {searchError ? (
+                  <div className="flex items-center gap-3 text-red-400 justify-center py-8">
+                    <AlertCircle className="w-5 h-5" />
+                    <p>{searchError}</p>
+                  </div>
+                ) : result.salaryMin != null ? (
                   <>
                     {result.company && (
                       <p className="text-sm font-medium text-center text-primary">{result.company}</p>
