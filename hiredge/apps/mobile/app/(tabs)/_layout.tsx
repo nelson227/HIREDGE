@@ -3,10 +3,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { useAuthStore } from '../../stores/auth.store';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/theme';
 import { useTranslation } from '../../lib/i18n';
 
-function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName: any; focused: boolean; color: string }) {
+function TabIcon({ name, focusedName, focused, color, primaryColor }: { name: any; focusedName: any; focused: boolean; color: string; primaryColor: string }) {
   return (
     <View style={{
       alignItems: 'center',
@@ -14,7 +14,7 @@ function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName
       width: 48,
       height: 36,
       borderRadius: 12,
-      backgroundColor: focused ? colors.primary + '15' : 'transparent',
+      backgroundColor: focused ? primaryColor + '15' : 'transparent',
     }}>
       <Ionicons name={focused ? focusedName : name} size={22} color={color} />
     </View>
@@ -24,6 +24,7 @@ function TabIcon({ name, focusedName, focused, color }: { name: any; focusedName
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuthStore();
   const { t } = useTranslation();
+  const { colors } = useThemeColors();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -66,7 +67,7 @@ export default function TabsLayout() {
         options={{
           title: t('navHome'),
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="home-outline" focusedName="home" focused={focused} color={color} />
+            <TabIcon name="home-outline" focusedName="home" focused={focused} color={color} primaryColor={colors.primary} />
           ),
         }}
       />
@@ -75,7 +76,7 @@ export default function TabsLayout() {
         options={{
           title: t('navJobs'),
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="briefcase-outline" focusedName="briefcase" focused={focused} color={color} />
+            <TabIcon name="briefcase-outline" focusedName="briefcase" focused={focused} color={color} primaryColor={colors.primary} />
           ),
         }}
       />
@@ -84,7 +85,7 @@ export default function TabsLayout() {
         options={{
           title: 'EDGE',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="sparkles-outline" focusedName="sparkles" focused={focused} color={color} />
+            <TabIcon name="sparkles-outline" focusedName="sparkles" focused={focused} color={color} primaryColor={colors.primary} />
           ),
         }}
       />
@@ -93,7 +94,7 @@ export default function TabsLayout() {
         options={{
           title: t('navSquad'),
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="people-outline" focusedName="people" focused={focused} color={color} />
+            <TabIcon name="people-outline" focusedName="people" focused={focused} color={color} primaryColor={colors.primary} />
           ),
         }}
       />
@@ -102,7 +103,7 @@ export default function TabsLayout() {
         options={{
           title: t('navProfile'),
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="person-outline" focusedName="person" focused={focused} color={color} />
+            <TabIcon name="person-outline" focusedName="person" focused={focused} color={color} primaryColor={colors.primary} />
           ),
         }}
       />

@@ -9,7 +9,7 @@ import { Image } from 'react-native';
 import { useAuthStore } from '../../stores/auth.store';
 import { profileApi } from '../../lib/api';
 import { useThemeColors } from '../../lib/theme';
-import { useTranslation } from '@hiredge/shared';
+import { useTranslation } from '../../lib/i18n';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
