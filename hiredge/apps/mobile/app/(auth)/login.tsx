@@ -12,7 +12,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const login = useAuthStore((s) => s.login);
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const handleLogin = async () => {

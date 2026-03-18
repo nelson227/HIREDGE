@@ -9,7 +9,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
 
   const handleSubmit = async () => {
     if (!email.trim()) {

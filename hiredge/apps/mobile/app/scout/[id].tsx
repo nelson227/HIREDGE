@@ -13,7 +13,7 @@ export default function ScoutConversationScreen() {
   const [message, setMessage] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const { data: conversation } = useQuery({

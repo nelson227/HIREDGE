@@ -12,7 +12,7 @@ export default function InterviewScreen() {
   const [company, setCompany] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const queryClient = useQueryClient();
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const INTERVIEW_TYPES = [

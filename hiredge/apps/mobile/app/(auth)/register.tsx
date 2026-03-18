@@ -13,7 +13,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const register = useAuthStore((s) => s.register);
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const handleRegister = async () => {

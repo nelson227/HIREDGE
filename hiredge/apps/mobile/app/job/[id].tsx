@@ -99,7 +99,7 @@ function parseSkills(skills: string[] | string | undefined): string[] {
 export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'offer' | 'letter' | 'company'>('offer');
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   // Cover letter state

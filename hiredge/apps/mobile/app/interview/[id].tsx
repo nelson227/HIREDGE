@@ -11,7 +11,7 @@ export default function InterviewSessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [input, setInput] = useState('');
   const flatListRef = useRef<FlatList>(null);
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const { data: simulation, isLoading, refetch } = useQuery({

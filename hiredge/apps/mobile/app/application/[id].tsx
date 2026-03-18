@@ -9,7 +9,7 @@ import { useTranslation } from '../../lib/i18n';
 export default function ApplicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const { t } = useTranslation();
 
   const STATUS_LABELS: Record<string, string> = {

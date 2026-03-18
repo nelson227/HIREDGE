@@ -142,7 +142,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useThemeColors() {
-  return useContext(ThemeContext).colors;
+  const ctx = useContext(ThemeContext);
+  return { colors: ctx.colors };
 }
 
 export function useTheme() {
