@@ -2,15 +2,21 @@ node_modules
 .git
 *.md
 .env*
-apps/mobile/**
-!apps/mobile/package.json
+dist
+coverage
+.turbo
+*.log
+
+# Exclude mobile/web app source code (only their package.json is needed)
+apps/mobile/app
+apps/mobile/assets
+apps/mobile/components
+apps/mobile/lib
+apps/mobile/stores
+apps/mobile/__tests__
 apps/web/app
 apps/web/components
 apps/web/hooks
 apps/web/lib
 apps/web/public
 apps/web/styles
-dist
-coverage
-.turbo
-*.log

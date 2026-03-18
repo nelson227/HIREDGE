@@ -2,14 +2,14 @@ FROM node:20-alpine AS base
 RUN apk add --no-cache openssl
 WORKDIR /app
 
-# Install all dependencies (all workspace package.json needed for lockfile validation)
+# Install all dependencies
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY apps/mobile/package.json ./apps/mobile/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 # Build shared package
 FROM deps AS shared-build
@@ -26,14 +26,14 @@ COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
 RUN cd apps/api && npx prisma generate
 RUN cd apps/api && npm run build
 
-# Prod dependencies only (all workspace package.json needed for lockfile validation)
+# Prod dependencies only
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY apps/mobile/package.json ./apps/mobile/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm ci --omit=dev
+RUN npm install --omit=dev --no-audit --no-fund
 
 # Production image
 FROM node:20-alpine AS runner
