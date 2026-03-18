@@ -472,7 +472,7 @@ export class SquadService {
             user: {
               select: {
                 candidateProfile: { select: { firstName: true } },
-                applications: { select: { id: true }, where: { appliedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+                applications: { select: { id: true }, where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
               },
             },
           },

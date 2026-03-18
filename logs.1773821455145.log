@@ -1,0 +1,198 @@
+2026-03-18T07:09:03.981597852Z [inf]  
+2026-03-18T07:09:05.748028372Z [inf]  [35m[Region: us-west1][0m
+2026-03-18T07:09:05.765251647Z [inf]  [35m=========================
+2026-03-18T07:09:05.765299822Z [inf]  Using Detected Dockerfile
+2026-03-18T07:09:05.765305752Z [inf]  =========================
+2026-03-18T07:09:05.765309348Z [inf]  [0m
+2026-03-18T07:09:05.765323348Z [inf]  context: v2vq-wVaT
+2026-03-18T07:09:05.927045859Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T07:09:05.927089831Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T07:09:05.927108291Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T07:09:05.940401915Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T07:09:05.942736450Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T07:09:06.077866239Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T07:09:06.077926071Z [inf]  [internal] load .dockerignore
+2026-03-18T07:09:06.077935932Z [inf]  [internal] load .dockerignore
+2026-03-18T07:09:06.077950564Z [inf]  [internal] load .dockerignore
+2026-03-18T07:09:06.078230020Z [inf]  [internal] load .dockerignore
+2026-03-18T07:09:06.088684705Z [inf]  [internal] load .dockerignore
+2026-03-18T07:09:06.094099908Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-18T07:09:06.094143394Z [inf]  [runner  9/14] COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
+2026-03-18T07:09:06.094151356Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T07:09:06.094159401Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:06.094168031Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:06.094176074Z [inf]  [internal] load build context
+2026-03-18T07:09:06.094185230Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T07:09:06.094194764Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T07:09:06.094203804Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T07:09:06.094215843Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T07:09:06.094225798Z [inf]  [runner 11/14] COPY --from=shared-build /app/packages/shared ./packages/shared
+2026-03-18T07:09:06.094235684Z [inf]  [runner 12/14] COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
+2026-03-18T07:09:06.094245381Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T07:09:06.094256801Z [inf]  [deps 4/4] RUN npm ci
+2026-03-18T07:09:06.094265848Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T07:09:06.094273829Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T07:09:06.094283054Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-18T07:09:06.094303845Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T07:09:06.094309763Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-18T07:09:06.094315644Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-18T07:09:06.094321670Z [inf]  [runner 10/14] COPY --from=api-build /app/apps/api ./apps/api
+2026-03-18T07:09:06.094326827Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T07:09:06.094335344Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T07:09:06.094341122Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-18T07:09:06.094346337Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-18T07:09:06.094351352Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-18T07:09:06.094371831Z [inf]  [runner 14/14] RUN chmod +x start.sh && sed -i 's/\r$//' start.sh
+2026-03-18T07:09:06.094379935Z [inf]  [runner 13/14] COPY start.sh ./start.sh
+2026-03-18T07:09:06.094393684Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T07:09:06.094411047Z [inf]  [internal] load build context
+2026-03-18T07:09:06.100184478Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T07:09:06.101682829Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T07:09:06.101714952Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T07:09:06.101724833Z [inf]  [internal] load build context
+2026-03-18T07:09:06.101738692Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T07:09:06.159795906Z [inf]  [internal] load build context
+2026-03-18T07:09:06.161895418Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T07:09:06.195519651Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T07:09:06.198518664Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T07:09:06.199491705Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T07:09:06.201202469Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T07:09:06.219025212Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T07:09:06.221219195Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T07:09:06.233595587Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T07:09:06.235245295Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T07:09:06.235278319Z [inf]  [deps 4/4] RUN npm ci
+2026-03-18T07:09:06.399727493Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T07:09:06.401044973Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T07:09:06.522774166Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T07:09:21.759753916Z [inf]  
+added 589 packages, and audited 594 packages in 15s
+
+2026-03-18T07:09:21.759817188Z [inf]  
+
+2026-03-18T07:09:21.759827101Z [inf]  92 packages are looking for funding
+
+2026-03-18T07:09:21.759856988Z [inf]    run `npm fund` for details
+
+2026-03-18T07:09:21.764468839Z [inf]  
+1 high severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2026-03-18T07:09:21.766028335Z [inf]  npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.11.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+npm notice To update run: npm install -g npm@11.11.1
+npm notice
+
+2026-03-18T07:09:22.326189936Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T07:09:24.617372795Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-18T07:09:25.453187658Z [inf]  
+added 694 packages, and audited 699 packages in 19s
+
+2026-03-18T07:09:25.453237653Z [inf]  
+119 packages are looking for funding
+  run `npm fund` for details
+
+2026-03-18T07:09:25.457855695Z [inf]  
+1 high severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2026-03-18T07:09:25.459232322Z [inf]  npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.11.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+npm notice To update run: npm install -g npm@11.11.1
+npm notice
+
+2026-03-18T07:09:25.905025764Z [inf]  [deps 4/4] RUN npm ci
+2026-03-18T07:09:25.907054108Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-18T07:09:26.257310317Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-18T07:09:26.258735915Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:26.258762240Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-18T07:09:26.297296461Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:26.299394129Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-18T07:09:26.300054569Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-18T07:09:26.301050052Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:26.324393153Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-18T07:09:26.551524063Z [inf]  
+> @hiredge/shared@0.1.0 build
+> tsc
+
+
+2026-03-18T07:09:26.649455567Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-18T07:09:26.650965342Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-18T07:09:26.863095038Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-18T07:09:28.417523138Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-18T07:09:28.423078757Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T07:09:28.493789252Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T07:09:28.495389858Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-18T07:09:29.497801105Z [inf]  Prisma schema loaded from prisma/schema.prisma
+
+2026-03-18T07:09:30.446240161Z [inf]  
+✔ Generated Prisma Client (v5.22.0) to ./../../node_modules/@prisma/client in 389ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Easily identify and fix slow SQL queries in your app. Optimize helps you enhance your visibility: https://pris.ly/--optimize
+
+
+2026-03-18T07:09:30.697275280Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-18T07:09:30.698598485Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-18T07:09:30.921478106Z [inf]  
+> @hiredge/api@0.1.0 build
+> tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
+
+
+2026-03-18T07:09:37.515346783Z [inf]  src/server.ts(135,16): error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.
+
+2026-03-18T07:09:37.515575745Z [inf]  src/server.ts(166,35): error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.
+
+2026-03-18T07:09:37.515586245Z [inf]  src/services/squad.service.ts(475,64): error TS2353: Object literal may only specify known properties, and 'appliedAt' does not exist in type 'ApplicationWhereInput'.
+
+2026-03-18T07:09:37.515627942Z [inf]  src/services/squad.service.ts(484,37): error TS2339: Property 'members' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; description: string | null; code: string | null; status: string; industry: string | null; focus: string | null; ... 4 more ...; dissolvedAt: Date | null; }'.
+
+2026-03-18T07:09:37.515631498Z [inf]  src/services/squad.service.ts(484,52): error TS7006: Parameter 'm' implicitly has an 'any' type.
+
+2026-03-18T07:09:37.515719974Z [inf]  src/services/squad.service.ts(485,35): error TS2339: Property 'members' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; description: string | null; code: string | null; status: string; industry: string | null; focus: string | null; ... 4 more ...; dissolvedAt: Date | null; }'.
+src/services/squad.service.ts(485,50): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/services/squad.service.ts(488,66): error TS2339: Property 'members' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; description: string | null; code: string | null; status: string; industry: string | null; focus: string | null; ... 4 more ...; dissolvedAt: Date | null; }'.
+
+2026-03-18T07:09:37.5158688Z [inf]  src/services/squad.service.ts(509,39): error TS2339: Property 'members' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; description: string | null; code: string | null; status: string; industry: string | null; focus: string | null; ... 4 more ...; dissolvedAt: Date | null; }'.
+
+2026-03-18T07:09:37.515930892Z [inf]  src/workers/scraping.worker.ts(172,43): error TS18046: 'tokenData' is of type 'unknown'.
+src/workers/scraping.worker.ts(177,13): error TS18046: 'data' is of type 'unknown'.
+src/workers/scraping.worker.ts(220,13): error TS18046: 'data' is of type 'unknown'.
+
+2026-03-18T07:09:37.515974404Z [inf]  src/workers/scraping.worker.ts(262,13): error TS18046: 'data' is of type 'unknown'.
+
+2026-03-18T07:09:37.559080249Z [inf]  npm error Lifecycle script `build` failed with error:
+
+2026-03-18T07:09:37.559602656Z [inf]  npm error code 2
+
+2026-03-18T07:09:37.559646899Z [inf]  npm error path /app/apps/api
+
+2026-03-18T07:09:37.559718006Z [inf]  npm error workspace @hiredge/api@0.1.0
+
+2026-03-18T07:09:37.559752736Z [inf]  npm error location /app/apps/api
+
+2026-03-18T07:09:37.559810433Z [inf]  npm error command failed
+
+2026-03-18T07:09:37.559869426Z [inf]  npm error command sh -c tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
+
+2026-03-18T07:09:37.742321350Z [err]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-18T07:09:37.755786691Z [err]  Dockerfile:25
+2026-03-18T07:09:37.755820724Z [err]  -------------------
+2026-03-18T07:09:37.755825597Z [err]  23 |     COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T07:09:37.755829993Z [err]  24 |     RUN cd apps/api && npx prisma generate
+2026-03-18T07:09:37.755834921Z [err]  25 | >>> RUN cd apps/api && npm run build
+2026-03-18T07:09:37.755838777Z [err]  26 |
+2026-03-18T07:09:37.755842392Z [err]  27 |     # Prod dependencies only
+2026-03-18T07:09:37.755845713Z [err]  -------------------
+2026-03-18T07:09:37.755850207Z [err]  ERROR: failed to build: failed to solve: process "/bin/sh -c cd apps/api && npm run build" did not complete successfully: exit code: 2

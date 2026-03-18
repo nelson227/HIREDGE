@@ -159,7 +159,7 @@ async function fetchFranceTravail(keywords: string, location: string): Promise<R
       }),
     });
     if (!tokenRes.ok) return [];
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json() as { access_token: string };
 
     // Search jobs
     const params = new URLSearchParams({
@@ -172,7 +172,7 @@ async function fetchFranceTravail(keywords: string, location: string): Promise<R
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     if (!res.ok) return [];
-    const data = await res.json();
+    const data = await res.json() as { resultats?: any[] };
 
     return (data.resultats || []).map((item: any) => ({
       title: item.intitule || '',
@@ -215,7 +215,7 @@ async function fetchJSearch(keywords: string, location: string, filter?: string)
       },
     });
     if (!res.ok) return [];
-    const data = await res.json();
+    const data = await res.json() as { data?: any[] };
 
     return (data.data || []).map((item: any) => ({
       title: item.job_title || '',
@@ -257,7 +257,7 @@ async function fetchAdzuna(keywords: string, location: string): Promise<RawJob[]
 
     const res = await fetch(`https://api.adzuna.com/v1/api/jobs/fr/search/1?${params}`);
     if (!res.ok) return [];
-    const data = await res.json();
+    const data = await res.json() as { results?: any[] };
 
     return (data.results || []).map((item: any) => ({
       title: item.title || '',
