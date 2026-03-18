@@ -24,7 +24,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging-api.hiredge.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://hiredge-production.up.railway.app/api/v1"
       }
     },
     "production": {
@@ -36,7 +36,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.hiredge.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://hiredge-production.up.railway.app/api/v1"
       }
     }
   },

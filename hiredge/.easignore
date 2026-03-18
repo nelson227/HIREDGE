@@ -1,0 +1,15 @@
+# EAS Build - ignore unnecessary files to speed up upload
+node_modules/
+.git/
+apps/api/
+apps/web/
+packages/config/
+*.md
+.env.local
+.env.development
+uploads/
+dist/
+.next/
+.turbo/
+coverage/
+*.log
