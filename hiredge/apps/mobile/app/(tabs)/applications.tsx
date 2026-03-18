@@ -55,7 +55,7 @@ interface Application {
   notes?: string | null;
 }
 
-const COLUMNS: { id: KanbanStatus; labelKey: string }[] = [
+const COLUMNS: { id: KanbanStatus; labelKey: any }[] = [
   { id: 'draft', labelKey: 'applicationDraft' },
   { id: 'applied', labelKey: 'applicationSent' },
   { id: 'screening', labelKey: 'applicationConsulted' },
@@ -303,7 +303,7 @@ export default function ApplicationsTab() {
                   fontSize: 12, fontWeight: '600',
                   color: listFilter === item ? '#fff' : colors.foreground,
                 }}>
-                  {item === 'ALL' ? t('applicationAll') : t(COLUMNS.find(c => c.id === item)?.labelKey ?? 'applicationAll')}
+                  {item === 'ALL' ? t('applicationAll') : t((COLUMNS.find(c => c.id === item)?.labelKey ?? 'applicationAll') as any)}
                 </Text>
               </TouchableOpacity>
             )}
@@ -339,7 +339,7 @@ export default function ApplicationsTab() {
                       paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
                     }}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: STATUS_COLORS[kanbanStatus] }}>
-                        {t(COLUMNS.find(c => c.id === kanbanStatus)?.labelKey ?? 'applicationAll')}
+                        {t((COLUMNS.find(c => c.id === kanbanStatus)?.labelKey ?? 'applicationAll') as any)}
                       </Text>
                     </View>
                   </View>
@@ -409,7 +409,7 @@ function KanbanColumn({
   label: string;
   applications: Application[];
   colors: any;
-  t: (key: string) => string;
+  t: (key: any) => string;
   onWithdraw: (id: string, title?: string) => void;
 }) {
   const color = STATUS_COLORS[status];

@@ -734,7 +734,7 @@ export default function EdgeScreen() {
 
       {/* Input */}
       <View style={{
-        paddingHorizontal: 12, paddingTop: 10, paddingBottom: 88,
+        paddingHorizontal: 12, paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 16 : 10,
         backgroundColor: colors.card,
         borderTopWidth: 1, borderColor: colors.border,
       }}>

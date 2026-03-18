@@ -30,15 +30,24 @@ function getSenderName(msg: any): string {
 export default function SquadScreen() {
   const { colors } = useThemeColors();
   const { t } = useTranslation();
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
 
-  const { data: mySquad, isLoading, refetch, error } = useQuery({
+  const { data: mySquads, isLoading, refetch, error } = useQuery({
     queryKey: ['mySquad'],
     queryFn: async () => {
-      const { data } = await squadApi.getMySquad();
+      const { data } = await squadApi.getMySquads();
       const squads = data.data;
-      return Array.isArray(squads) ? squads[0] ?? null : squads ?? null;
+      const list = Array.isArray(squads) ? squads : squads ? [squads] : [];
+      return list.filter((s: any) => s && s.id);
     },
   });
+
+  // Auto-select first squad
+  useEffect(() => {
+    if (mySquads && mySquads.length > 0 && !selectedSquadId) {
+      setSelectedSquadId(mySquads[0].id);
+    }
+  }, [mySquads]);
 
   if (isLoading) {
     return (
@@ -48,8 +57,64 @@ export default function SquadScreen() {
     );
   }
 
-  if (!mySquad || !mySquad.id) return <NoSquadView onJoined={() => refetch()} colors={colors} t={t} />;
-  return <SquadDetailView squad={mySquad} onLeft={() => refetch()} colors={colors} t={t} />;
+  const squads = mySquads ?? [];
+  if (squads.length === 0) return <NoSquadView onJoined={() => refetch()} colors={colors} t={t} />;
+
+  const selectedSquad = squads.find((s: any) => s.id === selectedSquadId) ?? squads[0];
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Squad selector — only shown when user has multiple squads */}
+      {squads.length > 1 && (
+        <View style={{ paddingTop: 56, paddingHorizontal: 12, paddingBottom: 8, backgroundColor: colors.background }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {squads.map((sq: any) => {
+              const isActive = sq.id === selectedSquad.id;
+              return (
+                <TouchableOpacity
+                  key={sq.id}
+                  onPress={() => setSelectedSquadId(sq.id)}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
+                    backgroundColor: isActive ? colors.primary : colors.card,
+                    borderWidth: 1, borderColor: isActive ? colors.primary : colors.border,
+                  }}
+                >
+                  <Ionicons name="people" size={14} color={isActive ? '#fff' : colors.primary} />
+                  <Text style={{
+                    fontSize: 13, fontWeight: '700',
+                    color: isActive ? '#fff' : colors.foreground,
+                  }} numberOfLines={1}>
+                    {sq.name}
+                  </Text>
+                  {(sq.unreadCount ?? 0) > 0 && (
+                    <View style={{
+                      backgroundColor: isActive ? '#fff' : colors.destructive,
+                      borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+                      paddingHorizontal: 4,
+                    }}>
+                      <Text style={{
+                        fontSize: 10, fontWeight: '800',
+                        color: isActive ? colors.primary : '#fff',
+                      }}>{sq.unreadCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+      <SquadDetailView
+        squad={selectedSquad}
+        onLeft={() => { setSelectedSquadId(null); refetch(); }}
+        colors={colors}
+        t={t}
+        hasMultipleSquads={squads.length > 1}
+      />
+    </View>
+  );
 }
 
 // ─── No Squad ────────────────────────────────────────────────────────────────
@@ -242,7 +307,7 @@ function NoSquadView({ onJoined, colors, t }: { onJoined: () => void; colors: an
 }
 
 // ─── Squad Detail ────────────────────────────────────────────────────────────
-function SquadDetailView({ squad, onLeft, colors, t }: { squad: any; onLeft: () => void; colors: any; t: (key: string) => string }) {
+function SquadDetailView({ squad, onLeft, colors, t, hasMultipleSquads }: { squad: any; onLeft: () => void; colors: any; t: (key: string) => string; hasMultipleSquads?: boolean }) {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
@@ -388,7 +453,7 @@ function SquadDetailView({ squad, onLeft, colors, t }: { squad: any; onLeft: () 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
-      <View style={{ paddingTop: 56, paddingBottom: 8, paddingHorizontal: 16 }}>
+      <View style={{ paddingTop: hasMultipleSquads ? 8 : 56, paddingBottom: 8, paddingHorizontal: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
             <View style={{
