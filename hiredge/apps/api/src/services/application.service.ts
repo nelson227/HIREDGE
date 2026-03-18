@@ -174,10 +174,6 @@ export class ApplicationService {
     });
     if (!application) throw new AppError('APPLICATION_NOT_FOUND', 'Candidature introuvable', 404);
 
-    if (application.status !== 'DRAFT') {
-      throw new AppError('CANNOT_DELETE', 'Seules les candidatures en brouillon peuvent être supprimées', 400);
-    }
-
     await prisma.application.delete({ where: { id: applicationId } });
   }
 
