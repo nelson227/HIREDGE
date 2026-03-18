@@ -106,6 +106,15 @@ const quickActions = [
   { icon: Users, label: "Conseils Squad", prompt: "Comment puis-je utiliser mon Squad efficacement ?" },
 ]
 
+const SAFE_IMAGE_SRC_PATTERN = /^(https?:\/\/[a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=-]+|data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+|\/[a-zA-Z0-9._~:/?#@!$&'()*+,;=-]*)$/;
+
+/** Validate and return a safe image src, or null if untrusted */
+function sanitizeImageSrc(uri: string | undefined | null): string | null {
+  if (!uri) return null;
+  if (SAFE_IMAGE_SRC_PATTERN.test(uri)) return uri;
+  return null;
+}
+
 export default function AssistantPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConversation, setCurrentConversation] = useState<string | null>(null)
@@ -584,13 +593,16 @@ export default function AssistantPage() {
                   )}
                   <div className="max-w-[80%]">
                     {/* Attachment preview in message */}
-                    {message.attachment?.type === "image" && message.attachment.uri && (
-                      <img
-                        src={message.attachment.uri}
-                        alt={message.attachment.name}
-                        className="max-w-[200px] rounded-xl mb-1 border"
-                      />
-                    )}
+                    {message.attachment?.type === "image" && (() => {
+                      const safeSrc = sanitizeImageSrc(message.attachment?.uri);
+                      return safeSrc ? (
+                        <img
+                          src={safeSrc}
+                          alt={message.attachment?.name ?? ""}
+                          className="max-w-[200px] rounded-xl mb-1 border"
+                        />
+                      ) : null;
+                    })()}
                     {message.attachment?.type === "document" && (
                       <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-3 py-2 mb-1 border border-primary/20">
                         <FileText className="w-4 h-4 text-primary" />

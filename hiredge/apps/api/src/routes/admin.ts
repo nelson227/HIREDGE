@@ -13,11 +13,19 @@ const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || '').trim();
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /admin/verify-access — Public route (no auth required)
-  fastify.post('/verify-access', async (request, reply) => {
-    const { email, password } = request.body as { email?: string; password?: string };
-    if (!email || !password) {
-      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Email et mot de passe requis' } });
+  fastify.post<{ Body: { email: string; password: string } }>('/verify-access', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email', maxLength: 255 },
+          password: { type: 'string', maxLength: 255 }
+        },
+        required: ['email', 'password']
+      }
     }
+  }, async (request, reply) => {
+    const { email, password } = request.body;
 
     if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
       fastify.log.error('ADMIN_EMAIL or ADMIN_PASSWORD env vars are not set');

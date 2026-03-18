@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -7,7 +8,12 @@ async function main() {
   console.log('🌱 Seeding database...');
 
   // ─── Demo User ──────────────────────────────
-  const passwordHash = await bcrypt.hash('demo123456', 12);
+  let demoPassword = process.env.SEED_DEMO_PASSWORD;
+  if (!demoPassword) {
+    demoPassword = randomBytes(12).toString('base64url');
+    console.log(`⚠️  No SEED_DEMO_PASSWORD env var set. Generated password: ${demoPassword}`);
+  }
+  const passwordHash = await bcrypt.hash(demoPassword, 12);
 
   const user = await prisma.user.upsert({
     where: { email: 'demo@hiredge.app' },

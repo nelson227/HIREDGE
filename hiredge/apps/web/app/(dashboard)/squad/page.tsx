@@ -1013,7 +1013,7 @@ export default function SquadPage() {
                       <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold overflow-hidden ${
                         isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}>
-                        {profile?.avatarUrl ? (
+                        {profile?.avatarUrl && /^(data:image\/|\/uploads\/|\/avatars\/)/.test(profile.avatarUrl) ? (
                           <img src={profile.avatarUrl.startsWith('data:') ? profile.avatarUrl : `${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
                         ) : initials}
                       </div>
@@ -1279,7 +1279,7 @@ export default function SquadPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden ${
                           isMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                         }`}>
-                          {profile?.avatarUrl ? (
+                          {profile?.avatarUrl && /^(data:image\/|\/uploads\/|\/avatars\/)/.test(profile.avatarUrl) ? (
                             <img src={profile.avatarUrl.startsWith('data:') ? profile.avatarUrl : `${API_BASE}${profile.avatarUrl}`} alt="" className="w-full h-full object-cover" />
                           ) : initials}
                         </div>
