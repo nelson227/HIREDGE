@@ -8,8 +8,8 @@ import prisma from '../db/prisma';
 import redis from '../lib/redis';
 
 // Admin panel credentials from environment variables
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim();
+const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || '').trim();
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /admin/verify-access — Public route (no auth required)
@@ -18,7 +18,14 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     if (!email || !password) {
       return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Email et mot de passe requis' } });
     }
-    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+      fastify.log.error('ADMIN_EMAIL or ADMIN_PASSWORD env vars are not set');
+      return reply.status(500).send({ success: false, error: { code: 'CONFIG_ERROR', message: 'Configuration admin manquante sur le serveur' } });
+    }
+
+    if (email.trim() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      fastify.log.warn(`Admin login failed: email_match=${email.trim() === ADMIN_EMAIL}, pwd_match=${password === ADMIN_PASSWORD}, env_email_len=${ADMIN_EMAIL.length}, env_pwd_len=${ADMIN_PASSWORD.length}`);
       return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
     }
 
