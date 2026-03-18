@@ -1,0 +1,81 @@
+2026-03-18T10:29:00.754125549Z [inf]  
+2026-03-18T10:29:02.296616710Z [inf]  [35m[Region: us-west1][0m
+2026-03-18T10:29:02.308535727Z [inf]  [35m=========================
+2026-03-18T10:29:02.308571429Z [inf]  Using Detected Dockerfile
+2026-03-18T10:29:02.308576195Z [inf]  =========================
+2026-03-18T10:29:02.308579377Z [inf]  [0m
+2026-03-18T10:29:02.308591672Z [inf]  context: tjdn-JvXJ
+2026-03-18T10:29:02.433896997Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:29:02.433959085Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:29:02.433976220Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:29:02.433987945Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:29:02.445808618Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:29:02.447852947Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T10:29:02.454514385Z [inf]  [auth] library/node:pull token for registry-1.docker.io
+2026-03-18T10:29:02.454580361Z [inf]  [auth] library/node:pull token for registry-1.docker.io
+2026-03-18T10:29:02.880194754Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T10:29:02.880535103Z [inf]  [internal] load .dockerignore
+2026-03-18T10:29:02.880563554Z [inf]  [internal] load .dockerignore
+2026-03-18T10:29:02.880582259Z [inf]  [internal] load .dockerignore
+2026-03-18T10:29:02.890993338Z [inf]  [internal] load .dockerignore
+2026-03-18T10:29:02.898890017Z [inf]  [deps 5/6] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:29:02.898933027Z [inf]  [deps 4/6] COPY apps/mobile/package.json ./apps/mobile/
+2026-03-18T10:29:02.898944692Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-18T10:29:02.898953403Z [inf]  [internal] load build context
+2026-03-18T10:29:02.898960635Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-18T10:29:02.898969196Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-18T10:29:02.898975616Z [inf]  [deps 6/6] RUN npm ci
+2026-03-18T10:29:02.898988642Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T10:29:02.898994696Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T10:29:02.899000162Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:29:02.899005559Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:29:02.899011013Z [inf]  [prod-deps 6/6] RUN npm ci --omit=dev
+2026-03-18T10:29:02.899016460Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-18T10:29:02.899026995Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T10:29:02.899032635Z [inf]  [deps 1/6] COPY package.json package-lock.json ./
+2026-03-18T10:29:02.899038028Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-18T10:29:02.899043425Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T10:29:02.899050800Z [inf]  [deps 3/6] COPY apps/web/package.json ./apps/web/
+2026-03-18T10:29:02.899057079Z [inf]  [deps 2/6] COPY apps/api/package.json ./apps/api/
+2026-03-18T10:29:02.899712729Z [inf]  [runner 14/14] RUN chmod +x start.sh && sed -i 's/\r$//' start.sh
+2026-03-18T10:29:02.899736800Z [inf]  [runner 13/14] COPY start.sh ./start.sh
+2026-03-18T10:29:02.899751004Z [inf]  [runner 12/14] COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
+2026-03-18T10:29:02.899763075Z [inf]  [runner 11/14] COPY --from=shared-build /app/packages/shared ./packages/shared
+2026-03-18T10:29:02.899774407Z [inf]  [runner 10/14] COPY --from=api-build /app/apps/api ./apps/api
+2026-03-18T10:29:02.899783043Z [inf]  [runner  9/14] COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
+2026-03-18T10:29:02.899791890Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-18T10:29:02.899812912Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-18T10:29:02.899826123Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T10:29:02.899832202Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-18T10:29:02.899842640Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-18T10:29:02.899860021Z [inf]  [internal] load build context
+2026-03-18T10:29:02.899869584Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:29:02.904384724Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:29:02.904802448Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:29:02.904822565Z [inf]  [internal] load build context
+2026-03-18T10:29:02.904837660Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:29:02.952596147Z [inf]  [internal] load build context
+2026-03-18T10:29:02.955894436Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:29:02.955934502Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T10:29:02.955952366Z [inf]  [deps 1/6] COPY package.json package-lock.json ./
+2026-03-18T10:29:02.955961014Z [inf]  [deps 2/6] COPY apps/api/package.json ./apps/api/
+2026-03-18T10:29:02.955976884Z [inf]  [deps 3/6] COPY apps/web/package.json ./apps/web/
+2026-03-18T10:29:02.955990524Z [err]  [deps 4/6] COPY apps/mobile/package.json ./apps/mobile/
+2026-03-18T10:29:03.065738968Z [err]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:29:03.081793660Z [err]  Dockerfile:10
+2026-03-18T10:29:03.081832310Z [err]  -------------------
+2026-03-18T10:29:03.081837427Z [err]  8 |     COPY apps/api/package.json ./apps/api/
+2026-03-18T10:29:03.081841104Z [err]  9 |     COPY apps/web/package.json ./apps/web/
+2026-03-18T10:29:03.081846288Z [err]  10 | >>> COPY apps/mobile/package.json ./apps/mobile/
+2026-03-18T10:29:03.081850046Z [err]  11 |     COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:29:03.081853609Z [err]  12 |     RUN npm ci
+2026-03-18T10:29:03.081858010Z [err]  -------------------
+2026-03-18T10:29:03.081863432Z [err]  Dockerfile:34
+2026-03-18T10:29:03.081868602Z [err]  -------------------
+2026-03-18T10:29:03.081873473Z [err]  32 |     COPY apps/api/package.json ./apps/api/
+2026-03-18T10:29:03.081878650Z [err]  33 |     COPY apps/web/package.json ./apps/web/
+2026-03-18T10:29:03.081883159Z [err]  34 | >>> COPY apps/mobile/package.json ./apps/mobile/
+2026-03-18T10:29:03.081887399Z [err]  35 |     COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:29:03.081892152Z [err]  36 |     RUN npm ci --omit=dev
+2026-03-18T10:29:03.081896886Z [err]  -------------------
+2026-03-18T10:29:03.081916345Z [err]  ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref uarhtbdbmp0raqjypfsd5rofy::o7qiv4byvgye5y4j895jgcmbm: "/apps/mobile/package.json": not found
