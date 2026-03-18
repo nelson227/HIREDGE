@@ -12,7 +12,9 @@
       "backgroundColor": "#6C5CE7"
     },
     "scheme": "hiredge",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hiredge.app",
@@ -31,7 +33,8 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-image"
     ],
     "web": {
       "bundler": "metro",
