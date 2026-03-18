@@ -330,7 +330,7 @@ export const onboardingApi = {
 
 // ─── Salary ──────────────────────────────────────────────────────
 export const salaryApi = {
-  getData: (params: { title?: string; jobFamily?: string; location?: string; experienceLevel?: string }) =>
+  getData: (params: { title?: string; jobFamily?: string; location?: string; experienceLevel?: string; company?: string }) =>
     api.get('/salary/data', { params }),
   contribute: (data: { jobTitle: string; jobFamily?: string; location: string; country?: string; experienceLevel?: string; salary: number; currency?: string }) =>
     api.post('/salary/contribute', data),

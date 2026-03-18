@@ -61,6 +61,10 @@ export const config = {
     apiKey: process.env.JSEARCH_API_KEY || '',
   },
 
+  openwebninja: {
+    apiKey: process.env.OPENWEBNINJA_API_KEY || '',
+  },
+
   daily: {
     apiKey: process.env.DAILY_API_KEY || '',
   },

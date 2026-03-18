@@ -21,7 +21,7 @@ export default function SalaryPage() {
   const [result, setResult] = useState<any>(null)
 
   // Data tab
-  const [dataForm, setDataForm] = useState({ title: "", jobFamily: "", location: "", experienceLevel: "" })
+  const [dataForm, setDataForm] = useState({ title: "", jobFamily: "", location: "", experienceLevel: "", company: "" })
 
   // Contribute tab
   const [contribForm, setContribForm] = useState({
@@ -124,6 +124,14 @@ export default function SalaryPage() {
                 />
               </div>
               <div className="space-y-2">
+                <label className="text-sm font-medium">Entreprise (optionnel)</label>
+                <Input
+                  value={dataForm.company}
+                  onChange={(e) => setDataForm({...dataForm, company: e.target.value})}
+                  placeholder="Ex: Google, Shopify, Desjardins"
+                />
+              </div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Niveau d&apos;expérience</label>
                 <select
                   value={dataForm.experienceLevel}
@@ -152,20 +160,30 @@ export default function SalaryPage() {
               <CardContent className="space-y-4">
                 {result.salaryMin != null ? (
                   <>
+                    {result.company && (
+                      <p className="text-sm font-medium text-center text-primary">{result.company}</p>
+                    )}
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center p-4 rounded-xl bg-muted">
-                        <p className="text-2xl font-bold text-foreground">{result.salaryMin?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-foreground">{result.salaryMin?.toLocaleString()} {result.currency === 'USD' ? 'US$' : '$'}</p>
                         <p className="text-xs text-muted-foreground">Minimum</p>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-primary/10 border border-primary/20">
-                        <p className="text-2xl font-bold text-primary">{result.salaryMedian?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-primary">{result.salaryMedian?.toLocaleString()} {result.currency === 'USD' ? 'US$' : '$'}</p>
                         <p className="text-xs text-muted-foreground">Médiane</p>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-muted">
-                        <p className="text-2xl font-bold text-foreground">{result.salaryMax?.toLocaleString()} $</p>
+                        <p className="text-2xl font-bold text-foreground">{result.salaryMax?.toLocaleString()} {result.currency === 'USD' ? 'US$' : '$'}</p>
                         <p className="text-xs text-muted-foreground">Maximum</p>
                       </div>
                     </div>
+                    {result.confidence && (
+                      <div className="flex items-center justify-center gap-2 text-xs">
+                        <span className={`px-2 py-0.5 rounded-full ${result.confidence === 'VERY_HIGH' || result.confidence === 'CONFIDENT' ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'}`}>
+                          {result.confidence === 'VERY_HIGH' ? 'Très haute confiance' : result.confidence === 'CONFIDENT' ? 'Confiance élevée' : result.confidence}
+                        </span>
+                      </div>
+                    )}
                     {result.sources && result.sources.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
                         <Info className="w-3 h-3" />
@@ -173,7 +191,7 @@ export default function SalaryPage() {
                       </div>
                     )}
                     <p className="text-sm text-muted-foreground text-center">
-                      Basé sur {result.sampleSize || 0} données • {result.currency || "CAD"}
+                      Basé sur {result.sampleSize || 0} données • {result.currency || "CAD"} / an
                     </p>
                   </>
                 ) : (

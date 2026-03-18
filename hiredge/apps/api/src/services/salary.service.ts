@@ -1,86 +1,137 @@
 import prisma from '../db/prisma';
 import { config } from '../config/env';
 
-const JSEARCH_BASE_URL = 'https://jsearch.p.rapidapi.com';
+const OPENWEBNINJA_BASE_URL = 'https://api.openwebninja.com/job-salary-data';
 
-interface JSearchSalaryEstimate {
+interface OpenWebNinjaSalaryResult {
+  location: string;
+  job_title: string;
+  company?: string;
   min_salary: number;
   max_salary: number;
   median_salary: number;
+  min_base_salary?: number;
+  max_base_salary?: number;
+  median_base_salary?: number;
+  min_additional_pay?: number;
+  max_additional_pay?: number;
+  median_additional_pay?: number;
   salary_period: string;
   salary_currency: string;
+  salary_count: number;
   publisher_name: string;
   publisher_link: string;
+  confidence: string;
 }
 
 export class SalaryService {
-  private jsearchApiKey: string;
+  private apiKey: string;
 
   constructor() {
-    this.jsearchApiKey = config.jsearch.apiKey;
+    this.apiKey = config.openwebninja.apiKey;
   }
 
   /**
-   * Fetch real-time salary data from JSearch estimated-salary endpoint.
+   * Fetch real-time salary data from OpenWebNinja Job Salary endpoint (Glassdoor).
    */
   private async fetchExternalSalaryData(params: {
     title: string;
     location?: string;
-  }): Promise<{ min: number; max: number; median: number; currency: string; source: string } | null> {
-    if (!this.jsearchApiKey || this.jsearchApiKey.length < 10) return null;
+  }): Promise<{ min: number; max: number; median: number; currency: string; source: string; sampleSize: number; confidence: string; publisherName: string } | null> {
+    if (!this.apiKey || this.apiKey.length < 10) return null;
 
     try {
-      const url = new URL(`${JSEARCH_BASE_URL}/estimated-salary`);
+      const url = new URL(`${OPENWEBNINJA_BASE_URL}/job-salary`);
       url.searchParams.set('job_title', params.title);
-      url.searchParams.set('location', params.location || 'Canada');
-      url.searchParams.set('radius', '100');
+      if (params.location) url.searchParams.set('location', params.location);
 
       const response = await fetch(url.toString(), {
-        headers: {
-          'X-RapidAPI-Key': this.jsearchApiKey,
-          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
-        },
+        headers: { 'x-api-key': this.apiKey },
       });
 
       if (!response.ok) {
-        console.error(`[Salary] JSearch estimated-salary error: ${response.status}`);
+        console.error(`[Salary] OpenWebNinja job-salary error: ${response.status}`);
         return null;
       }
 
-      const json: any = await response.json();
-      const estimates: JSearchSalaryEstimate[] = json.data || [];
+      const json = await response.json() as { status: string; data: OpenWebNinjaSalaryResult[] };
+      const entry = json.status === 'OK' && json.data?.length > 0 ? json.data[0] : undefined;
+      if (!entry) return null;
 
-      if (estimates.length === 0) return null;
-
-      // Aggregate across publishers, normalize to annual
-      const annualSalaries = estimates.map((e) => {
-        let multiplier = 1;
-        switch (e.salary_period?.toLowerCase()) {
-          case 'hour': multiplier = 2080; break;
-          case 'month': multiplier = 12; break;
-          case 'week': multiplier = 52; break;
-          default: multiplier = 1;
-        }
-        return {
-          min: Math.round(e.min_salary * multiplier),
-          max: Math.round(e.max_salary * multiplier),
-          median: Math.round(e.median_salary * multiplier),
-        };
-      });
-
-      const avgMin = Math.round(annualSalaries.reduce((s, e) => s + e.min, 0) / annualSalaries.length);
-      const avgMax = Math.round(annualSalaries.reduce((s, e) => s + e.max, 0) / annualSalaries.length);
-      const avgMedian = Math.round(annualSalaries.reduce((s, e) => s + e.median, 0) / annualSalaries.length);
+      // Normalize to annual salary
+      let multiplier = 1;
+      switch (entry.salary_period?.toUpperCase()) {
+        case 'HOUR': multiplier = 2080; break;
+        case 'MONTH': multiplier = 12; break;
+        case 'WEEK': multiplier = 52; break;
+        default: multiplier = 1;
+      }
 
       return {
-        min: avgMin,
-        max: avgMax,
-        median: avgMedian,
-        currency: estimates[0]?.salary_currency || 'CAD',
-        source: 'jsearch_api',
+        min: Math.round(entry.min_salary * multiplier),
+        max: Math.round(entry.max_salary * multiplier),
+        median: Math.round(entry.median_salary * multiplier),
+        currency: entry.salary_currency || 'CAD',
+        source: 'glassdoor',
+        sampleSize: entry.salary_count || 1,
+        confidence: entry.confidence || 'UNKNOWN',
+        publisherName: entry.publisher_name || 'Glassdoor',
       };
     } catch (err) {
-      console.error('[Salary] JSearch API error:', err);
+      console.error('[Salary] OpenWebNinja API error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch salary data for a specific company from OpenWebNinja.
+   */
+  async fetchCompanySalaryData(params: {
+    company: string;
+    title: string;
+    location?: string;
+  }): Promise<{ min: number; max: number; median: number; currency: string; source: string; sampleSize: number; confidence: string; company: string } | null> {
+    if (!this.apiKey || this.apiKey.length < 10) return null;
+
+    try {
+      const url = new URL(`${OPENWEBNINJA_BASE_URL}/company-job-salary`);
+      url.searchParams.set('company', params.company);
+      url.searchParams.set('job_title', params.title);
+      if (params.location) url.searchParams.set('location', params.location);
+
+      const response = await fetch(url.toString(), {
+        headers: { 'x-api-key': this.apiKey },
+      });
+
+      if (!response.ok) {
+        console.error(`[Salary] OpenWebNinja company-job-salary error: ${response.status}`);
+        return null;
+      }
+
+      const json = await response.json() as { status: string; data: OpenWebNinjaSalaryResult[] };
+      const entry = json.status === 'OK' && json.data?.length > 0 ? json.data[0] : undefined;
+      if (!entry) return null;
+
+      let multiplier = 1;
+      switch (entry.salary_period?.toUpperCase()) {
+        case 'HOUR': multiplier = 2080; break;
+        case 'MONTH': multiplier = 12; break;
+        case 'WEEK': multiplier = 52; break;
+        default: multiplier = 1;
+      }
+
+      return {
+        min: Math.round(entry.min_salary * multiplier),
+        max: Math.round(entry.max_salary * multiplier),
+        median: Math.round(entry.median_salary * multiplier),
+        currency: entry.salary_currency || 'USD',
+        source: 'glassdoor',
+        sampleSize: entry.salary_count || 1,
+        confidence: entry.confidence || 'UNKNOWN',
+        company: entry.company || params.company,
+      };
+    } catch (err) {
+      console.error('[Salary] OpenWebNinja company API error:', err);
       return null;
     }
   }
@@ -136,25 +187,40 @@ export class SalaryService {
 
   /**
    * Main salary lookup: combines external API data + collective contributions.
-   * Priority: JSearch API > Job postings DB > no data
+   * Priority: OpenWebNinja API > Job postings DB > no data
    */
   async getSalaryData(params: {
     jobFamily?: string;
     title?: string;
     location?: string;
+    company?: string;
   }) {
     const searchTitle = params.title || params.jobFamily || '';
 
-    // 1. Try external API (JSearch estimated-salary)
-    const externalData = await this.fetchExternalSalaryData({
-      title: searchTitle,
-      location: params.location,
-    });
+    // 1. Try company-specific API if company provided
+    let externalData: { min: number; max: number; median: number; currency: string; source: string; sampleSize: number; confidence?: string; company?: string } | null = null;
+    
+    if (params.company) {
+      const companyData = await this.fetchCompanySalaryData({
+        company: params.company,
+        title: searchTitle,
+        location: params.location,
+      });
+      if (companyData) externalData = companyData;
+    }
 
-    // 2. Get collective contributions
+    // 2. Try general salary API if no company data
+    if (!externalData) {
+      externalData = await this.fetchExternalSalaryData({
+        title: searchTitle,
+        location: params.location,
+      });
+    }
+
+    // 3. Get collective contributions
     const collectiveEntries = await this.getCollectiveData(params);
 
-    // 3. Fallback to job postings if no external data
+    // 4. Fallback to job postings if no external data
     const jobEstimate = !externalData ? await this.estimateFromJobs(params) : null;
 
     // Base salary range from API or job postings
@@ -195,18 +261,18 @@ export class SalaryService {
       salaryMax: finalMax,
       salaryMedian: finalMedian,
       currency: baseCurrency,
-      sampleSize: (externalData ? 1 : (jobEstimate as any)?.sampleSize ?? 0) + collectiveEntries.length,
+      sampleSize: (externalData?.sampleSize ?? (jobEstimate as any)?.sampleSize ?? 0) + collectiveEntries.length,
       sources,
-      // Pass the reference range for the frontend info
+      confidence: (externalData as any)?.confidence || null,
+      company: (externalData as any)?.company || null,
       referenceRange: baseMin != null ? { min: baseMin, max: baseMax } : null,
     };
   }
 
   /**
-   * Get the reference salary range (from API or job postings) for validation.
+   * Get the reference salary range (from OpenWebNinja or job postings) for validation.
    */
   async getReferenceSalaryRange(title: string, location?: string): Promise<{ min: number; max: number } | null> {
-    // Try JSearch first
     const external = await this.fetchExternalSalaryData({ title, location });
     if (external) return { min: external.min, max: external.max };
 

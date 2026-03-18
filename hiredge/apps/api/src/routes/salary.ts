@@ -5,13 +5,14 @@ import { AppError } from '../services/auth.service';
 const salaryRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate);
 
-  // GET /salary/data — Get salary data for a job title/location
+  // GET /salary/data — Get salary data for a job title/location/company
   fastify.get('/data', async (request, reply) => {
-    const { title, jobFamily, location, experienceLevel } = request.query as {
+    const { title, jobFamily, location, experienceLevel, company } = request.query as {
       title?: string;
       jobFamily?: string;
       location?: string;
       experienceLevel?: string;
+      company?: string;
     };
 
     if (!title && !jobFamily) {
@@ -22,7 +23,7 @@ const salaryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const data = await salaryService.getSalaryData({ title, jobFamily, location });
+      const data = await salaryService.getSalaryData({ title, jobFamily, location, company });
       return reply.send({ success: true, data });
     } catch (err) {
       if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
