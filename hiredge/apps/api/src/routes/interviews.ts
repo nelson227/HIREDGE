@@ -126,6 +126,46 @@ const interviewRoutes: FastifyPluginAsync = async (fastify) => {
       throw err;
     }
   });
+
+  // POST /interviews/start-stress — Start stress mode simulation (#21)
+  fastify.post('/start-stress', llmRateLimit, async (request, reply) => {
+    const body = request.body as any;
+    try {
+      const result = await interviewSimService.startStressSimulation(request.user.id, {
+        jobId: body.jobId,
+        companyName: body.companyName,
+        jobTitle: body.jobTitle,
+      });
+      return reply.status(201).send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // GET /interviews/:id/report — Generate full report (#18)
+  fastify.get('/:id/report', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const report = await interviewSimService.generateFullReport(request.user.id, id);
+      return reply.send({ success: true, data: report });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
+
+  // GET /interviews/:id/replay — Get annotated replay (#17)
+  fastify.get('/:id/replay', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const replay = await interviewSimService.getReplay(request.user.id, id);
+      return reply.send({ success: true, data: replay });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
 };
 
 export default interviewRoutes;

@@ -321,4 +321,86 @@ export const paymentsApi = {
   getStatus: () => api.get('/payments/status'),
 };
 
+// ─── Onboarding (Conversational) ─────────────────────────────────
+export const onboardingApi = {
+  chat: (message: string, sessionId?: string) =>
+    api.post('/onboarding/chat', { message, sessionId }),
+  getStatus: () => api.get('/onboarding/status'),
+};
+
+// ─── Salary ──────────────────────────────────────────────────────
+export const salaryApi = {
+  getData: (params: { jobFamily: string; location?: string; experienceLevel?: string }) =>
+    api.get('/salary/data', { params }),
+  negotiate: (data: { jobTitle: string; company: string; currentOffer: number; targetSalary: number; context?: string }) =>
+    api.post('/salary/negotiate', data),
+  contribute: (data: { jobTitle: string; jobFamily: string; location: string; country: string; experienceLevel: string; salary: number; currency?: string }) =>
+    api.post('/salary/contribute', data),
+};
+
+// ─── Video ───────────────────────────────────────────────────────
+export const videoApi = {
+  createRoom: (interviewId: string) =>
+    api.post('/video/room', { interviewId }),
+  createToken: (roomName: string) =>
+    api.post('/video/token', { roomName }),
+  deleteRoom: (roomName: string) =>
+    api.delete(`/video/room/${roomName}`),
+};
+
+// ─── Auth Extensions (LinkedIn, MFA, GDPR) ──────────────────────
+export const authExtApi = {
+  // LinkedIn
+  getLinkedinAuthUrl: () => api.get('/auth/linkedin'),
+  parseLinkedinText: (text: string) =>
+    api.post('/auth/linkedin/parse', { text }),
+  // MFA
+  mfaSetup: () => api.post('/auth/mfa/setup'),
+  mfaVerify: (code: string) => api.post('/auth/mfa/verify', { code }),
+  mfaValidate: (userId: string, code: string) =>
+    api.post('/auth/mfa/validate', { userId, code }),
+  mfaDisable: (password: string) =>
+    api.delete('/auth/mfa', { data: { password } }),
+  mfaStatus: () => api.get('/auth/mfa/status'),
+  // GDPR export
+  exportGdpr: () => api.get('/auth/export', { responseType: 'blob' }),
+};
+
+// ─── Analytics ───────────────────────────────────────────────────
+export const analyticsApi = {
+  getPersonal: () => api.get('/analytics/personal'),
+  exportCsv: () => api.get('/analytics/export/csv', { responseType: 'blob' }),
+  exportJson: () => api.get('/analytics/export/json', { responseType: 'blob' }),
+  compare: (jobIds: string[]) => api.post('/analytics/compare', { jobIds }),
+};
+
+// ─── Extended Jobs ───────────────────────────────────────────────
+export const jobsExtApi = {
+  getAdaptedCv: (jobId: string) =>
+    api.post(`/jobs/${jobId}/adapted-cv`),
+  getDossier: (jobId: string) =>
+    api.get(`/jobs/${jobId}/dossier`),
+};
+
+// ─── Extended Interviews ─────────────────────────────────────────
+export const interviewsExtApi = {
+  startStress: (data: { applicationId?: string; jobId?: string }) =>
+    api.post('/interviews/start-stress', data),
+  getReport: (id: string) => api.get(`/interviews/${id}/report`),
+  getReplay: (id: string) => api.get(`/interviews/${id}/replay`),
+};
+
+// ─── Extended Squad ──────────────────────────────────────────────
+export const squadExtApi = {
+  detectCompetition: (id: string) => api.get(`/squads/${id}/competition`),
+};
+
+// ─── Extended Notifications (FCM) ────────────────────────────────
+export const fcmApi = {
+  register: (token: string, device?: string) =>
+    api.post('/notifications/fcm/register', { token, device }),
+  remove: (token: string) =>
+    api.delete('/notifications/fcm/token', { data: { token } }),
+};
+
 export default api;

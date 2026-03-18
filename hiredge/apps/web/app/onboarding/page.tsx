@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,38 +9,124 @@ import {
   Sparkles,
   Upload,
   FileText,
-  PenLine,
   Loader2,
   Check,
+  Send,
   ArrowRight,
   AlertCircle,
   X,
+  MessageCircle,
 } from "lucide-react"
-import { profileApi } from "@/lib/api"
+import { profileApi, onboardingApi } from "@/lib/api"
 import Link from "next/link"
 
-type Step = "choose" | "uploading" | "parsed" | "manual"
+interface ChatMessage {
+  id: string
+  role: "assistant" | "user"
+  content: string
+  suggestedReplies?: string[]
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [step, setStep] = useState<Step>("choose")
-  const [uploading, setUploading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const [mode, setMode] = useState<"choose" | "chat" | "upload" | "uploading" | "done">("choose")
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState("")
+  const [sending, setSending] = useState(false)
+  const [sessionId, setSessionId] = useState<string>()
   const [error, setError] = useState("")
+  const [uploading, setUploading] = useState(false)
   const [parsedData, setParsedData] = useState<any>(null)
   const [dragOver, setDragOver] = useState(false)
 
-  // Manual form state
-  const [manualForm, setManualForm] = useState({
-    firstName: "",
-    lastName: "",
-    title: "",
-    phone: "",
-    city: "",
-    country: "CA",
-  })
-  const [savingManual, setSavingManual] = useState(false)
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
+  // Start chat mode — send initial empty message to get greeting
+  const startChat = useCallback(async () => {
+    setMode("chat")
+    setSending(true)
+    try {
+      const { data } = await onboardingApi.chat("", undefined)
+      if (data.success) {
+        const resp = data.data
+        setSessionId(resp.sessionId)
+        setMessages([{
+          id: "1",
+          role: "assistant",
+          content: resp.message,
+          suggestedReplies: resp.suggestedReplies,
+        }])
+        if (resp.completed) {
+          setTimeout(() => router.push("/profile"), 2000)
+        }
+      }
+    } catch {
+      setError("Erreur de connexion. Réessayez.")
+      setMode("choose")
+    } finally {
+      setSending(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
+  }, [router])
+
+  const sendMessage = async (text?: string) => {
+    const msg = text ?? input.trim()
+    if (!msg || sending) return
+
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: msg,
+    }
+    setMessages((prev) => [...prev, userMsg])
+    setInput("")
+    setSending(true)
+
+    try {
+      const { data } = await onboardingApi.chat(msg, sessionId)
+      if (data.success) {
+        const resp = data.data
+        if (resp.sessionId) setSessionId(resp.sessionId)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            content: resp.message,
+            suggestedReplies: resp.suggestedReplies,
+          },
+        ])
+        if (resp.completed) {
+          setMode("done")
+          setTimeout(() => router.push("/profile"), 2500)
+        }
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { id: `e-${Date.now()}`, role: "assistant", content: "Désolé, une erreur est survenue. Réessayez votre message." },
+      ])
+    } finally {
+      setSending(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  // CV upload handlers
   const handleFileUpload = useCallback(async (file: File) => {
     const validTypes = [
       "application/pdf",
@@ -55,23 +141,21 @@ export default function OnboardingPage() {
       setError("Le fichier ne doit pas dépasser 5 Mo.")
       return
     }
-
     setError("")
     setUploading(true)
-    setStep("uploading")
-
+    setMode("uploading")
     try {
       const { data } = await profileApi.uploadCv(file)
       if (data.success) {
         setParsedData(data.data)
-        setStep("parsed")
+        setMode("done")
       } else {
         setError(data.error?.message || "Erreur lors de l'analyse du CV")
-        setStep("choose")
+        setMode("choose")
       }
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || "Erreur lors de l'envoi du CV. Vérifiez votre connexion.")
-      setStep("choose")
+      setError(err.response?.data?.error?.message || "Erreur lors de l'envoi du CV.")
+      setMode("choose")
     } finally {
       setUploading(false)
     }
@@ -84,34 +168,12 @@ export default function OnboardingPage() {
     if (file) handleFileUpload(file)
   }, [handleFileUpload])
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFileUpload(file)
-  }
-
-  const handleSaveManual = async () => {
-    if (!manualForm.firstName.trim() || !manualForm.lastName.trim()) {
-      setError("Le prénom et le nom sont requis.")
-      return
-    }
-    setSavingManual(true)
-    setError("")
-    try {
-      await profileApi.update(manualForm)
-      router.push("/profile")
-    } catch {
-      setError("Erreur lors de la sauvegarde. Réessayez.")
-    } finally {
-      setSavingManual(false)
-    }
-  }
-
   const goToProfile = () => router.push("/profile")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -128,17 +190,15 @@ export default function OnboardingPage() {
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
 
-          {/* Step: Choose */}
-          {step === "choose" && (
+          {/* Mode: Choose */}
+          {mode === "choose" && (
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center mb-6">
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <h1 className="text-2xl font-bold text-foreground mb-2">Bienvenue sur HIREDGE !</h1>
-                <p className="text-muted-foreground">
-                  Comment souhaitez-vous configurer votre profil ?
-                </p>
+                <p className="text-muted-foreground">Comment souhaitez-vous configurer votre profil ?</p>
               </div>
 
               {error && (
@@ -150,7 +210,29 @@ export default function OnboardingPage() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Option 1: Upload CV */}
+                {/* Option 1: Chat conversationnel */}
+                <Card
+                  className="cursor-pointer transition-all hover:border-primary hover:shadow-lg group"
+                  onClick={startChat}
+                >
+                  <CardContent className="p-8 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center group-hover:bg-primary/20 text-primary transition-colors">
+                      <MessageCircle className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-1">Discuter avec EDGE</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Notre IA vous guide pas à pas en conversation pour créer votre profil parfait
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Recommandé — 2 minutes</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Option 2: Upload CV */}
                 <Card
                   className="cursor-pointer transition-all hover:border-primary hover:shadow-lg group"
                   onClick={() => fileInputRef.current?.click()}
@@ -160,41 +242,19 @@ export default function OnboardingPage() {
                 >
                   <CardContent className="p-8 text-center space-y-4">
                     <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center transition-colors ${
-                      dragOver ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                      dragOver ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-foreground group-hover:bg-secondary"
                     }`}>
                       <Upload className="w-8 h-8" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground mb-1">Importer mon CV</h3>
                       <p className="text-sm text-muted-foreground">
-                        Téléchargez votre CV et votre profil sera rempli automatiquement grâce à l'IA
+                        Téléchargez votre CV et votre profil sera rempli automatiquement par l'IA
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                       <FileText className="w-3 h-3" />
                       <span>PDF ou DOCX, max 5 Mo</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Option 2: Manual */}
-                <Card
-                  className="cursor-pointer transition-all hover:border-primary hover:shadow-lg group"
-                  onClick={() => { setStep("manual"); setError("") }}
-                >
-                  <CardContent className="p-8 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-2xl bg-secondary/50 mx-auto flex items-center justify-center group-hover:bg-secondary text-foreground transition-colors">
-                      <PenLine className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-1">Remplir manuellement</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Saisissez vos informations vous-même pour configurer votre profil
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                      <ArrowRight className="w-3 h-3" />
-                      <span>Quelques minutes suffisent</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -204,18 +264,93 @@ export default function OnboardingPage() {
                 ref={fileInputRef}
                 type="file"
                 accept=".pdf,.docx,.doc"
-                onChange={handleFileInput}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f) }}
                 className="hidden"
               />
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Vous pourrez toujours modifier votre profil ou importer un nouveau CV plus tard.
+                Vous pourrez toujours modifier votre profil plus tard.
               </p>
             </div>
           )}
 
-          {/* Step: Uploading */}
-          {step === "uploading" && (
+          {/* Mode: Conversational Chat */}
+          {mode === "chat" && (
+            <Card className="h-[70vh] flex flex-col">
+              <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          : "bg-muted text-foreground rounded-bl-md"
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Suggested replies */}
+                  {messages.length > 0 && messages[messages.length - 1].suggestedReplies && !sending && (
+                    <div className="flex flex-wrap gap-2 justify-start">
+                      {messages[messages.length - 1].suggestedReplies!.map((reply, i) => (
+                        <button
+                          key={i}
+                          onClick={() => sendMessage(reply)}
+                          className="text-xs px-3 py-1.5 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+                        >
+                          {reply}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {sending && (
+                    <div className="flex justify-start">
+                      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="border-t border-border p-4">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Votre réponse..."
+                      disabled={sending}
+                      className="flex-1"
+                    />
+                    <Button
+                      size="icon"
+                      onClick={() => sendMessage()}
+                      disabled={!input.trim() || sending}
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                    Vous pouvez cliquer sur les suggestions ou écrire librement
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Mode: Uploading */}
+          {mode === "uploading" && (
             <Card>
               <CardContent className="p-12 text-center space-y-6">
                 <div className="w-20 h-20 rounded-full bg-primary/10 mx-auto flex items-center justify-center">
@@ -227,191 +362,31 @@ export default function OnboardingPage() {
                     Notre IA extrait vos informations. Cela peut prendre quelques secondes.
                   </p>
                 </div>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center justify-center gap-2">
-                    <Check className="w-4 h-4 text-success" />
-                    <span>Fichier reçu</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Extraction du texte et analyse IA...</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Step: Parsed — show summary */}
-          {step === "parsed" && parsedData && (
+          {/* Mode: Done */}
+          {mode === "done" && (
             <Card>
-              <CardContent className="p-8 space-y-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-success/10 mx-auto flex items-center justify-center mb-4">
-                    <Check className="w-8 h-8 text-success" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Profil créé avec succès !</h2>
-                  <p className="text-muted-foreground">
-                    Votre CV a été analysé et votre profil a été rempli automatiquement.
-                  </p>
+              <CardContent className="p-8 text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 mx-auto flex items-center justify-center">
+                  <Check className="w-8 h-8 text-green-500" />
                 </div>
-
-                {/* Summary of what was extracted */}
-                <div className="bg-muted/50 rounded-xl p-6 space-y-3">
-                  <h3 className="font-medium text-foreground text-sm uppercase tracking-wide">Résumé extrait</h3>
-                  {parsedData.parsed?.firstName && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Nom</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.firstName} {parsedData.parsed.lastName}</span>
-                    </div>
-                  )}
-                  {parsedData.parsed?.title && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Titre</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.title}</span>
-                    </div>
-                  )}
-                  {parsedData.parsed?.city && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Localisation</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.city}{parsedData.parsed.country ? `, ${parsedData.parsed.country}` : ""}</span>
-                    </div>
-                  )}
-                  {parsedData.parsed?.skills?.length > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Compétences</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.skills.length} extraites</span>
-                    </div>
-                  )}
-                  {parsedData.parsed?.experiences?.length > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Expériences</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.experiences.length} extraites</span>
-                    </div>
-                  )}
-                  {parsedData.parsed?.educations?.length > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Formations</span>
-                      <span className="font-medium text-foreground">{parsedData.parsed.educations.length} extraites</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <Button onClick={goToProfile} className="w-full h-11">
-                    <span className="flex items-center gap-2">
-                      Voir mon profil complet
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </Button>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Vous pouvez modifier toutes les informations depuis votre profil.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step: Manual fill */}
-          {step === "manual" && (
-            <Card>
-              <CardContent className="p-8 space-y-6">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Informations de base</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Remplissez vos informations essentielles. Vous pourrez compléter votre profil plus tard.
-                  </p>
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Prénom *</label>
-                      <Input
-                        value={manualForm.firstName}
-                        onChange={(e) => setManualForm({ ...manualForm, firstName: e.target.value })}
-                        placeholder="Jean"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Nom *</label>
-                      <Input
-                        value={manualForm.lastName}
-                        onChange={(e) => setManualForm({ ...manualForm, lastName: e.target.value })}
-                        placeholder="Dupont"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Titre professionnel</label>
-                    <Input
-                      value={manualForm.title}
-                      onChange={(e) => setManualForm({ ...manualForm, title: e.target.value })}
-                      placeholder="Ex: Développeur Full Stack"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Téléphone</label>
-                    <Input
-                      value={manualForm.phone}
-                      onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })}
-                      placeholder="+1 514 000 0000"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Ville</label>
-                      <Input
-                        value={manualForm.city}
-                        onChange={(e) => setManualForm({ ...manualForm, city: e.target.value })}
-                        placeholder="Montréal"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Pays</label>
-                      <Input
-                        value={manualForm.country}
-                        onChange={(e) => setManualForm({ ...manualForm, country: e.target.value })}
-                        placeholder="CA"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => { setStep("choose"); setError("") }} className="flex-1 h-11">
-                    Retour
-                  </Button>
-                  <Button onClick={handleSaveManual} disabled={savingManual} className="flex-1 h-11">
-                    {savingManual ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Sauvegarde...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        Continuer
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
-                    )}
-                  </Button>
-                </div>
-
-                <p className="text-center text-xs text-muted-foreground">
-                  Vous pourrez aussi importer votre CV plus tard depuis votre profil.
+                <h2 className="text-xl font-semibold text-foreground mb-2">Profil configuré !</h2>
+                <p className="text-muted-foreground">
+                  Votre profil a été créé avec succès. Redirection vers votre tableau de bord...
                 </p>
+                <Button onClick={goToProfile} className="w-full h-11">
+                  <span className="flex items-center gap-2">
+                    Voir mon profil
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                </Button>
               </CardContent>
             </Card>
           )}
+
         </div>
       </div>
     </div>

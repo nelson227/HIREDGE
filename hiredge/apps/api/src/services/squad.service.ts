@@ -406,6 +406,124 @@ export class SquadService {
 
     return squads.filter((s: any) => s._count.members < s.maxMembers);
   }
+
+  // ─── Competition Detection (#13) ──────────────────────────────
+  /**
+   * Check if squad members are competing for the same jobs.
+   * Returns a list of conflicts to warn users.
+   */
+  async detectCompetition(squadId: string): Promise<Array<{
+    jobId: string;
+    jobTitle: string;
+    members: Array<{ userId: string; name: string }>;
+  }>> {
+    const members = await prisma.squadMember.findMany({
+      where: { squadId, isActive: true },
+      select: { userId: true, user: { select: { candidateProfile: { select: { firstName: true, lastName: true } } } } },
+    });
+    const userIds = members.map(m => m.userId);
+    if (userIds.length < 2) return [];
+
+    // Find jobs where multiple squad members applied
+    const applications = await prisma.application.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, jobId: true, job: { select: { title: true } } },
+    });
+
+    const jobApplicants = new Map<string, Array<{ userId: string; name: string; jobTitle: string }>>();
+    for (const app of applications) {
+      const key = app.jobId;
+      if (!jobApplicants.has(key)) jobApplicants.set(key, []);
+      const member = members.find(m => m.userId === app.userId);
+      const name = member?.user?.candidateProfile
+        ? `${member.user.candidateProfile.firstName ?? ''} ${member.user.candidateProfile.lastName ?? ''}`.trim()
+        : 'Membre';
+      jobApplicants.get(key)!.push({ userId: app.userId, name, jobTitle: app.job.title });
+    }
+
+    const conflicts: Array<{ jobId: string; jobTitle: string; members: Array<{ userId: string; name: string }> }> = [];
+    for (const [jobId, applicants] of jobApplicants) {
+      if (applicants.length >= 2) {
+        conflicts.push({
+          jobId,
+          jobTitle: applicants[0]!.jobTitle,
+          members: applicants.map(a => ({ userId: a.userId, name: a.name })),
+        });
+      }
+    }
+
+    return conflicts;
+  }
+
+  // ─── Dynamic Reformation (#14) ──────────────────────────────
+  /**
+   * Check squad health and suggest/execute reformation.
+   * Called by a scheduled cron job.
+   */
+  async checkAndReformSquads(): Promise<Array<{ squadId: string; action: string; details: string }>> {
+    const actions: Array<{ squadId: string; action: string; details: string }> = [];
+
+    const activeSquads = await prisma.squad.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        members: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: {
+                candidateProfile: { select: { firstName: true } },
+                applications: { select: { id: true }, where: { appliedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    for (const squad of activeSquads) {
+      const inactiveMembers = squad.members.filter(m => (m.user?.applications?.length ?? 0) === 0);
+      const activeMembers = squad.members.filter(m => (m.user?.applications?.length ?? 0) > 0);
+
+      // If more than half inactive for 7+ days, flag for reformation
+      if (inactiveMembers.length > activeMembers.length && squad.members.length >= 3) {
+        // Deactivate long-inactive members
+        for (const inactiveMember of inactiveMembers) {
+          await prisma.squadMember.update({
+            where: { id: inactiveMember.id },
+            data: { isActive: false },
+          });
+
+          // Post a system message
+          const name = inactiveMember.user?.candidateProfile?.firstName ?? 'Un membre';
+          await prisma.squadMessage.create({
+            data: {
+              squadId: squad.id,
+              userId: inactiveMember.userId,
+              content: `${name} a été retiré(e) de l'escouade pour inactivité prolongée.`,
+              type: 'SYSTEM',
+            },
+          });
+        }
+
+        // If squad now has < 2 active members, set to FORMING to attract new ones
+        const remainingActive = squad.members.length - inactiveMembers.length;
+        if (remainingActive < 2) {
+          await prisma.squad.update({
+            where: { id: squad.id },
+            data: { status: 'FORMING' },
+          });
+        }
+
+        actions.push({
+          squadId: squad.id,
+          action: 'REFORMED',
+          details: `${inactiveMembers.length} membre(s) inactif(s) retirés. ${remainingActive} actif(s) restant(s).`,
+        });
+      }
+    }
+
+    return actions;
+  }
 }
 
 export const squadService = new SquadService();

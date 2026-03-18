@@ -24,6 +24,8 @@ import {
   ChevronRight,
   LogOut,
   Shield,
+  DollarSign,
+  GitCompareArrows,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ErrorBoundary } from "@/components/error-boundary"
@@ -42,6 +44,8 @@ const sidebarItemKeys: NavItem[] = [
   { labelKey: "navSquad", href: "/squad", icon: Users },
   { labelKey: "navScouts", href: "/scouts", icon: Building2 },
   { labelKey: "navAnalytics", href: "/analytics", icon: BarChart3 },
+  { labelKey: "navSalary", href: "/salary", icon: DollarSign },
+  { labelKey: "navCompare", href: "/compare", icon: GitCompareArrows },
 ]
 
 const bottomItemKeys: NavItem[] = [

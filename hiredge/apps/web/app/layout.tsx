@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     title: 'HIREDGE - Recherche d\'emploi augmentée par l\'IA',
     description: 'Trouvez votre emploi idéal plus vite grâce au matching IA.',
   },
+  manifest: '/manifest.json',
   icons: {
     icon: [
       {
@@ -56,7 +57,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js')})}`
+          }}
+        />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <I18nProvider>
             {children}

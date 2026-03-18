@@ -7,7 +7,7 @@ import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
-import { env } from './config/env';
+import { env, config } from './config/env';
 import prisma from './db/prisma';
 import { authenticate, optionalAuthenticate } from './middleware/auth';
 import { initializeWebSocket } from './lib/websocket';
@@ -22,6 +22,11 @@ import interviewRoutes from './routes/interviews';
 import notificationRoutes from './routes/notifications';
 import adminRoutes from './routes/admin';
 import paymentRoutes from './routes/payments';
+import onboardingRoutes from './routes/onboarding';
+import salaryRoutes from './routes/salary';
+import videoRoutes from './routes/video';
+import authExtRoutes from './routes/auth-ext';
+import analyticsRoutes from './routes/analytics';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -103,6 +108,7 @@ async function buildServer() {
 
   // Register routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
+  await app.register(authExtRoutes, { prefix: '/api/v1/auth' });
   await app.register(profileRoutes, { prefix: '/api/v1/profile' });
   await app.register(jobRoutes, { prefix: '/api/v1/jobs' });
   await app.register(applicationRoutes, { prefix: '/api/v1/applications' });
@@ -113,10 +119,26 @@ async function buildServer() {
   await app.register(notificationRoutes, { prefix: '/api/v1/notifications' });
   await app.register(adminRoutes, { prefix: '/api/v1/admin' });
   await app.register(paymentRoutes, { prefix: '/api/v1/payments' });
+  await app.register(onboardingRoutes, { prefix: '/api/v1/onboarding' });
+  await app.register(salaryRoutes, { prefix: '/api/v1/salary' });
+  await app.register(videoRoutes, { prefix: '/api/v1/video' });
+  await app.register(analyticsRoutes, { prefix: '/api/v1/analytics' });
 
   // Global error handler
   app.setErrorHandler((error: any, request, reply) => {
     app.log.error(error);
+
+    // Report to Sentry if configured
+    if (config.sentry.dsn) {
+      try {
+        // Dynamic import to avoid crash if @sentry/node not installed
+        import('@sentry/node').then(Sentry => {
+          Sentry.captureException(error, {
+            extra: { url: request.url, method: request.method },
+          });
+        }).catch(() => {});
+      } catch {}
+    }
 
     const statusCode = error.statusCode ?? 500;
     // In production, only expose messages for client errors (4xx), never for server errors
@@ -137,6 +159,21 @@ async function buildServer() {
 
 async function start() {
   const app = await buildServer();
+
+  // Initialize Sentry if configured (#25)
+  if (config.sentry.dsn) {
+    try {
+      const Sentry = await import('@sentry/node');
+      Sentry.init({
+        dsn: config.sentry.dsn,
+        environment: env.NODE_ENV,
+        tracesSampleRate: env.NODE_ENV === 'production' ? 0.1 : 1.0,
+      });
+      app.log.info('✅ Sentry initialized');
+    } catch {
+      app.log.warn('⚠️ @sentry/node not installed, Sentry disabled');
+    }
+  }
 
   try {
     // Initialize Socket.IO on Fastify's internal HTTP server BEFORE listening

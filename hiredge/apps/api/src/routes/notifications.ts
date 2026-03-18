@@ -58,6 +58,38 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
       throw err;
     }
   });
+
+  // ─── FCM Push Notification Token Management (#15) ─────────
+
+  // POST /notifications/fcm/register — Register FCM token
+  fastify.post('/fcm/register', async (request, reply) => {
+    const { token, device } = request.body as { token: string; device?: string };
+    if (!token) {
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Token FCM requis' } });
+    }
+    try {
+      const { fcmService } = await import('../services/fcm.service');
+      await fcmService.registerToken(request.user.id, token, device);
+      return reply.send({ success: true, data: { message: 'Token FCM enregistré' } });
+    } catch (err) {
+      throw err;
+    }
+  });
+
+  // DELETE /notifications/fcm/token — Remove FCM token
+  fastify.delete('/fcm/token', async (request, reply) => {
+    const { token } = request.body as { token: string };
+    if (!token) {
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Token FCM requis' } });
+    }
+    try {
+      const { fcmService } = await import('../services/fcm.service');
+      await fcmService.removeToken(token);
+      return reply.send({ success: true, data: { message: 'Token FCM supprimé' } });
+    } catch (err) {
+      throw err;
+    }
+  });
 };
 
 export default notificationRoutes;

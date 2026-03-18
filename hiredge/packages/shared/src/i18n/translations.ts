@@ -71,6 +71,8 @@ export const translations = {
     navInterviews: 'Entretiens',
     navScouts: 'Éclaireurs',
     navAnalytics: 'Analytiques',
+    navSalary: 'Salaires',
+    navCompare: 'Comparer',
     navSettings: 'Paramètres',
 
     // ── Auth ──
@@ -936,6 +938,8 @@ export const translations = {
     navInterviews: 'Interviews',
     navScouts: 'Scouts',
     navAnalytics: 'Analytics',
+    navSalary: 'Salaries',
+    navCompare: 'Compare',
     navSettings: 'Settings',
 
     // ── Auth ──
@@ -1798,6 +1802,8 @@ export const translations = {
     navInterviews: 'Vorstellungsgespräche',
     navScouts: 'Scouts',
     navAnalytics: 'Analysen',
+    navSalary: 'Gehälter',
+    navCompare: 'Vergleichen',
     navSettings: 'Einstellungen',
 
     login: 'Anmelden',
@@ -2642,6 +2648,8 @@ export const translations = {
     navInterviews: 'Entrevistas',
     navScouts: 'Exploradores',
     navAnalytics: 'Analíticas',
+    navSalary: 'Salarios',
+    navCompare: 'Comparar',
     navSettings: 'Configuración',
 
     login: 'Iniciar sesión',

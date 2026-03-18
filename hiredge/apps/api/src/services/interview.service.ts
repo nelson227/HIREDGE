@@ -50,6 +50,7 @@ export class InterviewSimService {
     companyName?: string;
     jobTitle?: string;
     difficulty?: number;
+    stressMode?: boolean;
   }) {
     // Get user profile for context
     const profile = await prisma.candidateProfile.findUnique({
@@ -82,6 +83,7 @@ export class InterviewSimService {
         config: {
           character: character as any,
           difficulty: data.difficulty ?? 2,
+          stressMode: data.stressMode ?? false,
           totalQuestions: data.type === 'TECHNICAL' ? 8 : 6,
         } as any,
       },
@@ -299,6 +301,20 @@ export class InterviewSimService {
     messages: any[],
     context: any,
   ): Promise<string> {
+    // Check if stress mode is active
+    const sim = await prisma.interviewSimulation.findUnique({ where: { id: simulationId } });
+    const config = sim?.config as any;
+    const isStressMode = config?.stressMode === true;
+
+    const stressInstructions = isStressMode
+      ? `\n\nMODE STRESS ACTIVÉ: Tu es beaucoup plus challengeant que d'habitude.
+- Interromps parfois le candidat ("Attendez, pouvez-vous être plus précis ?")
+- Pose des questions pièges ("Et si je vous disais que votre approche est complètement fausse ?")
+- Mets la pression sur le temps ("Il nous reste peu de temps, soyez concis")
+- Challenge chaque réponse ("Concrètement, quel résultat chiffré ?")
+- Reste professionnel mais exigeant`
+      : '';
+
     const systemPrompt = `Tu es ${character.name}, ${character.role} chez ${character.company}.
 Tu fais passer un entretien d'embauche.
 
@@ -308,7 +324,7 @@ PHASE ACTUELLE: ${phase}
 ${phase === 'WARMUP' ? 'Accueille le candidat chaleureusement et pose une première question légère.' : ''}
 ${phase === 'CORE' ? 'Pose une question pertinente au poste. Si la réponse précédente était bonne, approfondis. Si elle était vague, demande des exemples concrets.' : ''}
 ${phase === 'WRAP_UP' ? 'Pose une dernière question puis propose au candidat de poser ses questions.' : ''}
-${phase === 'DEBRIEF' ? 'Sors du personnage et donne un feedback constructif et honnête.' : ''}
+${phase === 'DEBRIEF' ? 'Sors du personnage et donne un feedback constructif et honnête.' : ''}${stressInstructions}
 
 RESTE EN PERSONNAGE. Parle naturellement comme dans un vrai entretien. 1-3 phrases max par message.`;
 
@@ -408,6 +424,152 @@ Réponds UNIQUEMENT avec le JSON.`,
         },
       };
     }
+  }
+
+  /**
+   * Start simulation in STRESS mode — interruptions, challenging follow-ups, time pressure cues.
+   */
+  async startStressSimulation(userId: string, data: {
+    jobId?: string;
+    companyName?: string;
+    jobTitle?: string;
+  }) {
+    return this.startSimulation(userId, {
+      type: 'TECHNICAL',
+      jobId: data.jobId,
+      companyName: data.companyName,
+      jobTitle: data.jobTitle,
+      difficulty: 4, // Max difficulty
+      stressMode: true,
+    });
+  }
+
+  /**
+   * Generate a comprehensive post-interview report with section breakdowns and coaching.
+   */
+  async generateFullReport(userId: string, simulationId: string) {
+    const simulation = await prisma.interviewSimulation.findFirst({
+      where: { id: simulationId, userId, status: 'COMPLETED' },
+    });
+    if (!simulation) throw new AppError('SIMULATION_NOT_FOUND', 'Simulation terminée introuvable', 404);
+
+    const messages: any[] = simulation.transcriptJson ? JSON.parse(simulation.transcriptJson as string) : [];
+    const config = simulation.config as any;
+
+    const candidateResponses = messages.filter((m: any) => m.role === 'candidate');
+    const interviewerQuestions = messages.filter((m: any) => m.role === 'interviewer');
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'system',
+          content: `Tu es un coach expert en entretiens d'embauche. Génère un rapport complet de simulation d'entretien.
+Le rapport doit inclure :
+1. Résumé global (score /100, impression générale)
+2. Analyse question par question (pour chaque échange Q/R)
+3. Communication verbale (clarté, structure, concision)
+4. Gestion du stress et confiance
+5. Points forts (top 3)
+6. Axes d'amélioration (top 3 avec exercices pratiques)
+7. Score par compétence (technique, communication, motivation, adaptabilité)
+8. Plan d'action personnalisé (3 actions concrètes)
+
+Retourne un JSON structuré:
+{
+  "overallScore": number,
+  "summary": "string",
+  "questionAnalysis": [{"question": "...", "response": "...", "score": number, "feedback": "..."}],
+  "communication": {"score": number, "details": "string"},
+  "stressManagement": {"score": number, "details": "string"},
+  "strengths": ["..."],
+  "improvements": [{"area": "...", "exercise": "..."}],
+  "competencyScores": {"technical": number, "communication": number, "motivation": number, "adaptability": number},
+  "actionPlan": ["..."]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Type: ${simulation.type}\nEntreprise: ${simulation.companyName}\nPoste: ${simulation.jobTitle}\n\nTranscription:\n${messages.map((m: any) => `[${m.role}] ${m.content}`).join('\n')}`,
+        },
+      ],
+    });
+
+    try {
+      const content = completion.choices[0]?.message?.content?.trim() || '{}';
+      const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      const report = JSON.parse(jsonStr);
+
+      // Store the full report 
+      await prisma.interviewSimulation.update({
+        where: { id: simulationId },
+        data: { analysisJson: JSON.stringify(report) },
+      });
+
+      return report;
+    } catch {
+      return {
+        overallScore: simulation.score ?? 65,
+        summary: 'Rapport généré avec les données disponibles.',
+        strengths: ['Participation complète à la simulation'],
+        improvements: [{ area: 'Préparation', exercise: 'Pratiquer la méthode STAR' }],
+        competencyScores: { technical: 3, communication: 3, motivation: 3, adaptability: 3 },
+        actionPlan: ['Refaire une simulation dans 3 jours'],
+      };
+    }
+  }
+
+  /**
+   * Get annotated replay of a completed simulation — each exchange with evaluation.
+   */
+  async getReplay(userId: string, simulationId: string) {
+    const simulation = await prisma.interviewSimulation.findFirst({
+      where: { id: simulationId, userId },
+    });
+    if (!simulation) throw new AppError('SIMULATION_NOT_FOUND', 'Simulation introuvable', 404);
+
+    const messages: any[] = simulation.transcriptJson ? JSON.parse(simulation.transcriptJson as string) : [];
+    const analysis: any = simulation.analysisJson ? JSON.parse(simulation.analysisJson as string) : {};
+
+    // Group messages into exchanges (question + response pairs)
+    const exchanges: any[] = [];
+    let currentExchange: any = null;
+
+    for (const msg of messages) {
+      if (msg.role === 'interviewer') {
+        if (currentExchange) exchanges.push(currentExchange);
+        currentExchange = { question: msg.content, phase: msg.phase, timestamp: msg.timestamp };
+      } else if (msg.role === 'candidate' && currentExchange) {
+        currentExchange.response = msg.content;
+        currentExchange.responseTimestamp = msg.timestamp;
+      }
+    }
+    if (currentExchange) exchanges.push(currentExchange);
+
+    // Merge with question analysis if available
+    if (analysis.questionAnalysis) {
+      exchanges.forEach((ex, i) => {
+        if (analysis.questionAnalysis[i]) {
+          ex.score = analysis.questionAnalysis[i].score;
+          ex.feedback = analysis.questionAnalysis[i].feedback;
+        }
+      });
+    }
+
+    return {
+      id: simulationId,
+      type: simulation.type,
+      companyName: simulation.companyName,
+      jobTitle: simulation.jobTitle,
+      status: simulation.status,
+      overallScore: simulation.score,
+      date: simulation.createdAt,
+      exchanges,
+      analysis,
+      audioUrl: simulation.audioUrl,
+    };
   }
 }
 

@@ -502,6 +502,18 @@ const squadRoutes: FastifyPluginAsync = async (fastify) => {
       throw err;
     }
   });
+
+  // GET /squads/:id/competition — Detect competition within squad (#13)
+  fastify.get('/:id/competition', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const conflicts = await squadService.detectCompetition(id);
+      return reply.send({ success: true, data: { conflicts, hasConflicts: conflicts.length > 0 } });
+    } catch (err) {
+      if (err instanceof AppError) return reply.status(err.statusCode).send({ success: false, error: { code: err.code, message: err.message } });
+      throw err;
+    }
+  });
 };
 
 export default squadRoutes;

@@ -119,12 +119,163 @@ interface RawJob {
 }
 
 async function fetchJobsFromSource(source: string, keywords: string, location: string): Promise<RawJob[]> {
-  // NOTE: En production, chaque source a un scraper spécialisé (Puppeteer / API)
-  // Ici placeholder pour la structure. Chaque scraper sera un module séparé.
-  const jobs: RawJob[] = [];
+  switch (source) {
+    case 'pole-emploi':
+      return fetchFranceTravail(keywords, location);
+    case 'indeed-fr':
+      return fetchJSearch(keywords, location, 'indeed');
+    case 'linkedin-jobs':
+      return fetchJSearch(keywords, location, 'linkedin');
+    case 'welcometothejungle':
+      return fetchAdzuna(keywords, location);
+    case 'hellowork':
+      return fetchAdzuna(keywords, location);
+    case 'apec':
+      return fetchFranceTravail(keywords, location);
+    default:
+      return [];
+  }
+}
 
-  // NOTE: En vrai chaque source a son scraper via scrapers[source].scrape()
-  return jobs;
+/**
+ * France Travail (ex Pôle Emploi) API — offres d'emploi.
+ * Uses OAuth client_credentials flow.
+ */
+async function fetchFranceTravail(keywords: string, location: string): Promise<RawJob[]> {
+  const clientId = process.env.FRANCE_TRAVAIL_CLIENT_ID;
+  const clientSecret = process.env.FRANCE_TRAVAIL_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return [];
+
+  try {
+    // Get access token
+    const tokenRes = await fetch('https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: 'api_offresdemploiv2 o2dsoffre',
+      }),
+    });
+    if (!tokenRes.ok) return [];
+    const tokenData = await tokenRes.json();
+
+    // Search jobs
+    const params = new URLSearchParams({
+      motsCles: keywords,
+      commune: location === 'Remote' ? '' : location,
+      range: '0-49',
+    });
+
+    const res = await fetch(`https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search?${params}`, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    return (data.resultats || []).map((item: any) => ({
+      title: item.intitule || '',
+      company: item.entreprise?.nom || 'Non précisé',
+      location: item.lieuTravail?.libelle || location,
+      description: item.description || '',
+      url: item.origineOffre?.urlOrigine || `https://candidat.francetravail.fr/offres/recherche/detail/${item.id}`,
+      salary: item.salaire?.libelle || '',
+      contractType: item.typeContrat || 'CDI',
+      source: 'france-travail',
+      externalId: `ft-${item.id}`,
+    }));
+  } catch (e: any) {
+    console.error(JSON.stringify({ level: 'error', scraper: 'france-travail', error: e.message }));
+    return [];
+  }
+}
+
+/**
+ * JSearch API (RapidAPI) — aggregates Indeed, LinkedIn, Glassdoor.
+ */
+async function fetchJSearch(keywords: string, location: string, filter?: string): Promise<RawJob[]> {
+  const apiKey = process.env.JSEARCH_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const query = `${keywords} in ${location}, France`;
+    const params = new URLSearchParams({
+      query,
+      page: '1',
+      num_pages: '1',
+      country: 'fr',
+      date_posted: 'week',
+    });
+
+    const res = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
+      headers: {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+      },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    return (data.data || []).map((item: any) => ({
+      title: item.job_title || '',
+      company: item.employer_name || 'Non précisé',
+      location: item.job_city ? `${item.job_city}, ${item.job_country}` : location,
+      description: item.job_description || '',
+      url: item.job_apply_link || item.job_google_link || '',
+      salary: item.job_min_salary
+        ? `${item.job_min_salary} - ${item.job_max_salary} ${item.job_salary_currency || 'EUR'}`
+        : '',
+      contractType: item.job_employment_type === 'FULLTIME' ? 'CDI' : item.job_employment_type || 'CDI',
+      source: filter || 'jsearch',
+      externalId: `js-${item.job_id}`,
+    }));
+  } catch (e: any) {
+    console.error(JSON.stringify({ level: 'error', scraper: 'jsearch', error: e.message }));
+    return [];
+  }
+}
+
+/**
+ * Adzuna API — job search aggregator.
+ */
+async function fetchAdzuna(keywords: string, location: string): Promise<RawJob[]> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) return [];
+
+  try {
+    const params = new URLSearchParams({
+      app_id: appId,
+      app_key: appKey,
+      what: keywords,
+      where: location,
+      results_per_page: '50',
+      content_type: 'application/json',
+      max_days_old: '14',
+    });
+
+    const res = await fetch(`https://api.adzuna.com/v1/api/jobs/fr/search/1?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    return (data.results || []).map((item: any) => ({
+      title: item.title || '',
+      company: item.company?.display_name || 'Non précisé',
+      location: item.location?.display_name || location,
+      description: item.description || '',
+      url: item.redirect_url || '',
+      salary: item.salary_min
+        ? `${Math.round(item.salary_min)} - ${Math.round(item.salary_max || item.salary_min)} EUR`
+        : '',
+      contractType: item.contract_type || 'CDI',
+      source: 'adzuna',
+      externalId: `adz-${item.id}`,
+    }));
+  } catch (e: any) {
+    console.error(JSON.stringify({ level: 'error', scraper: 'adzuna', error: e.message }));
+    return [];
+  }
 }
 
 function normalizeJob(raw: RawJob): any {

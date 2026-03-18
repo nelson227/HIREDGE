@@ -60,6 +60,29 @@ export const config = {
   jsearch: {
     apiKey: process.env.JSEARCH_API_KEY || '',
   },
+
+  daily: {
+    apiKey: process.env.DAILY_API_KEY || '',
+  },
+
+  fcm: {
+    serverKey: process.env.FCM_SERVER_KEY || '',
+  },
+
+  sentry: {
+    dsn: process.env.SENTRY_DSN || '',
+  },
+
+  linkedin: {
+    clientId: process.env.LINKEDIN_CLIENT_ID || '',
+    clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+    redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
+  },
+
+  franceTravail: {
+    clientId: process.env.FRANCE_TRAVAIL_CLIENT_ID || '',
+    clientSecret: process.env.FRANCE_TRAVAIL_CLIENT_SECRET || '',
+  },
 } as const;
 
 // Flat alias for backward compatibility

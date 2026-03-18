@@ -26,7 +26,7 @@ import {
   Languages,
   Monitor,
 } from "lucide-react"
-import { profileApi, authApi, paymentsApi } from "@/lib/api"
+import { profileApi, authApi, paymentsApi, authExtApi } from "@/lib/api"
 import { disconnectSocket } from "@/lib/socket"
 import { useTranslation, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n"
 
@@ -51,6 +51,14 @@ export default function SettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [subscription, setSubscription] = useState<{ tier: string; applicationsUsed: number; applicationsLimit: number } | null>(null)
   const [billingLoading, setBillingLoading] = useState(false)
+  const [mfaEnabled, setMfaEnabled] = useState(false)
+  const [mfaSecret, setMfaSecret] = useState("")
+  const [mfaQr, setMfaQr] = useState("")
+  const [mfaCode, setMfaCode] = useState("")
+  const [mfaLoading, setMfaLoading] = useState(false)
+  const [mfaSetupMode, setMfaSetupMode] = useState(false)
+  const [mfaDisablePassword, setMfaDisablePassword] = useState("")
+  const [advPrefs, setAdvPrefs] = useState({ sectors: "", companySize: "", jobFamilies: "" })
 
   useEffect(() => {
     setNotifications([
@@ -80,6 +88,7 @@ export default function SettingsPage() {
   useEffect(() => {
     loadProfile()
     loadSubscription()
+    loadMfaStatus()
   }, [])
 
   const loadSubscription = async () => {
@@ -87,6 +96,55 @@ export default function SettingsPage() {
       const { data } = await paymentsApi.getStatus()
       if (data.success) setSubscription(data.data)
     } catch { /* no-op */ }
+  }
+
+  const loadMfaStatus = async () => {
+    try {
+      const { data } = await authExtApi.mfaStatus()
+      if (data.success) setMfaEnabled(data.data.enabled)
+    } catch { /* no-op */ }
+  }
+
+  const handleMfaSetup = async () => {
+    setMfaLoading(true)
+    try {
+      const { data } = await authExtApi.mfaSetup()
+      if (data.success) {
+        setMfaSecret(data.data.secret)
+        setMfaQr(data.data.otpauthUrl)
+        setMfaSetupMode(true)
+      }
+    } catch { setMessage("Erreur lors de la configuration 2FA") }
+    finally { setMfaLoading(false) }
+  }
+
+  const handleMfaVerify = async () => {
+    if (mfaCode.length !== 6) return
+    setMfaLoading(true)
+    try {
+      const { data } = await authExtApi.mfaVerify(mfaCode)
+      if (data.success) {
+        setMfaEnabled(true)
+        setMfaSetupMode(false)
+        setMfaCode("")
+        setMessage("2FA activé avec succès !")
+      } else {
+        setMessage("Code invalide, réessayez")
+      }
+    } catch { setMessage("Code invalide") }
+    finally { setMfaLoading(false) }
+  }
+
+  const handleMfaDisable = async () => {
+    if (!mfaDisablePassword) return
+    setMfaLoading(true)
+    try {
+      await authExtApi.mfaDisable(mfaDisablePassword)
+      setMfaEnabled(false)
+      setMfaDisablePassword("")
+      setMessage("2FA désactivé")
+    } catch { setMessage("Mot de passe incorrect") }
+    finally { setMfaLoading(false) }
   }
 
   const loadProfile = async () => {
@@ -106,6 +164,11 @@ export default function SettingsPage() {
           salaryMax: p.salaryMax?.toString() || "",
           city: p.city || "",
           country: p.country || "",
+        })
+        setAdvPrefs({
+          sectors: p.preferredSectors ? (typeof p.preferredSectors === 'string' ? JSON.parse(p.preferredSectors || '[]') : p.preferredSectors).join(', ') : "",
+          companySize: p.preferredCompanySize ? (typeof p.preferredCompanySize === 'string' ? JSON.parse(p.preferredCompanySize || '[]') : p.preferredCompanySize).join(', ') : "",
+          jobFamilies: p.preferredJobFamilies ? (typeof p.preferredJobFamilies === 'string' ? JSON.parse(p.preferredJobFamilies || '[]') : p.preferredJobFamilies).join(', ') : "",
         })
         // Load notification & privacy prefs from backend
         if (p.notificationPrefs) {
@@ -149,6 +212,9 @@ export default function SettingsPage() {
         salaryMax: prefForm.salaryMax ? parseInt(prefForm.salaryMax) : undefined,
         city: prefForm.city,
         country: prefForm.country,
+        preferredSectors: JSON.stringify(advPrefs.sectors.split(',').map(s => s.trim()).filter(Boolean)),
+        preferredCompanySize: JSON.stringify(advPrefs.companySize.split(',').map(s => s.trim()).filter(Boolean)),
+        preferredJobFamilies: JSON.stringify(advPrefs.jobFamilies.split(',').map(s => s.trim()).filter(Boolean)),
       })
       setMessage("Préférences sauvegardées !")
       setTimeout(() => setMessage(""), 3000)
@@ -546,6 +612,44 @@ export default function SettingsPage() {
                   </Button>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Préférences avancées</CardTitle>
+                  <CardDescription>Affinez votre profil pour un meilleur matching IA</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Secteurs préférés</label>
+                    <Input
+                      value={advPrefs.sectors}
+                      onChange={(e) => setAdvPrefs({...advPrefs, sectors: e.target.value})}
+                      placeholder="Tech, Finance, Santé (séparés par des virgules)"
+                    />
+                    <p className="text-xs text-muted-foreground">Ex: Tech, Finance, Énergie</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Taille d&apos;entreprise</label>
+                    <Input
+                      value={advPrefs.companySize}
+                      onChange={(e) => setAdvPrefs({...advPrefs, companySize: e.target.value})}
+                      placeholder="Startup, PME, Grande entreprise"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Familles de métiers</label>
+                    <Input
+                      value={advPrefs.jobFamilies}
+                      onChange={(e) => setAdvPrefs({...advPrefs, jobFamilies: e.target.value})}
+                      placeholder="Développement, Product, Data"
+                    />
+                  </div>
+                  <Button onClick={savePreferences} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Sauvegarder
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
 
@@ -653,20 +757,82 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>{t('settings2FA')}</CardTitle>
-                  <CardDescription>{t('comingSoon')}</CardDescription>
+                  <CardDescription>Sécurisez votre compte avec l&apos;authentification à deux facteurs</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-muted-foreground" />
+                <CardContent className="space-y-4">
+                  {mfaEnabled && !mfaSetupMode ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 rounded-xl border border-green-500/30 bg-green-500/5">
+                        <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">2FA activé</p>
+                          <p className="text-sm text-muted-foreground">Votre compte est protégé</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">{t('settings2FA')}</p>
-                        <p className="text-sm text-muted-foreground">{t('comingSoon')}</p>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Mot de passe pour désactiver</label>
+                        <Input
+                          type="password"
+                          value={mfaDisablePassword}
+                          onChange={(e) => setMfaDisablePassword(e.target.value)}
+                          placeholder="Votre mot de passe"
+                        />
+                      </div>
+                      <Button variant="destructive" onClick={handleMfaDisable} disabled={mfaLoading || !mfaDisablePassword}>
+                        {mfaLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Désactiver le 2FA
+                      </Button>
+                    </div>
+                  ) : mfaSetupMode ? (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Scannez ce QR code avec votre application authenticator (Google Authenticator, Authy, etc.) ou entrez la clé manuellement :
+                      </p>
+                      {mfaQr && (
+                        <div className="p-4 bg-muted rounded-xl text-center">
+                          <p className="font-mono text-xs break-all mb-2">{mfaQr}</p>
+                          <p className="text-xs text-muted-foreground mt-2">Clé secrète : <span className="font-mono">{mfaSecret}</span></p>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Code de vérification (6 chiffres)</label>
+                        <Input
+                          value={mfaCode}
+                          onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="000000"
+                          maxLength={6}
+                          className="text-center text-2xl tracking-[0.5em] font-mono"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => { setMfaSetupMode(false); setMfaCode("") }}>
+                          Annuler
+                        </Button>
+                        <Button onClick={handleMfaVerify} disabled={mfaLoading || mfaCode.length !== 6}>
+                          {mfaLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                          Vérifier et activer
+                        </Button>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 rounded-xl border border-border">
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">2FA non activé</p>
+                          <p className="text-sm text-muted-foreground">Ajoutez une couche de sécurité supplémentaire</p>
+                        </div>
+                      </div>
+                      <Button onClick={handleMfaSetup} disabled={mfaLoading}>
+                        {mfaLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Configurer le 2FA
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </>

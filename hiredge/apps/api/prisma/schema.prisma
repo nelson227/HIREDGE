@@ -44,6 +44,8 @@ model User {
   streak             Streak?
   followUpReminders  FollowUpReminder[]
   edgeMemoryEpisodes EdgeMemoryEpisode[]
+  fcmTokens          FcmToken[]
+  mfaSecret          MfaSecret?
 
   @@map("users")
 }
@@ -97,6 +99,10 @@ model CandidateProfile {
   applicationsSinceDismissal Int    @default(0)
   notificationPrefs        Json     @default("{\"new_matches\":true,\"application_updates\":true,\"squad_activity\":true,\"interview_reminders\":true,\"weekly_digest\":false,\"marketing\":false}")
   privacyPrefs             Json     @default("{\"profile_visibility\":true,\"anonymous_mode\":false,\"data_sharing\":true}")
+  preferredSectors         String   @default("[]") // JSON array of preferred industries
+  preferredCompanySize     String   @default("[]") // JSON array: ["startup","pme","grande_entreprise"]
+  preferredJobFamilies     String   @default("[]") // JSON array of job families
+  linkedinImportedAt       DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -691,5 +697,63 @@ model EdgeMemoryEpisode {
 
   @@index([userId, createdAt])
   @@map("edge_memory_episodes")
+}
+
+// ============================================================
+// DONNÉES SALARIALES — Intelligence Collective
+// ============================================================
+
+model SalaryData {
+  id           String   @id @default(uuid())
+  jobFamily    String
+  title        String
+  location     String?
+  country      String   @default("CA")
+  experienceLevel String @default("mid")
+  salaryMin    Int
+  salaryMax    Int
+  salaryMedian Int?
+  currency     String   @default("CAD")
+  source       String   @default("collective") // collective | glassdoor | levels.fyi
+  sampleSize   Int      @default(1)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@index([jobFamily, location])
+  @@index([title])
+  @@map("salary_data")
+}
+
+// ============================================================
+// PUSH NOTIFICATIONS — FCM Tokens
+// ============================================================
+
+model FcmToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  device    String?  // mobile | web
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("fcm_tokens")
+}
+
+// ============================================================
+// MFA — Two-Factor Authentication
+// ============================================================
+
+model MfaSecret {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  secret    String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mfa_secrets")
 }
 
