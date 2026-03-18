@@ -341,7 +341,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
       }),
       fastify.prisma.candidateProfile.findUnique({
         where: { userId },
-        include: { skills: true, experiences: true, educations: true, languages: true },
+        include: { skills: true, experiences: true, educations: true },
       }),
       fastify.prisma.application.findMany({
         where: { userId },

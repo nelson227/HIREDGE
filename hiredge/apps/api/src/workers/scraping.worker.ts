@@ -16,9 +16,6 @@ const openai = isLLMEnabled
   ? new OpenAI({ apiKey: env.OPENAI_API_KEY, baseURL: 'https://api.groq.com/openai/v1' })
   : null;
 
-const redisInstance = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
-const connection = redisInstance as unknown as ConnectionOptions;
-
 // ─── Queues ──────────────────────────────────────────────
 export const scrapingQueue = new Queue('scraping', { connection });
 
