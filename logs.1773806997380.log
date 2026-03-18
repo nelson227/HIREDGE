@@ -1,0 +1,550 @@
+2026-03-18T03:03:36.924725808Z [inf]  Running Prisma db push...
+2026-03-18T03:03:36.924729454Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:36.924733246Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:36.965946964Z [inf]  Starting Container
+2026-03-18T03:03:37.608098035Z [inf]  
+2026-03-18T03:03:37.608102758Z [inf]  🚀  Your database is now in sync with your Prisma schema. Done in 591ms
+2026-03-18T03:03:37.608105934Z [inf]  
+2026-03-18T03:03:37.954435645Z [inf]  Starting server...
+2026-03-18T03:03:38.166420912Z [err]  
+2026-03-18T03:03:38.166427945Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:38.166433326Z [err]  Require stack:
+2026-03-18T03:03:38.166440430Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:38.166443242Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:38.166450631Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:38.166452304Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:38.166453386Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:38.166453929Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:38.166455253Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:38.166463192Z [err]    throw err;
+2026-03-18T03:03:38.166463874Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:38.166465678Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:38.166468221Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:38.166470788Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:38.166473511Z [err]    ^
+2026-03-18T03:03:38.166475852Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:38.166475968Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:38.166478434Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:38.166482858Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:38.166485328Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:38.166495348Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:38.166502264Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:38.167792597Z [err]  Node.js v20.20.1
+2026-03-18T03:03:38.167794549Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:38.167799589Z [err]    ]
+2026-03-18T03:03:38.167805285Z [err]  }
+2026-03-18T03:03:38.167809328Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:38.167810478Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:38.167813418Z [err]  
+2026-03-18T03:03:38.167817524Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:38.167818882Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:38.167822893Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:38.167824739Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:38.167828711Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:38.167830155Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:38.167833303Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:38.167838467Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:38.167838706Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:38.167842314Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:38.167845538Z [err]    requireStack: [
+2026-03-18T03:03:38.167851465Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:38.935956477Z [inf]  Running Prisma db push...
+2026-03-18T03:03:38.979156480Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:38.985078499Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:39.507650143Z [inf]  
+2026-03-18T03:03:39.507655129Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:39.507658953Z [inf]  
+2026-03-18T03:03:39.550421015Z [inf]  ┌─────────────────────────────────────────────────────────┐
+2026-03-18T03:03:39.550424280Z [inf]  │  Update available 5.22.0 -> 7.5.0                       │
+2026-03-18T03:03:39.550427058Z [inf]  │                                                         │
+2026-03-18T03:03:39.550430072Z [inf]  │                                                         │
+2026-03-18T03:03:39.550434957Z [inf]  │  Run the following to update                            │
+2026-03-18T03:03:39.550435289Z [inf]  │  This is a major update - please follow the guide at    │
+2026-03-18T03:03:39.550440418Z [inf]  │  https://pris.ly/d/major-version-upgrade                │
+2026-03-18T03:03:39.550440551Z [inf]  │    npm i --save-dev prisma@latest                       │
+2026-03-18T03:03:39.550444390Z [inf]  │    npm i @prisma/client@latest                          │
+2026-03-18T03:03:39.550447419Z [inf]  └─────────────────────────────────────────────────────────┘
+2026-03-18T03:03:39.550451070Z [inf]  Starting server...
+2026-03-18T03:03:40.053846902Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:40.053853845Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:40.053858918Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:40.053859153Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:40.053864476Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:40.053866494Z [err]    throw err;
+2026-03-18T03:03:40.053868951Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:40.053873605Z [err]    ^
+2026-03-18T03:03:40.053876148Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:40.053879772Z [err]  
+2026-03-18T03:03:40.053882206Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:40.053885924Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:40.053886908Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:40.053893949Z [err]  Require stack:
+2026-03-18T03:03:40.053894668Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:40.053901460Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:40.053901838Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:40.053907805Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:40.053910247Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:40.053914374Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:40.053917531Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:40.053920867Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:40.053923672Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:40.055078305Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:40.055084052Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:40.055087974Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:40.055091324Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:40.055094974Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:40.055098534Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:40.055102416Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:40.055106228Z [err]    requireStack: [
+2026-03-18T03:03:40.055111186Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:40.055115072Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:40.055119306Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:40.055123119Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:40.055126707Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:40.055130638Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:40.055134873Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:40.055139386Z [err]    ]
+2026-03-18T03:03:40.055142960Z [err]  }
+2026-03-18T03:03:40.055146670Z [err]  
+2026-03-18T03:03:40.055150189Z [err]  Node.js v20.20.1
+2026-03-18T03:03:40.549261961Z [inf]  Running Prisma db push...
+2026-03-18T03:03:40.982035172Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:40.982082193Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:41.501668854Z [inf]  
+2026-03-18T03:03:41.501673092Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:41.501676761Z [inf]  
+2026-03-18T03:03:41.527533676Z [inf]  Starting server...
+2026-03-18T03:03:42.021980654Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:42.021988192Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:42.021993009Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:42.021993187Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:42.021999758Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:42.021999819Z [err]    throw err;
+2026-03-18T03:03:42.022005298Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:42.022005510Z [err]    ^
+2026-03-18T03:03:42.022010695Z [err]  
+2026-03-18T03:03:42.022011555Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:42.022016393Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:42.022016545Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:42.022022885Z [err]  Require stack:
+2026-03-18T03:03:42.022023221Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:42.022029431Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:42.022029595Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:42.022035756Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:42.022036774Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:42.022062347Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:42.022066524Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:42.022072173Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:42.022075989Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:42.022079448Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:42.023495948Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:42.023499709Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:42.023502845Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:42.023506366Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:42.023508966Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:42.023511792Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:42.023514435Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:42.023516892Z [err]    requireStack: [
+2026-03-18T03:03:42.023520901Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:42.023523651Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:42.023526474Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:42.023529490Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:42.023532064Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:42.023534817Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:42.023537501Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:42.023540025Z [err]    ]
+2026-03-18T03:03:42.023542611Z [err]  }
+2026-03-18T03:03:42.023545352Z [err]  
+2026-03-18T03:03:42.023547829Z [err]  Node.js v20.20.1
+2026-03-18T03:03:42.553259603Z [inf]  Running Prisma db push...
+2026-03-18T03:03:42.971135456Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:42.971139201Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:43.503178102Z [inf]  
+2026-03-18T03:03:43.503181444Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:43.503185247Z [inf]  
+2026-03-18T03:03:43.550787304Z [inf]  Starting server...
+2026-03-18T03:03:44.066631844Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:44.066637236Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:44.066641701Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:44.066643936Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:44.066647079Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:44.066652295Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:44.066656171Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:44.066660428Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:44.066662917Z [err]    throw err;
+2026-03-18T03:03:44.066666441Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:44.066668293Z [err]    ^
+2026-03-18T03:03:44.066673223Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:44.066675618Z [err]  
+2026-03-18T03:03:44.066678229Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:44.066683174Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:44.066684577Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:44.066688035Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:44.066691698Z [err]  Require stack:
+2026-03-18T03:03:44.066693398Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:44.066697869Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:44.066700590Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:44.066702657Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:44.066706133Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:44.067605261Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:44.067605436Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:44.067614545Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:44.067615696Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:44.067618878Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:44.067621633Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:44.067623502Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:44.067627130Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:44.067628494Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:44.067632056Z [err]    ]
+2026-03-18T03:03:44.067633296Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:44.067637649Z [err]  }
+2026-03-18T03:03:44.067637716Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:44.067643192Z [err]  
+2026-03-18T03:03:44.067643257Z [err]    requireStack: [
+2026-03-18T03:03:44.067648395Z [err]  Node.js v20.20.1
+2026-03-18T03:03:44.067648483Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:44.067652097Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:44.067654969Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:44.593775200Z [inf]  Running Prisma db push...
+2026-03-18T03:03:44.984982740Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:44.984991237Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:45.535682384Z [inf]  
+2026-03-18T03:03:45.535687676Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:45.535691796Z [inf]  
+2026-03-18T03:03:45.589250400Z [inf]  Starting server...
+2026-03-18T03:03:46.096899255Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:46.096907487Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:46.096910823Z [err]    throw err;
+2026-03-18T03:03:46.096914080Z [err]    ^
+2026-03-18T03:03:46.096917357Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:46.096917911Z [err]  
+2026-03-18T03:03:46.096922580Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:46.096927748Z [err]  Require stack:
+2026-03-18T03:03:46.096927860Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:46.096934483Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:46.096936346Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:46.096942567Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:46.096943732Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:46.096949021Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:46.096951961Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:46.096955576Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:46.096960116Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:46.096961592Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:46.096966180Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:46.096970803Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:46.096975864Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:46.096980373Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:46.096985124Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:46.097825161Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:46.097827583Z [err]  }
+2026-03-18T03:03:46.097831066Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:46.097836586Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:46.097837096Z [err]  
+2026-03-18T03:03:46.097844316Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:46.097844410Z [err]    requireStack: [
+2026-03-18T03:03:46.097845929Z [err]  Node.js v20.20.1
+2026-03-18T03:03:46.097850363Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:46.097852353Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:46.097855187Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:46.097859243Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:46.097860539Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:46.097865193Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:46.097868155Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:46.097871660Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:46.097874941Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:46.097879080Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:46.097882091Z [err]    ]
+2026-03-18T03:03:46.609993486Z [inf]  Running Prisma db push...
+2026-03-18T03:03:47.016693558Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:47.016697377Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:47.480740242Z [inf]  
+2026-03-18T03:03:47.480744638Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:47.480748358Z [inf]  
+2026-03-18T03:03:47.504628649Z [inf]  Starting server...
+2026-03-18T03:03:48.028254578Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:48.028262873Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:48.028263229Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:48.028267668Z [err]    throw err;
+2026-03-18T03:03:48.028269268Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:48.028272502Z [err]    ^
+2026-03-18T03:03:48.028274045Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:48.028277212Z [err]  
+2026-03-18T03:03:48.028279205Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:48.028281774Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:48.028287123Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:48.028287181Z [err]  Require stack:
+2026-03-18T03:03:48.028293455Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:48.028293637Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:48.028299209Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:48.028302147Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:48.028304064Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:48.028306062Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:48.028308532Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:48.028311737Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:48.028314952Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:48.028320116Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:48.028325433Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:48.029136645Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:48.029143643Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:48.029147037Z [err]    ]
+2026-03-18T03:03:48.029160361Z [err]  }
+2026-03-18T03:03:48.029162739Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:48.029167546Z [err]  
+2026-03-18T03:03:48.029170508Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:48.029175956Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:48.029176153Z [err]  Node.js v20.20.1
+2026-03-18T03:03:48.029179743Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:48.029182613Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:48.029185638Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:48.029188225Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:48.029190969Z [err]    requireStack: [
+2026-03-18T03:03:48.029193722Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:48.029196745Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:48.029199578Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:48.029202151Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:48.029205854Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:48.539162567Z [inf]  Running Prisma db push...
+2026-03-18T03:03:49.006206289Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:49.006209913Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:49.308746270Z [inf]  
+2026-03-18T03:03:49.308752713Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:49.310063295Z [inf]  
+2026-03-18T03:03:49.357268383Z [inf]  Starting server...
+2026-03-18T03:03:50.028913909Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:50.028916818Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:50.028927035Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:50.028927076Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:50.028933123Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:50.028934654Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:50.028937329Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:50.028942290Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:50.028947784Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:50.028949733Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:50.028950558Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:50.028953507Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:50.028959147Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:50.028959757Z [err]  Require stack:
+2026-03-18T03:03:50.028966916Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:50.028971452Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:50.028973494Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:50.028977227Z [err]    throw err;
+2026-03-18T03:03:50.028978926Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:50.028982166Z [err]    ^
+2026-03-18T03:03:50.028984100Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:50.028988040Z [err]  
+2026-03-18T03:03:50.028990169Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:50.029905655Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:50.029910135Z [err]  Node.js v20.20.1
+2026-03-18T03:03:50.029912600Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:50.029918341Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:50.029919769Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:50.029924301Z [err]    requireStack: [
+2026-03-18T03:03:50.029927008Z [err]    ]
+2026-03-18T03:03:50.029930459Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:50.029930470Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:50.029933639Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:50.029934390Z [err]  }
+2026-03-18T03:03:50.029938740Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:50.029942425Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:50.029942439Z [err]  
+2026-03-18T03:03:50.029949508Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:50.029965898Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:50.029969606Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:50.029973236Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:50.029976230Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:50.441633188Z [inf]  Running Prisma db push...
+2026-03-18T03:03:51.024659137Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:51.024662306Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:51.197490348Z [inf]  
+2026-03-18T03:03:51.197496339Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:51.197500411Z [inf]  
+2026-03-18T03:03:51.240036723Z [inf]  Starting server...
+2026-03-18T03:03:52.029424040Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:52.029427458Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:52.029432229Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:52.029438465Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:52.029441218Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:52.029443269Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:52.029448859Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:52.029452559Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:52.029453334Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:52.029453551Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:52.029456418Z [err]    throw err;
+2026-03-18T03:03:52.029458771Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:52.029464017Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:52.029464922Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:52.029466803Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:52.029466862Z [err]    ^
+2026-03-18T03:03:52.029469473Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:52.029474268Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:52.029474406Z [err]  
+2026-03-18T03:03:52.029476989Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:52.029480335Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:52.029485294Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:52.029486533Z [err]  Require stack:
+2026-03-18T03:03:52.030752856Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:52.030760455Z [err]  
+2026-03-18T03:03:52.030762604Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:52.030766717Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:52.030767306Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:52.030770508Z [err]    ]
+2026-03-18T03:03:52.030771808Z [err]  Node.js v20.20.1
+2026-03-18T03:03:52.030774289Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:52.030776134Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:52.030781833Z [err]  }
+2026-03-18T03:03:52.030783643Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:52.030786560Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:52.030791219Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:52.030793536Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:52.030796967Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:52.030801822Z [err]    requireStack: [
+2026-03-18T03:03:52.030805733Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:52.030810253Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:52.030815913Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:52.274369049Z [inf]  Running Prisma db push...
+2026-03-18T03:03:52.596558900Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:52.602168262Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:53.115594818Z [inf]  
+2026-03-18T03:03:53.115599271Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:53.115601907Z [inf]  
+2026-03-18T03:03:53.172240481Z [inf]  Starting server...
+2026-03-18T03:03:53.662317497Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:53.662324874Z [err]    throw err;
+2026-03-18T03:03:53.662329789Z [err]    ^
+2026-03-18T03:03:53.662333986Z [err]  
+2026-03-18T03:03:53.662337441Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:53.662341125Z [err]  Require stack:
+2026-03-18T03:03:53.662345366Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:53.662350175Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:53.662353888Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:53.662358145Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:53.662362317Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:53.662366085Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:53.662370728Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:53.662374598Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:53.662380103Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:53.662383517Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:53.662386536Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:53.662391297Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:53.662395171Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:53.662399009Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:53.662403158Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:53.662407335Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:53.662411704Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:53.663744812Z [err]    requireStack: [
+2026-03-18T03:03:53.663745761Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:53.663749812Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:53.663752322Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:53.663757263Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:53.663759278Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:53.663763918Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:53.663765175Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:53.663771274Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:53.663771641Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:53.663775256Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:53.663779269Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:53.663781019Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:53.663785143Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:53.663788499Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:53.663791807Z [err]    ]
+2026-03-18T03:03:53.663795814Z [err]  }
+2026-03-18T03:03:53.663799870Z [err]  
+2026-03-18T03:03:53.663804300Z [err]  Node.js v20.20.1
+2026-03-18T03:03:56.234275405Z [inf]  Running Prisma db push...
+2026-03-18T03:03:56.604722776Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:56.604726371Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:57.193208082Z [inf]  
+2026-03-18T03:03:57.193212015Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:57.193215572Z [inf]  
+2026-03-18T03:03:57.240250856Z [inf]  Starting server...
+2026-03-18T03:03:57.716461049Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:57.716461363Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:57.716472214Z [err]    throw err;
+2026-03-18T03:03:57.716472479Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:57.716476587Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:57.716478262Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:57.716482027Z [err]    ^
+2026-03-18T03:03:57.716484111Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:57.716485940Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:57.716490173Z [err]  
+2026-03-18T03:03:57.716490213Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:57.716496126Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:57.716497999Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:57.716504711Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:57.716505777Z [err]  Require stack:
+2026-03-18T03:03:57.716511242Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:57.716512649Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:57.716517755Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:57.716520078Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:57.716523646Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:57.716526600Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:57.716529239Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:57.716533044Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:57.717933588Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:57.717941461Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:57.717947201Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:57.717952583Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:57.717955536Z [err]    ]
+2026-03-18T03:03:57.717961332Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:57.717962884Z [err]  }
+2026-03-18T03:03:57.717969016Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:57.717969993Z [err]  
+2026-03-18T03:03:57.717976959Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:57.717978076Z [err]  Node.js v20.20.1
+2026-03-18T03:03:57.717981880Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:57.717985833Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:57.717989774Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:57.717993540Z [err]    requireStack: [
+2026-03-18T03:03:57.717997363Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:57.718001200Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
+2026-03-18T03:03:57.718005403Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:57.718009175Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:58.261261963Z [inf]  Running Prisma db push...
+2026-03-18T03:03:58.597687987Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-03-18T03:03:58.603765016Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-03-18T03:03:59.068236784Z [inf]  
+2026-03-18T03:03:59.068245990Z [inf]  The database is already in sync with the Prisma schema.
+2026-03-18T03:03:59.068252170Z [inf]  
+2026-03-18T03:03:59.115452678Z [inf]  Starting server...
+2026-03-18T03:03:59.659709563Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:59.659716603Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:59.659720100Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:59.659723137Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-03-18T03:03:59.659726187Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:59.659764088Z [err]  node:internal/modules/cjs/loader:1210
+2026-03-18T03:03:59.659767002Z [err]    throw err;
+2026-03-18T03:03:59.659769897Z [err]    ^
+2026-03-18T03:03:59.659772729Z [err]  
+2026-03-18T03:03:59.659775560Z [err]  Error: Cannot find module 'cron-parser'
+2026-03-18T03:03:59.659779094Z [err]  Require stack:
+2026-03-18T03:03:59.659781978Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js
+2026-03-18T03:03:59.659789509Z [err]  - /app/node_modules/bullmq/dist/cjs/classes/index.js
+2026-03-18T03:03:59.659792215Z [err]  - /app/node_modules/bullmq/dist/cjs/index.js
+2026-03-18T03:03:59.659795731Z [err]  - /app/apps/api/dist/workers/follow-up.worker.js
+2026-03-18T03:03:59.659799182Z [err]  - /app/apps/api/dist/services/application.service.js
+2026-03-18T03:03:59.659802709Z [err]  - /app/apps/api/dist/routes/applications.js
+2026-03-18T03:03:59.659806470Z [err]  - /app/apps/api/dist/server.js
+2026-03-18T03:03:59.659809968Z [err]      at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+2026-03-18T03:03:59.659813524Z [err]      at Module._load (node:internal/modules/cjs/loader:1038:27)
+2026-03-18T03:03:59.659816986Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-03-18T03:03:59.659820688Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:59.659825360Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js:5:23)
+2026-03-18T03:03:59.660394263Z [err]      '/app/node_modules/bullmq/dist/cjs/index.js',
+2026-03-18T03:03:59.660400753Z [err]      '/app/apps/api/dist/workers/follow-up.worker.js',
+2026-03-18T03:03:59.660404442Z [err]      '/app/apps/api/dist/services/application.service.js',
+2026-03-18T03:03:59.660408020Z [err]      '/app/apps/api/dist/routes/applications.js',
+2026-03-18T03:03:59.660413233Z [err]      '/app/apps/api/dist/server.js'
+2026-03-18T03:03:59.660415270Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-03-18T03:03:59.660418383Z [err]    ]
+2026-03-18T03:03:59.660421863Z [err]      at Object.<anonymous> (/app/node_modules/bullmq/dist/cjs/classes/index.js:12:22)
+2026-03-18T03:03:59.660424961Z [err]  }
+2026-03-18T03:03:59.660427349Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-03-18T03:03:59.660431181Z [err]  
+2026-03-18T03:03:59.660433426Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-03-18T03:03:59.660436738Z [err]  Node.js v20.20.1
+2026-03-18T03:03:59.660438752Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-03-18T03:03:59.660444479Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12) {
+2026-03-18T03:03:59.660447437Z [err]    code: 'MODULE_NOT_FOUND',
+2026-03-18T03:03:59.660450059Z [err]    requireStack: [
+2026-03-18T03:03:59.660452804Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/job-scheduler.js',
+2026-03-18T03:03:59.660455618Z [err]      '/app/node_modules/bullmq/dist/cjs/classes/index.js',
