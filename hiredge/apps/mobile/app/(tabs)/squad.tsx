@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import api, { squadApi } from '../../lib/api';
 import { useThemeColors } from '../../lib/theme';
 import { useAuthStore } from '../../stores/auth.store';
-import { useTranslation } from '@hiredge/shared';
+import { useTranslation } from '../../lib/i18n';
 import { connectSocket, getSocket, joinSquadRoom, leaveSquadRoom } from '../../lib/socket';
 
 const REACTIONS = ['👍', '❤️', '😂', '🔥', '🎉', '💪', '👏', '🚀'];
