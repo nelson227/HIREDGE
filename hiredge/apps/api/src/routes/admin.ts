@@ -4,6 +4,7 @@ import { adminService } from '../services/admin.service';
 import { requireRole } from '../middleware/auth';
 import { AppError } from '../services/auth.service';
 import { env } from '../config/env';
+import prisma from '../db/prisma';
 
 // Admin panel credentials from environment variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -19,6 +20,13 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
       return reply.status(401).send({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants admin invalides' } });
     }
+
+    // Auto-restore ADMIN role if the admin user exists but lost their role
+    const adminUser = await prisma.user.findUnique({ where: { email } });
+    if (adminUser && adminUser.role !== 'ADMIN') {
+      await prisma.user.update({ where: { id: adminUser.id }, data: { role: 'ADMIN' } });
+    }
+
     const adminToken = jwt.sign({ adminAccess: true, email }, env.JWT_SECRET, { expiresIn: '2h' });
     return reply.send({ success: true, data: { adminToken } });
   });
@@ -96,7 +104,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const user = await adminService.updateUserRole(id, role);
+      const user = await adminService.updateUserRole(id, role, request.user.id);
       return reply.send({ success: true, data: user });
     } catch (err) {
       if (err instanceof AppError) {

@@ -146,7 +146,12 @@ export default function AdminUsersPage() {
     loadUsers(newPage, search, roleFilter, tierFilter)
   }
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: string, currentRole: string) => {
+    // Prevent admin from downgrading their own role
+    if (currentRole === 'ADMIN' && newRole !== 'ADMIN') {
+      alert((t as any)('adminCannotDowngradeSelf') || 'Impossible de rétrograder votre propre rôle administrateur')
+      return
+    }
     setActionLoading(true)
     try {
       await adminApi.updateUserRole(userId, newRole)
@@ -348,7 +353,7 @@ export default function AdminUsersPage() {
                               {ROLES.map(role => (
                                 <button
                                   key={role}
-                                  onClick={() => handleRoleChange(user.id, role)}
+                                  onClick={() => handleRoleChange(user.id, role, user.role)}
                                   disabled={user.role === role || actionLoading}
                                   className={`w-full text-left px-3 py-1.5 text-sm hover:bg-muted transition-colors flex items-center gap-2 ${user.role === role ? 'text-primary font-medium' : ''} disabled:opacity-50`}
                                 >

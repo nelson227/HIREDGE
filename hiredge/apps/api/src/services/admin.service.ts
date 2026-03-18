@@ -163,7 +163,7 @@ export class AdminService {
     return user;
   }
 
-  async updateUserRole(userId: string, role: string) {
+  async updateUserRole(userId: string, role: string, requesterId?: string) {
     const validRoles = ['CANDIDATE', 'SCOUT', 'RECRUITER', 'ADMIN'];
     if (!validRoles.includes(role)) {
       throw new AppError('INVALID_ROLE', 'Rôle invalide', 400);
@@ -172,6 +172,11 @@ export class AdminService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Utilisateur introuvable', 404);
+    }
+
+    // Prevent an admin from downgrading their own role
+    if (user.role === 'ADMIN' && role !== 'ADMIN' && requesterId === userId) {
+      throw new AppError('CANNOT_DOWNGRADE_SELF', 'Impossible de rétrograder votre propre rôle administrateur', 400);
     }
 
     return prisma.user.update({
