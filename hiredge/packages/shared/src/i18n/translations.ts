@@ -3190,7 +3190,7 @@ export const translations = {
     jobImportPlaceholder: 'Pega tu carta de presentación aquí...',
     jobImportConfirm: 'Usar esta carta',
     jobImportedLabel: 'Carta personal importada',
-    jobCompanyAnalysisLoading: 'Analizando la empresa...'
+    jobCompanyAnalysisLoading: 'Analizando la empresa...',
     jobAIAnalysis: 'Análisis IA',
     jobTechRequired: 'Tecnologías requeridas',
     jobOpenPositions: 'Puestos abiertos',
