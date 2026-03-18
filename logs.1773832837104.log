@@ -1,0 +1,155 @@
+2026-03-18T10:18:31.066203043Z [inf]  
+2026-03-18T10:18:32.642450646Z [inf]  [35m[Region: us-west1][0m
+2026-03-18T10:18:32.652844051Z [inf]  [35m=========================
+2026-03-18T10:18:32.652878320Z [inf]  Using Detected Dockerfile
+2026-03-18T10:18:32.652882303Z [inf]  =========================
+2026-03-18T10:18:32.652885943Z [inf]  [0m
+2026-03-18T10:18:32.652897665Z [inf]  context: kkt8-Jtjo
+2026-03-18T10:18:32.813584341Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:18:32.813630544Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:18:32.813648569Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:18:32.823202394Z [inf]  [internal] load build definition from Dockerfile
+2026-03-18T10:18:32.825164807Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T10:18:32.828566365Z [inf]  [auth] library/node:pull token for registry-1.docker.io
+2026-03-18T10:18:32.828600122Z [inf]  [auth] library/node:pull token for registry-1.docker.io
+2026-03-18T10:18:33.097935996Z [inf]  [internal] load metadata for docker.io/library/node:20-alpine
+2026-03-18T10:18:33.098000891Z [inf]  [internal] load .dockerignore
+2026-03-18T10:18:33.098498622Z [inf]  [internal] load .dockerignore
+2026-03-18T10:18:33.098550891Z [inf]  [internal] load .dockerignore
+2026-03-18T10:18:33.107765619Z [inf]  [internal] load .dockerignore
+2026-03-18T10:18:33.116930471Z [inf]  [shared-build 3/3] RUN cd packages/shared && npm run build
+2026-03-18T10:18:33.116974749Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T10:18:33.116982633Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T10:18:33.116990246Z [inf]  [api-build 2/6] COPY apps/api/ ./apps/api/
+2026-03-18T10:18:33.116999548Z [inf]  [runner  8/14] COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+2026-03-18T10:18:33.117005645Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T10:18:33.117011620Z [inf]  [runner  7/14] COPY --from=prod-deps /app/node_modules ./node_modules
+2026-03-18T10:18:33.117017228Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:18:33.117029539Z [inf]  [api-build 5/6] RUN cd apps/api && npx prisma generate
+2026-03-18T10:18:33.117036164Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T10:18:33.117041570Z [inf]  [shared-build 2/3] COPY packages/shared/ ./packages/shared/
+2026-03-18T10:18:33.117047211Z [inf]  [deps 4/4] RUN npm ci
+2026-03-18T10:18:33.117052914Z [inf]  [api-build 3/6] COPY packages/shared/ ./packages/shared/
+2026-03-18T10:18:33.117060601Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T10:18:33.117066515Z [inf]  [internal] load build context
+2026-03-18T10:18:33.117071916Z [inf]  [shared-build 1/3] COPY tsconfig.json ./
+2026-03-18T10:18:33.117079026Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T10:18:33.117085361Z [inf]  [api-build 6/6] RUN cd apps/api && npm run build
+2026-03-18T10:18:33.117091044Z [inf]  [api-build 4/6] COPY --from=shared-build /app/packages/shared/dist ./packages/shared/dist
+2026-03-18T10:18:33.117106234Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:18:33.117111776Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:18:33.117117466Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T10:18:33.117132053Z [inf]  [runner  9/14] COPY --from=api-build /app/node_modules/.prisma ./node_modules/.prisma
+2026-03-18T10:18:33.117150831Z [inf]  [runner 12/14] COPY --from=shared-build /app/packages/shared/dist ./node_modules/@hiredge/shared/dist
+2026-03-18T10:18:33.117156776Z [inf]  [runner 11/14] COPY --from=shared-build /app/packages/shared ./packages/shared
+2026-03-18T10:18:33.117161769Z [inf]  [runner 10/14] COPY --from=api-build /app/apps/api ./apps/api
+2026-03-18T10:18:33.117173181Z [inf]  [runner 14/14] RUN chmod +x start.sh && sed -i 's/\r$//' start.sh
+2026-03-18T10:18:33.117179146Z [inf]  [runner 13/14] COPY start.sh ./start.sh
+2026-03-18T10:18:33.117187911Z [inf]  [internal] load build context
+2026-03-18T10:18:33.117196991Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:18:33.121825816Z [inf]  [base 1/3] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+2026-03-18T10:18:33.123348531Z [inf]  [base 2/3] RUN apk add --no-cache openssl
+2026-03-18T10:18:33.123383080Z [inf]  [base 3/3] WORKDIR /app
+2026-03-18T10:18:33.123392838Z [inf]  [internal] load build context
+2026-03-18T10:18:33.123407068Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T10:18:33.171246604Z [inf]  [internal] load build context
+2026-03-18T10:18:33.174074774Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T10:18:33.194568381Z [inf]  [deps 1/4] COPY package.json package-lock.json ./
+2026-03-18T10:18:33.196195099Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T10:18:33.213786236Z [inf]  [runner  4/14] RUN addgroup --system --gid 1001 nodejs
+2026-03-18T10:18:33.214933487Z [inf]  [deps 2/4] COPY apps/api/package.json ./apps/api/
+2026-03-18T10:18:33.216135806Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T10:18:33.217314279Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:18:33.234429695Z [inf]  [deps 3/4] COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:18:33.235905237Z [inf]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T10:18:33.235952536Z [inf]  [deps 4/4] RUN npm ci
+2026-03-18T10:18:33.341468989Z [inf]  [runner  5/14] RUN adduser --system --uid 1001 hiredge
+2026-03-18T10:18:33.342826998Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T10:18:33.436960198Z [inf]  [runner  6/14] RUN mkdir -p /app/uploads && chown hiredge:nodejs /app/uploads
+2026-03-18T10:18:34.652416003Z [inf]  npm error code EUSAGE
+
+2026-03-18T10:18:34.65243958Z [inf]  npm error
+npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+npm error
+npm error Invalid: lock file's picomatch@2.3.1 does not satisfy picomatch@4.0.3
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Invalid: lock file's yaml@1.10.2 does not satisfy yaml@2.8.2
+npm error
+npm error Clean install a project
+npm error
+npm error Usage:
+npm error npm ci
+npm error
+npm error Options:
+npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+npm error [--no-bin-links] [--no-fund] [--dry-run]
+npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+npm error
+npm error aliases: clean-install, ic, install-clean, isntall-clean
+npm error
+npm error Run "npm help ci" for more info
+
+2026-03-18T10:18:34.654596992Z [inf]  npm error code EUSAGE
+
+2026-03-18T10:18:34.654702836Z [inf]  npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.11.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+npm notice To update run: npm install -g npm@11.11.1
+npm notice
+
+2026-03-18T10:18:34.654728402Z [inf]  npm error
+npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+npm error
+npm error Invalid: lock file's picomatch@2.3.1 does not satisfy picomatch@4.0.3
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Missing: picomatch@2.3.1 from lock file
+npm error Invalid: lock file's yaml@1.10.2 does not satisfy yaml@2.8.2
+npm error
+npm error Clean install a project
+npm error
+npm error Usage:
+npm error npm ci
+npm error
+npm error Options:
+npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+npm error [--no-bin-links] [--no-fund] [--dry-run]
+npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+npm error
+npm error aliases: clean-install, ic, install-clean, isntall-clean
+npm error
+npm error Run "npm help ci" for more info
+
+2026-03-18T10:18:34.655043356Z [inf]  npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-18T10_18_33_488Z-debug-0.log
+
+2026-03-18T10:18:34.656899336Z [inf]  npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.11.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+npm notice To update run: npm install -g npm@11.11.1
+npm notice
+
+2026-03-18T10:18:34.657158657Z [inf]  npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-18T10_18_33_488Z-debug-0.log
+
+2026-03-18T10:18:34.723289845Z [err]  [prod-deps 4/4] RUN npm ci --omit=dev
+2026-03-18T10:18:34.774612698Z [err]  [deps 4/4] RUN npm ci
+2026-03-18T10:18:34.789515799Z [err]  Dockerfile:32
+2026-03-18T10:18:34.789564976Z [err]  -------------------
+2026-03-18T10:18:34.789570520Z [err]  30 |     COPY apps/api/package.json ./apps/api/
+2026-03-18T10:18:34.789574443Z [err]  31 |     COPY packages/shared/package.json ./packages/shared/
+2026-03-18T10:18:34.789580441Z [err]  32 | >>> RUN npm ci --omit=dev
+2026-03-18T10:18:34.789584273Z [err]  33 |
+2026-03-18T10:18:34.789592840Z [err]  34 |     # Production image
+2026-03-18T10:18:34.789596379Z [err]  -------------------
+2026-03-18T10:18:34.789600723Z [err]  ERROR: failed to build: failed to solve: process "/bin/sh -c npm ci --omit=dev" did not complete successfully: exit code: 1
