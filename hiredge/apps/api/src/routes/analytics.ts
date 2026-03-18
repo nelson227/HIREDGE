@@ -44,7 +44,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         select: { score: true },
       });
       const avgSimScore = simulations.length > 0
-        ? Math.round(simulations.reduce((sum, s) => sum + (s.score ?? 0), 0) / simulations.length)
+        ? Math.round(simulations.reduce((sum: number, s: { score: number | null }) => sum + (s.score ?? 0), 0) / simulations.length)
         : 0;
 
       // Streaks
@@ -125,7 +125,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         include: { company: true },
       });
 
-      const comparison = jobs.map((job) => ({
+      const comparison = jobs.map((job: any) => ({
         id: job.id,
         title: job.title,
         company: job.company?.name ?? 'N/A',
