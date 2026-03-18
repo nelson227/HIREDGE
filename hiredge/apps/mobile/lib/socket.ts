@@ -108,27 +108,6 @@ export function updateSocketToken(newToken: string) {
   }
 }
 
-export function disconnectSocket() {
-  if (socket) {
-    socket.removeAllListeners();
-    socket.disconnect();
-    socket = null;
-  }
-}
-
-// Squad helpers
-export function joinSquadRoom(squadId: string) {
-  socket?.emit('squad:join', squadId);
-}
-
-export function leaveSquadRoom(squadId: string) {
-  socket?.emit('squad:leave', squadId);
-}
-
-export function sendSquadMessage(squadId: string, content: string) {
-  socket?.emit('squad:message', { squadId, content });
-}
-
 export function emitTyping(squadId: string) {
   socket?.emit('squad:typing', squadId);
 }
