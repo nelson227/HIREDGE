@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Alert, Modal, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Alert, Modal, Switch, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -124,6 +124,11 @@ export default function JobDetailScreen() {
   const [applyCoverLetter, setApplyCoverLetter] = useState<string | null>(null);
   const [applyCoverLetterLoading, setApplyCoverLetterLoading] = useState(false);
 
+  // Import cover letter state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [isCustomLetter, setIsCustomLetter] = useState(false);
+
   const { data: job, isLoading } = useQuery({
     queryKey: ['job', id],
     queryFn: async () => {
@@ -154,6 +159,7 @@ export default function JobDetailScreen() {
     setCoverLetter(null);
     setCoverLetterLoading(true);
     setCoverLetterError(null);
+    setIsCustomLetter(false);
     try {
       const res = await jobsApi.getCoverLetter(id!, true);
       if (res.data?.data) setCoverLetter(res.data.data);
@@ -163,6 +169,19 @@ export default function JobDetailScreen() {
       setCoverLetterLoading(false);
     }
   }, [id]);
+
+  const handleConfirmImport = useCallback(() => {
+    if (!importText.trim()) return;
+    const imported: CoverLetterData = {
+      coverLetter: importText.trim(),
+      generatedAt: new Date().toISOString(),
+    };
+    setCoverLetter(imported);
+    setApplyCoverLetter(imported.coverLetter);
+    setIsCustomLetter(true);
+    setShowImportModal(false);
+    setImportText('');
+  }, [importText]);
 
   // ─── Company Analysis ───────────────────────────────────────
   const loadCompanyAnalysis = useCallback(async () => {
@@ -531,6 +550,13 @@ export default function JobDetailScreen() {
 
             {coverLetter && !coverLetterLoading && (
               <View>
+                {/* Imported label */}
+                {isCustomLetter && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <Ionicons name="cloud-upload-outline" size={14} color={colors.primary} />
+                    <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>{t('jobImportedLabel')}</Text>
+                  </View>
+                )}
                 {/* Action buttons */}
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                   <TouchableOpacity
@@ -550,6 +576,13 @@ export default function JobDetailScreen() {
                     <Ionicons name="refresh-outline" size={18} color={colors.primary} />
                     <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '600' }}>{t('jobRegenerate')}</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowImportModal(true)}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <Ionicons name="cloud-upload-outline" size={18} color={colors.primary} />
+                    <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>{t('jobImport')}</Text>
+                  </TouchableOpacity>
                 </View>
                 {/* Letter content */}
                 <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border }}>
@@ -564,12 +597,23 @@ export default function JobDetailScreen() {
                 <Text style={{ color: colors.mutedForeground, fontSize: 15, marginTop: 12, textAlign: 'center' }}>
                   {t('jobGenerateLetterPrompt')}
                 </Text>
-                <TouchableOpacity onPress={loadCoverLetter} style={{
-                  marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14,
-                  shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
-                }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>✦  {t('jobGenerateLetter')}</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                  <TouchableOpacity onPress={loadCoverLetter} style={{
+                    backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14,
+                    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+                  }}>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>✦  {t('jobGenerateLetter')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowImportModal(true)} style={{
+                    borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14,
+                    backgroundColor: colors.card,
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="cloud-upload-outline" size={18} color={colors.primary} />
+                      <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>{t('jobImport')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -933,6 +977,76 @@ export default function JobDetailScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* ═══ Import Cover Letter Modal ═══ */}
+      <Modal visible={showImportModal} transparent animationType="slide" onRequestClose={() => setShowImportModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{
+              backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+              paddingHorizontal: 20, paddingTop: 20, paddingBottom: 34, maxHeight: '80%',
+            }}>
+              {/* Handle */}
+              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 }} />
+
+              {/* Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground }}>{t('jobImportTitle')}</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setShowImportModal(false); setImportText(''); }}>
+                  <Ionicons name="close" size={24} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 12 }}>{t('jobImportDesc')}</Text>
+
+              {/* Text input */}
+              <TextInput
+                multiline
+                placeholder={t('jobImportPlaceholder')}
+                placeholderTextColor={colors.mutedForeground}
+                value={importText}
+                onChangeText={setImportText}
+                style={{
+                  minHeight: 200, maxHeight: 300, borderRadius: 14, borderWidth: 1,
+                  borderColor: colors.border, backgroundColor: colors.background,
+                  padding: 16, fontSize: 14, color: colors.foreground, lineHeight: 22,
+                  textAlignVertical: 'top',
+                }}
+              />
+
+              {/* Action buttons */}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <TouchableOpacity
+                  onPress={() => { setShowImportModal(false); setImportText(''); }}
+                  style={{
+                    flex: 1, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+                    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card,
+                  }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.mutedForeground }}>{t('jobCancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleConfirmImport}
+                  disabled={!importText.trim()}
+                  style={{
+                    flex: 2, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+                    backgroundColor: importText.trim() ? colors.primary : colors.muted,
+                    flexDirection: 'row', gap: 8,
+                  }}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color={importText.trim() ? '#fff' : colors.mutedForeground} />
+                  <Text style={{ color: importText.trim() ? '#fff' : colors.mutedForeground, fontSize: 15, fontWeight: '700' }}>
+                    {t('jobImportConfirm')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

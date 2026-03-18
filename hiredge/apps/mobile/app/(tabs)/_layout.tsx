@@ -81,6 +81,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="applications"
+        options={{
+          title: t('navApplications'),
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="document-text-outline" focusedName="document-text" focused={focused} color={color} primaryColor={colors.primary} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="edge"
         options={{
           title: 'EDGE',
