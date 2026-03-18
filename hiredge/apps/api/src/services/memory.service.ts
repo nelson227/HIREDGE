@@ -105,9 +105,9 @@ Réponds UNIQUEMENT avec le JSON.`,
         userId,
         conversationId,
         summary: summary.summary || 'Conversation sans résumé.',
-        keyDecisions: summary.keyDecisions || [],
+        keyDecisions: JSON.stringify(summary.keyDecisions || []),
         emotionalState: summary.emotionalState || 'neutral',
-        actionItems: summary.actionItems || [],
+        actionItems: JSON.stringify(summary.actionItems || []),
       },
     });
 
@@ -213,7 +213,8 @@ Réponds UNIQUEMENT avec le JSON.`,
     if (episodes.length > 0) {
       const episodeSummary = episodes.map((e) => {
         const date = new Date(e.createdAt).toLocaleDateString('fr-FR');
-        return `- ${date}: ${e.summary}${e.actionItems?.length ? ` (à faire: ${(e.actionItems as string[]).join(', ')})` : ''}`;
+        const items: string[] = e.actionItems ? JSON.parse(e.actionItems) : [];
+        return `- ${date}: ${e.summary}${items.length ? ` (à faire: ${items.join(', ')})` : ''}`;
       }).join('\n');
       parts.push(`[Conversations récentes]\n${episodeSummary}`);
     }
