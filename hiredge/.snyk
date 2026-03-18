@@ -1,0 +1,11 @@
+# Snyk policy file — ignore false positives
+# https://docs.snyk.io/scan-using-snyk/policies/the-.snyk-file
+version: v1.25.0
+
+exclude:
+  code:
+    # translations.ts — i18n UI labels containing the word "password" are NOT hardcoded secrets
+    - packages/shared/src/i18n/translations.ts
+
+    # serve.js — development-only localhost HTTP server, not used in production
+    - apps/mobile/serve.js
