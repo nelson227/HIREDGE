@@ -74,7 +74,7 @@ function getCompanyName(company: Job['company'], fallback: string): string {
   return company?.name || fallback
 }
 
-function formatSalary(job: Job, t: (k: string) => string): string {
+function formatSalary(job: Job, t: (k: any) => string): string {
   if (job.salary) return job.salary
   if (job.salaryMin && job.salaryMax) {
     return `${job.salaryMin.toLocaleString()}€ - ${job.salaryMax.toLocaleString()}€`
@@ -83,7 +83,7 @@ function formatSalary(job: Job, t: (k: string) => string): string {
   return t('dashboardNotSpecified')
 }
 
-function formatPostedAt(dateStr: string, t: (k: string) => string): string {
+function formatPostedAt(dateStr: string, t: (k: any) => string): string {
   const date = new Date(dateStr)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
@@ -96,7 +96,7 @@ function formatPostedAt(dateStr: string, t: (k: string) => string): string {
   return date.toLocaleDateString()
 }
 
-function formatEventDate(dateStr: string | undefined, t: (k: string) => string): string {
+function formatEventDate(dateStr: string | undefined, t: (k: any) => string): string {
   if (!dateStr) return t('dashboardDateNotDefined')
   const date = new Date(dateStr)
   const now = new Date()
