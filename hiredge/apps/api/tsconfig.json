@@ -11,6 +11,8 @@
       "@/*": ["./src/*"],
       "@hiredge/shared": ["../../packages/shared/src"],
       "@hiredge/shared/*": ["../../packages/shared/src/*"],
+      "@prisma/client": ["../../node_modules/@prisma/client"],
+      "@prisma/client/*": ["../../node_modules/@prisma/client/*"],
       ".prisma/client/*": ["../../node_modules/.prisma/client/*"],
       ".prisma/*": ["../../node_modules/.prisma/*"]
     }

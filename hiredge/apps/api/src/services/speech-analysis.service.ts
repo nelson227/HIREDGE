@@ -3,6 +3,9 @@ import prisma from '../db/prisma';
 import { env } from '../config/env';
 import { AppError } from './auth.service';
 
+type SimulationWithSessions = Awaited<ReturnType<typeof prisma.interviewSimulation.findMany<{ include: { sessions: true } }>>>[number];
+type SessionMetrics = SimulationWithSessions['sessions'][number];
+
 const groq = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
   baseURL: 'https://api.groq.com/openai/v1',
@@ -393,28 +396,28 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
     }
 
     // Aggregate all metrics
-    const allMetrics = simulations.flatMap(s => s.sessions);
+    const allMetrics: SessionMetrics[] = simulations.flatMap((s: SimulationWithSessions) => s.sessions);
 
-    const avgScore = simulations.reduce((sum, s) => sum + s.score, 0) / simulations.length;
+    const avgScore = simulations.reduce((sum: number, s: SimulationWithSessions) => sum + s.score, 0) / simulations.length;
     const avgConfidence = allMetrics.length > 0
-      ? allMetrics.reduce((sum, m) => sum + m.confidenceScore, 0) / allMetrics.length
+      ? allMetrics.reduce((sum: number, m: SessionMetrics) => sum + m.confidenceScore, 0) / allMetrics.length
       : 0;
     const avgWPM = allMetrics.length > 0
-      ? allMetrics.reduce((sum, m) => sum + m.wordsPerMinute, 0) / allMetrics.length
+      ? allMetrics.reduce((sum: number, m: SessionMetrics) => sum + m.wordsPerMinute, 0) / allMetrics.length
       : 0;
     const avgFillers = allMetrics.length > 0
-      ? allMetrics.reduce((sum, m) => sum + m.fillerWordCount, 0) / allMetrics.length
+      ? allMetrics.reduce((sum: number, m: SessionMetrics) => sum + m.fillerWordCount, 0) / allMetrics.length
       : 0;
     const avgEyeContact = allMetrics.length > 0
-      ? allMetrics.reduce((sum, m) => sum + m.eyeContactPct, 0) / allMetrics.length
+      ? allMetrics.reduce((sum: number, m: SessionMetrics) => sum + m.eyeContactPct, 0) / allMetrics.length
       : 0;
 
     // Trend: compare last 5 vs previous 5
     const recent5 = simulations.slice(0, 5);
     const previous5 = simulations.slice(5, 10);
-    const recentAvg = recent5.reduce((sum, s) => sum + s.score, 0) / recent5.length;
+    const recentAvg = recent5.reduce((sum: number, s: SimulationWithSessions) => sum + s.score, 0) / recent5.length;
     const previousAvg = previous5.length > 0
-      ? previous5.reduce((sum, s) => sum + s.score, 0) / previous5.length
+      ? previous5.reduce((sum: number, s: SimulationWithSessions) => sum + s.score, 0) / previous5.length
       : recentAvg;
     const trend = recentAvg > previousAvg + 5 ? 'improving' as const
       : recentAvg < previousAvg - 5 ? 'declining' as const
@@ -422,11 +425,11 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
 
     // Content dimension averages
     const contentAvgs = {
-      relevance: avg(allMetrics.map(m => m.relevanceScore)),
-      depth: avg(allMetrics.map(m => m.depthScore)),
-      structure: avg(allMetrics.map(m => m.structureScore)),
-      specificity: avg(allMetrics.map(m => m.specificityScore)),
-      communication: avg(allMetrics.map(m => m.communicationScore)),
+      relevance: avg(allMetrics.map((m: SessionMetrics) => m.relevanceScore)),
+      depth: avg(allMetrics.map((m: SessionMetrics) => m.depthScore)),
+      structure: avg(allMetrics.map((m: SessionMetrics) => m.structureScore)),
+      specificity: avg(allMetrics.map((m: SessionMetrics) => m.specificityScore)),
+      communication: avg(allMetrics.map((m: SessionMetrics) => m.communicationScore)),
     };
 
     // Determine strengths and improvements
@@ -444,13 +447,13 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
     }));
 
     // Session history for charts
-    const sessionHistory = simulations.map(s => ({
+    const sessionHistory = simulations.map((s: SimulationWithSessions) => ({
       id: s.id,
       date: s.createdAt,
       type: s.type,
       score: s.score,
       confidence: s.sessions.length > 0
-        ? Math.round(s.sessions.reduce((sum, m) => sum + m.confidenceScore, 0) / s.sessions.length)
+        ? Math.round(s.sessions.reduce((sum: number, m: SessionMetrics) => sum + m.confidenceScore, 0) / s.sessions.length)
         : 0,
       company: s.companyName,
     })).reverse(); // chronological
@@ -465,7 +468,7 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
         averageFillerWords: Math.round(avgFillers * 10) / 10,
         averageEyeContact: Math.round(avgEyeContact),
         starMethodUsage: allMetrics.length > 0
-          ? Math.round((allMetrics.filter(m => m.starMethodUsed).length / allMetrics.length) * 100)
+          ? Math.round((allMetrics.filter((m: SessionMetrics) => m.starMethodUsed).length / allMetrics.length) * 100)
           : 0,
       },
       confidenceStats: {
@@ -509,7 +512,7 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
         date: simulation.createdAt,
         mode: (simulation as any).mode ?? 'TEXT',
       },
-      metrics: metrics.map(m => ({
+      metrics: metrics.map((m: SessionMetrics) => ({
         questionIndex: m.questionIndex,
         speech: {
           duration: m.speechDuration,
@@ -536,15 +539,15 @@ Sois précis et factuel. Réponds UNIQUEMENT avec le JSON.`,
         responseTimeMs: m.responseTimeMs,
       })),
       summary: {
-        avgConfidence: Math.round(avg(metrics.map(m => m.confidenceScore))),
-        avgWPM: Math.round(avg(metrics.map(m => m.wordsPerMinute))),
-        totalFillers: metrics.reduce((sum, m) => sum + m.fillerWordCount, 0),
-        avgEyeContact: Math.round(avg(metrics.map(m => m.eyeContactPct))),
-        avgContentScore: Math.round(avg(metrics.map(m =>
+        avgConfidence: Math.round(avg(metrics.map((m: SessionMetrics) => m.confidenceScore))),
+        avgWPM: Math.round(avg(metrics.map((m: SessionMetrics) => m.wordsPerMinute))),
+        totalFillers: metrics.reduce((sum: number, m: SessionMetrics) => sum + m.fillerWordCount, 0),
+        avgEyeContact: Math.round(avg(metrics.map((m: SessionMetrics) => m.eyeContactPct))),
+        avgContentScore: Math.round(avg(metrics.map((m: SessionMetrics) =>
           (m.relevanceScore + m.depthScore + m.structureScore + m.specificityScore + m.communicationScore) / 5,
         )) * 20),
         starUsageRate: Math.round(
-          (metrics.filter(m => m.starMethodUsed).length / metrics.length) * 100,
+          (metrics.filter((m: SessionMetrics) => m.starMethodUsed).length / metrics.length) * 100,
         ),
       },
     };
