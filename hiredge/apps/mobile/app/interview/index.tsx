@@ -70,9 +70,21 @@ export default function InterviewScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Header */}
       <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 12 }}>
-          <Ionicons name="arrow-back" size={22} color={colors.foreground} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/interview/analytics')}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 4,
+              backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+            }}
+          >
+            <Ionicons name="bar-chart-outline" size={14} color={colors.primary} />
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>Analytics</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={{ fontSize: 22, fontWeight: '700', color: colors.foreground }}>{t('interviewTitle')}</Text>
         <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 4 }}>
           {t('interviewSubtitle')}

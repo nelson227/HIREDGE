@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Animated } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -10,7 +10,14 @@ import { useTranslation } from '../../lib/i18n';
 export default function InterviewSessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [input, setInput] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [lastConfidence, setLastConfidence] = useState<number | null>(null);
+  const [lastSpeechAnalysis, setLastSpeechAnalysis] = useState<any>(null);
+  const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const recordingInterval = useRef<NodeJS.Timeout | null>(null);
+  const confidenceAnim = useRef(new Animated.Value(0)).current;
   const { colors } = useThemeColors();
   const { t } = useTranslation();
 
@@ -25,10 +32,21 @@ export default function InterviewSessionScreen() {
 
   const respondMutation = useMutation({
     mutationFn: async (message: string) => {
-      const { data } = await interviewsApi.respond(id!, message);
+      const responseTimeMs = responseStartTime ? Date.now() - responseStartTime : 0;
+      const { data } = await interviewsApi.respond(id!, message, { responseTimeMs });
       return data.data;
     },
-    onSuccess: () => refetch(),
+    onSuccess: (result) => {
+      if (result?.confidence?.score != null) {
+        setLastConfidence(result.confidence.score);
+        Animated.spring(confidenceAnim, { toValue: result.confidence.score / 100, useNativeDriver: false }).start();
+      }
+      if (result?.speechAnalysis) {
+        setLastSpeechAnalysis(result.speechAnalysis);
+      }
+      setResponseStartTime(null);
+      refetch();
+    },
   });
 
   const endMutation = useMutation({
@@ -45,6 +63,13 @@ export default function InterviewSessionScreen() {
     setInput('');
     respondMutation.mutate(text);
   };
+
+  // Track when user starts typing
+  useEffect(() => {
+    if (input.length === 1 && !responseStartTime) {
+      setResponseStartTime(Date.now());
+    }
+  }, [input, responseStartTime]);
 
   const handleEnd = () => {
     Alert.alert(t('interviewEndTitle'), t('interviewEndConfirm'), [
@@ -123,6 +148,49 @@ export default function InterviewSessionScreen() {
         </View>
       )}
 
+      {/* Real-time confidence banner */}
+      {lastConfidence != null && !isFinished && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8,
+          backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border, gap: 12,
+        }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{
+              fontSize: 22, fontWeight: '800',
+              color: lastConfidence >= 70 ? '#22C55E' : lastConfidence >= 50 ? '#F59E0B' : '#EF4444',
+            }}>
+              {lastConfidence}
+            </Text>
+            <Text style={{ fontSize: 9, color: colors.mutedForeground }}>Confiance</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ height: 6, backgroundColor: colors.muted, borderRadius: 3, overflow: 'hidden' }}>
+              <Animated.View style={{
+                height: 6, borderRadius: 3,
+                backgroundColor: lastConfidence >= 70 ? '#22C55E' : lastConfidence >= 50 ? '#F59E0B' : '#EF4444',
+                width: confidenceAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+              }} />
+            </View>
+          </View>
+          {lastSpeechAnalysis && (
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <View style={{ backgroundColor: '#3B82F620', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                <Text style={{ fontSize: 9, color: '#3B82F6', fontWeight: '600' }}>
+                  {lastSpeechAnalysis.wordsPerMinute} m/m
+                </Text>
+              </View>
+              {lastSpeechAnalysis.fillerCount > 0 && (
+                <View style={{ backgroundColor: '#EF444420', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ fontSize: 9, color: '#EF4444', fontWeight: '600' }}>
+                    {lastSpeechAnalysis.fillerCount} filler{lastSpeechAnalysis.fillerCount > 1 ? 's' : ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Messages */}
       <FlatList
         ref={flatListRef}
@@ -160,6 +228,28 @@ export default function InterviewSessionScreen() {
                   {item.evaluation.specificity != null && (
                     <ScoreBadge label={t('interviewSpecificity')} score={item.evaluation.specificity} colors={colors} />
                   )}
+                  {item.evaluation.starMethodUsed && (
+                    <View style={{ backgroundColor: '#22C55E15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 9, color: '#22C55E', fontWeight: '600' }}>⭐ STAR</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              {/* Confidence per response */}
+              {item.confidence?.score != null && (
+                <View style={{
+                  marginTop: 4, alignSelf: isUser ? 'flex-end' : 'flex-start',
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                }}>
+                  <Ionicons name="flash" size={10} color={
+                    item.confidence.score >= 70 ? '#22C55E' : item.confidence.score >= 50 ? '#F59E0B' : '#EF4444'
+                  } />
+                  <Text style={{
+                    fontSize: 9, fontWeight: '700',
+                    color: item.confidence.score >= 70 ? '#22C55E' : item.confidence.score >= 50 ? '#F59E0B' : '#EF4444',
+                  }}>
+                    {item.confidence.score}% confiance
+                  </Text>
                 </View>
               )}
             </View>

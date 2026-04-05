@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import prisma from '../db/prisma';
 import { env } from '../config/env';
 import { AppError } from './auth.service';
+import { speechAnalysisService } from './speech-analysis.service';
 
 const groq = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
@@ -116,7 +117,11 @@ export class InterviewSimService {
     };
   }
 
-  async respondToSimulation(userId: string, simulationId: string, response: string) {
+  async respondToSimulation(userId: string, simulationId: string, response: string, meta?: {
+    durationSeconds?: number;
+    eyeContactPct?: number;
+    responseTimeMs?: number;
+  }) {
     const simulation = await prisma.interviewSimulation.findFirst({
       where: { id: simulationId, userId },
     });
@@ -145,8 +150,26 @@ export class InterviewSimService {
       timestamp: new Date().toISOString(),
     });
 
-    // Evaluate response in background (simplified inline)
-    const evaluation = await this.evaluateResponse(response, messages, character);
+    // Evaluate response with full speech + confidence analysis
+    const lastQuestion = messages.filter((m: any) => m.role === 'interviewer').pop()?.content ?? '';
+    const fullAnalysis = await speechAnalysisService.analyzeResponse(
+      response, lastQuestion, messages, meta?.durationSeconds, meta?.eyeContactPct,
+    );
+
+    // Save detailed metrics for this exchange
+    await speechAnalysisService.saveSessionMetrics(
+      simulationId,
+      questionCount,
+      fullAnalysis,
+      meta?.responseTimeMs ?? 0,
+      meta?.eyeContactPct,
+    ).catch(() => {}); // non-blocking
+
+    const evaluation = {
+      questionId: questionCount,
+      scores: fullAnalysis.content,
+      feedback: fullAnalysis.feedback,
+    };
 
     // Check if simulation should end
     if (questionCount >= totalQuestions) {
@@ -214,6 +237,16 @@ export class InterviewSimService {
       evaluation: {
         score: evaluation.scores,
         feedback: evaluation.feedback,
+      },
+      speechAnalysis: {
+        wordsPerMinute: fullAnalysis.speech.wordsPerMinute,
+        fillerWords: fullAnalysis.speech.fillerWords,
+        fillerCount: fullAnalysis.speech.fillerWordCount,
+      },
+      confidence: {
+        score: fullAnalysis.confidence.confidenceScore,
+        breakdown: fullAnalysis.confidence.breakdown,
+        tips: fullAnalysis.confidence.tips,
       },
     };
   }
@@ -441,6 +474,40 @@ Réponds UNIQUEMENT avec le JSON.`,
       jobTitle: data.jobTitle,
       difficulty: 4, // Max difficulty
       stressMode: true,
+    });
+  }
+
+  /**
+   * Start simulation from a job listing URL — extracts info and generates targeted questions.
+   */
+  async startFromJobUrl(userId: string, url: string, type?: string) {
+    // Use LLM to extract job info from URL context
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0,
+      max_tokens: 300,
+      messages: [
+        {
+          role: 'system',
+          content: `L'utilisateur veut préparer un entretien pour une offre d'emploi. 
+Extrais les informations de l'URL et retourne un JSON: { "company": "nom", "jobTitle": "titre du poste", "suggestedType": "RH|TECHNICAL|BEHAVIORAL|CASE_STUDY" }
+Si tu ne peux pas extraire, invente des valeurs raisonnables basées sur l'URL.`,
+        },
+        { role: 'user', content: `URL de l'offre: ${url}` },
+      ],
+    });
+
+    let jobInfo = { company: 'Entreprise', jobTitle: 'Poste', suggestedType: 'RH' };
+    try {
+      const raw = completion.choices[0]?.message?.content?.trim() ?? '{}';
+      const cleaned = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      jobInfo = JSON.parse(cleaned);
+    } catch { /* use defaults */ }
+
+    return this.startSimulation(userId, {
+      type: type ?? jobInfo.suggestedType ?? 'RH',
+      companyName: jobInfo.company,
+      jobTitle: jobInfo.jobTitle,
     });
   }
 

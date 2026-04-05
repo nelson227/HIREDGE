@@ -14,8 +14,11 @@ import {
   XCircle,
   User,
   Bot,
+  BarChart3,
+  Zap,
+  Volume2,
 } from "lucide-react"
-import { interviewsExtApi } from "@/lib/api"
+import { interviewsExtApi, interviewsApi } from "@/lib/api"
 
 interface Exchange {
   question: string
@@ -38,9 +41,10 @@ export default function InterviewReplayPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
-  const [tab, setTab] = useState<"replay" | "report">("replay")
+  const [tab, setTab] = useState<"replay" | "report" | "metrics">("replay")
   const [replay, setReplay] = useState<ReplayData | null>(null)
   const [report, setReport] = useState<any>(null)
+  const [metrics, setMetrics] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -50,12 +54,14 @@ export default function InterviewReplayPage() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [replayRes, reportRes] = await Promise.all([
+      const [replayRes, reportRes, metricsRes] = await Promise.all([
         interviewsExtApi.getReplay(id).catch(() => null),
         interviewsExtApi.getReport(id).catch(() => null),
+        interviewsApi.getMetrics(id).catch(() => null),
       ])
       if (replayRes?.data?.success) setReplay(replayRes.data.data)
       if (reportRes?.data?.success) setReport(reportRes.data.data)
+      if (metricsRes?.data?.data) setMetrics(metricsRes.data.data)
     } catch { /* no-op */ }
     finally { setLoading(false) }
   }
@@ -106,6 +112,15 @@ export default function InterviewReplayPage() {
         >
           <FileText className="w-4 h-4" />
           Rapport complet
+        </button>
+        <button
+          onClick={() => setTab("metrics")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            tab === "metrics" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Métriques vocales
         </button>
       </div>
 
@@ -269,6 +284,124 @@ export default function InterviewReplayPage() {
               <CardContent className="p-12 text-center">
                 <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">Rapport non disponible. Terminez d&apos;abord la simulation.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Metrics Tab */}
+      {tab === "metrics" && (
+        <div className="space-y-6">
+          {metrics?.metrics?.length > 0 ? (
+            <>
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <Zap className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+                    <p className="text-2xl font-bold">
+                      {Math.round(metrics.metrics.reduce((s: number, m: any) => s + (m.confidenceScore ?? 0), 0) / metrics.metrics.length)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Confiance moy.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <Volume2 className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+                    <p className="text-2xl font-bold">
+                      {Math.round(metrics.metrics.reduce((s: number, m: any) => s + (m.wordsPerMinute ?? 0), 0) / metrics.metrics.length)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Mots/min moy.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-2xl font-bold text-red-500">
+                      {metrics.metrics.reduce((s: number, m: any) => s + (m.fillerWordCount ?? 0), 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Fillers total</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-2xl font-bold text-green-500">
+                      {metrics.metrics.filter((m: any) => m.starMethodUsed).length}/{metrics.metrics.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Méthode STAR</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Per-question metrics */}
+              {metrics.metrics.map((m: any, i: number) => (
+                <Card key={i}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span>Question {m.questionIndex + 1}</span>
+                      <span className={`text-lg font-bold ${
+                        (m.confidenceScore ?? 0) >= 70 ? 'text-green-600' :
+                        (m.confidenceScore ?? 0) >= 50 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {m.confidenceScore ?? '—'}%
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Débit</span>
+                        <p className="font-medium">{m.wordsPerMinute ?? '—'} mots/min</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Fillers</span>
+                        <p className="font-medium">{m.fillerWordCount ?? 0}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Durée</span>
+                        <p className="font-medium">{m.speechDuration ? `${m.speechDuration.toFixed(0)}s` : '—'}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">STAR</span>
+                        <p className="font-medium">{m.starMethodUsed ? '✓ Oui' : '✗ Non'}</p>
+                      </div>
+                    </div>
+
+                    {/* Content scores */}
+                    <div className="mt-3 flex gap-2">
+                      {[
+                        { label: 'Pertinence', val: m.relevanceScore },
+                        { label: 'Profondeur', val: m.depthScore },
+                        { label: 'Structure', val: m.structureScore },
+                        { label: 'Spécificité', val: m.specificityScore },
+                        { label: 'Communication', val: m.communicationScore },
+                      ].map(d => (
+                        <div key={d.label} title={d.label} className={`flex-1 text-center py-1.5 rounded text-xs font-medium ${
+                          (d.val ?? 0) >= 4 ? 'bg-green-100 text-green-700' :
+                          (d.val ?? 0) >= 3 ? 'bg-blue-100 text-blue-700' :
+                          (d.val ?? 0) >= 2 ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {d.label.slice(0, 4)} {d.val ?? '—'}/5
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Filler words list */}
+                    {m.fillerWords?.length > 0 && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Mots détectés : {(typeof m.fillerWords === 'string' ? JSON.parse(m.fillerWords) : m.fillerWords).join(', ')}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Pas de métriques vocales pour cette simulation</p>
               </CardContent>
             </Card>
           )}

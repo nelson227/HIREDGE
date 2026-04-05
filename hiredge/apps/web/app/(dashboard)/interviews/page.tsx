@@ -15,6 +15,7 @@ import {
   Loader2,
   Calendar,
   MessageSquare,
+  BarChart3,
 } from "lucide-react"
 import { interviewsApi } from "@/lib/api"
 import { connectSocket } from "@/lib/socket"
@@ -134,12 +135,20 @@ export default function InterviewsPage() {
             Entraînez-vous avec l&apos;IA ou préparez vos entretiens planifiés
           </p>
         </div>
-        <Link href="/interview">
-          <Button size="lg">
-            <Play className="w-4 h-4 mr-2" />
-            Démarrer une simulation
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/interviews/analytics">
+            <Button variant="outline" size="lg">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </Button>
+          </Link>
+          <Link href="/interview">
+            <Button size="lg">
+              <Play className="w-4 h-4 mr-2" />
+              Démarrer une simulation
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Quick Start Cards */}

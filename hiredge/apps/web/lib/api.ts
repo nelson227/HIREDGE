@@ -228,12 +228,29 @@ export const profileApi = {
 // ─── Interviews ──────────────────────────────────────────────────
 export const interviewsApi = {
   list: (params?: Record<string, string>) => api.get('/interviews', { params }),
-  start: (data: { type: string; applicationId?: string; jobId?: string }) =>
+  start: (data: { type: string; applicationId?: string; jobId?: string; companyName?: string; jobTitle?: string; mode?: string }) =>
     api.post('/interviews/start', data),
+  startFromUrl: (data: { url: string; type?: string }) =>
+    api.post('/interviews/from-url', data),
   getById: (id: string) => api.get(`/interviews/${id}`),
-  sendMessage: (id: string, message: string) =>
-    api.post(`/interviews/${id}/message`, { message }),
+  sendMessage: (id: string, message: string, meta?: { durationSeconds?: number; eyeContactPct?: number; responseTimeMs?: number }) =>
+    api.post(`/interviews/${id}/message`, { message, ...meta }),
+  sendVoice: (id: string, audioBlob: Blob) => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'voice.webm');
+    return api.post(`/interviews/${id}/voice`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    });
+  },
   end: (id: string) => api.post(`/interviews/${id}/end`),
+  getHistory: () => api.get('/interviews/history'),
+  startStress: (data: { jobId?: string; companyName?: string; jobTitle?: string }) =>
+    api.post('/interviews/start-stress', data),
+  getReport: (id: string) => api.get(`/interviews/${id}/report`),
+  getReplay: (id: string) => api.get(`/interviews/${id}/replay`),
+  getMetrics: (id: string) => api.get(`/interviews/${id}/metrics`),
+  getAnalytics: () => api.get('/interviews/analytics'),
 };
 
 // ─── Squad ───────────────────────────────────────────────────────

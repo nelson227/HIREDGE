@@ -458,14 +458,51 @@ model InterviewSimulation {
   config          String?
   audioUrl        String?
   status          String    @default("IN_PROGRESS")
+  mode            String    @default("TEXT") // TEXT | VOICE
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job  Job?  @relation(fields: [jobId], references: [id])
+  user     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job      Job?                      @relation(fields: [jobId], references: [id])
+  sessions InterviewSessionMetrics[]
 
   @@index([userId, createdAt])
   @@map("interview_simulations")
+}
+
+// Métriques détaillées par réponse (inspiré Every Round AI)
+model InterviewSessionMetrics {
+  id              String   @id @default(uuid())
+  simulationId    String
+  questionIndex   Int
+  // Speech analytics
+  speechDuration  Float    @default(0) // secondes de parole
+  wordsPerMinute  Float    @default(0)
+  fillerWordCount Int      @default(0) // "euh", "genre", "voilà"
+  fillerWords     String?  // JSON array des fillers détectés
+  pauseCount      Int      @default(0)
+  longestPause    Float    @default(0) // secondes
+  // Confidence & delivery
+  confidenceScore Float    @default(0) // 0-100 score global de confiance
+  eyeContactPct   Float    @default(0) // 0-100 (mobile caméra uniquement)
+  voiceSteadiness Float    @default(0) // 0-100 stabilité vocale
+  energyLevel     Float    @default(0) // 0-100 énergie/enthousiasme
+  // Content scores (from LLM evaluation)
+  relevanceScore  Float    @default(0) // 0-5
+  depthScore      Float    @default(0) // 0-5
+  structureScore  Float    @default(0) // 0-5
+  specificityScore Float   @default(0) // 0-5
+  communicationScore Float @default(0) // 0-5
+  starMethodUsed  Boolean  @default(false)
+  // Timing
+  responseTimeMs  Int      @default(0) // temps avant de répondre
+  createdAt       DateTime @default(now())
+
+  simulation InterviewSimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  @@unique([simulationId, questionIndex])
+  @@index([simulationId])
+  @@map("interview_session_metrics")
 }
 
 // ============================================================

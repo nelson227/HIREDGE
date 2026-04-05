@@ -153,12 +153,23 @@ export const sendScoutMessageSchema = z.object({
 
 // --- Interview Simulation Schemas ---
 export const startSimulationSchema = z.object({
-  jobId: z.string().uuid(),
+  jobId: z.string().uuid().optional(),
   type: z.enum(['RH', 'TECHNICAL', 'BEHAVIORAL', 'CASE_STUDY']),
+  companyName: z.string().max(200).optional(),
+  jobTitle: z.string().max(200).optional(),
+  mode: z.enum(['TEXT', 'VOICE']).default('TEXT'),
 });
 
 export const simulationMessageSchema = z.object({
   content: z.string().min(1).max(10000),
+  durationSeconds: z.number().min(0).max(600).optional(),
+  eyeContactPct: z.number().min(0).max(100).optional(),
+  responseTimeMs: z.number().min(0).optional(),
+});
+
+export const startFromUrlSchema = z.object({
+  url: z.string().url().max(2000),
+  type: z.enum(['RH', 'TECHNICAL', 'BEHAVIORAL', 'CASE_STUDY']).optional(),
 });
 
 // --- Edge Chat Schema ---
