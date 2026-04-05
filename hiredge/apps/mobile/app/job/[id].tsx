@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { jobsApi, applicationsApi, squadApi } from '../../lib/api';
+import { jobsApi, applicationsApi, squadApi, interviewsApi } from '../../lib/api';
 import { useThemeColors } from '../../lib/theme';
 import { useTranslation } from '../../lib/i18n';
 import type { TranslationKey } from '@hiredge/shared/src/i18n/translations';
@@ -793,27 +793,39 @@ export default function JobDetailScreen() {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         backgroundColor: colors.card, padding: 16, paddingBottom: 28,
         borderTopWidth: 1, borderColor: colors.muted,
-        flexDirection: 'row', gap: 12,
+        flexDirection: 'row', gap: 10,
         shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 12,
       }}>
         <TouchableOpacity style={{
-          width: 52, height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: colors.border,
+          width: 48, height: 48, borderRadius: 14, borderWidth: 1.5, borderColor: colors.border,
           justifyContent: 'center', alignItems: 'center', backgroundColor: colors.card,
         }}>
-          <Ionicons name="bookmark-outline" size={22} color={colors.primary} />
+          <Ionicons name="bookmark-outline" size={20} color={colors.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: '/interview/', params: { jobId: id, jobTitle: job?.title, company: job?.company?.name } })}
+          style={{
+            height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+            backgroundColor: '#FF6B35', paddingHorizontal: 14,
+            flexDirection: 'row', gap: 6,
+            shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+          }}
+        >
+          <Ionicons name="sparkles" size={16} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Interview</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => { if (!applied) handleOpenApplyModal(); }}
           disabled={applyMutation.isPending || applied}
           style={{
-            flex: 1, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+            flex: 1, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
             backgroundColor: applied ? '#00B894' : colors.primary,
             opacity: applyMutation.isPending ? 0.7 : 1,
             shadowColor: applied ? '#00B894' : colors.primary,
             shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8,
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
             {applied ? t('jobApplied') : applyMutation.isPending ? t('jobSending') : t('jobApplyWithEdge')}
           </Text>
         </TouchableOpacity>

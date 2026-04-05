@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
 import { useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth.store';
@@ -11,8 +11,23 @@ import { useTranslation } from '../../lib/i18n';
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [jobUrl, setJobUrl] = useState('');
   const { colors } = useThemeColors();
   const { t } = useTranslation();
+
+  const fromUrlMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const { data } = await interviewsApi.startFromUrl(url);
+      return data.data;
+    },
+    onSuccess: (sim: any) => {
+      setJobUrl('');
+      router.push(`/interview/${sim.id}`);
+    },
+    onError: () => {
+      Alert.alert('Error', 'Could not generate interview from this URL. Please try again.');
+    },
+  });
 
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['applicationStats'],
@@ -315,6 +330,95 @@ export default function HomeScreen() {
             )}
           </View>
         )}
+
+        {/* ═══ Interview Prep Section ═══ */}
+        <View style={{
+          backgroundColor: colors.card, borderRadius: 12,
+          borderWidth: 1, borderColor: colors.border, marginBottom: 16, overflow: 'hidden',
+        }}>
+          {/* Header with gradient-like accent */}
+          <View style={{
+            backgroundColor: '#FF6B35', padding: 16,
+            flexDirection: 'row', alignItems: 'center', gap: 12,
+          }}>
+            <View style={{
+              width: 44, height: 44, borderRadius: 12,
+              backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center',
+            }}>
+              <Ionicons name="mic-outline" size={22} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>
+                Interview Preparation
+              </Text>
+              <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>
+                Practice with AI before the real thing
+              </Text>
+            </View>
+          </View>
+
+          {/* Generate from scratch */}
+          <TouchableOpacity
+            onPress={() => router.push('/interview/')}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
+              borderBottomWidth: 1, borderColor: colors.border,
+            }}
+          >
+            <View style={{
+              width: 40, height: 40, borderRadius: 10,
+              backgroundColor: '#FF6B35' + '18', justifyContent: 'center', alignItems: 'center',
+            }}>
+              <Ionicons name="sparkles" size={18} color="#FF6B35" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>Generate Interview</Text>
+              <Text style={{ fontSize: 12, color: colors.mutedForeground }}>Choose type, company & role</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
+          {/* Generate from Job URL */}
+          <View style={{ padding: 16 }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground, marginBottom: 8 }}>
+              Generate from Job URL
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                value={jobUrl}
+                onChangeText={setJobUrl}
+                placeholder="https://linkedin.com/jobs/..."
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                style={{
+                  flex: 1, height: 42, borderRadius: 10, paddingHorizontal: 12,
+                  backgroundColor: colors.muted, color: colors.foreground, fontSize: 13,
+                  borderWidth: 1, borderColor: colors.border,
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  if (jobUrl.trim()) fromUrlMutation.mutate(jobUrl.trim());
+                }}
+                disabled={!jobUrl.trim() || fromUrlMutation.isPending}
+                style={{
+                  height: 42, paddingHorizontal: 16, borderRadius: 10,
+                  backgroundColor: !jobUrl.trim() ? colors.muted : '#FF6B35',
+                  justifyContent: 'center', alignItems: 'center',
+                  opacity: fromUrlMutation.isPending ? 0.7 : 1,
+                }}
+              >
+                {fromUrlMutation.isPending ? (
+                  <Ionicons name="hourglass-outline" size={18} color="#fff" />
+                ) : (
+                  <Ionicons name="arrow-forward" size={18} color={!jobUrl.trim() ? colors.mutedForeground : '#fff'} />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
         {/* Quick actions row */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 32 }}>
