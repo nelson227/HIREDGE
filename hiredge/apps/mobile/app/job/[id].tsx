@@ -803,7 +803,7 @@ export default function JobDetailScreen() {
           <Ionicons name="bookmark-outline" size={20} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => router.push({ pathname: '/interview/', params: { jobId: id, jobTitle: job?.title, company: job?.company?.name } })}
+          onPress={() => router.push({ pathname: '/interview', params: { jobId: id, jobTitle: job?.title, company: job?.company?.name } })}
           style={{
             height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
             backgroundColor: '#FF6B35', paddingHorizontal: 14,

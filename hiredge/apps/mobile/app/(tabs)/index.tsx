@@ -359,7 +359,7 @@ export default function HomeScreen() {
 
           {/* Generate from scratch */}
           <TouchableOpacity
-            onPress={() => router.push('/interview/')}
+            onPress={() => router.push('/interview')}
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
               borderBottomWidth: 1, borderColor: colors.border,
