@@ -56,6 +56,49 @@ export class CVService {
     return this.openai;
   }
 
+  private async createChatCompletionWithFallback(messages: any[]) {
+    const openai = this.getOpenAI();
+    const models = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+    ];
+
+    let lastError: any = null;
+
+    for (const model of models) {
+      try {
+        return await openai.chat.completions.create({
+          model,
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+          messages,
+        });
+      } catch (error: any) {
+        lastError = error;
+        const msg = String(error?.message || error || '');
+        const shouldRetry =
+          error?.status === 404 ||
+          error?.code === 'model_not_found' ||
+          /does not exist|not found|access to it|404/i.test(msg);
+
+        if (!shouldRetry) {
+          throw error;
+        }
+      }
+    }
+
+    const fallbackMessage = Array.isArray(lastError?.error?.message)
+      ? lastError.error.message.join(', ')
+      : lastError?.message || 'Le modèle IA n\'est pas disponible pour ce compte.';
+
+    throw new AppError(
+      'AI_MODEL_UNAVAILABLE',
+      `Le service IA est indisponible pour l’analyse du CV. Le modèle configuré n’est pas accessible sur ce compte (${fallbackMessage}).`,
+      502,
+    );
+  }
+
   /**
    * Extract text content from a PDF or DOCX buffer
    */
@@ -86,14 +129,10 @@ export class CVService {
 
     let response;
     try {
-      response = await openai.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `Tu es un expert en extraction de données de CV. Analyse le texte du CV fourni et extrais les informations structurées.
+      const messagesPayload = [
+        {
+          role: 'system',
+          content: `Tu es un expert en extraction de données de CV. Analyse le texte du CV fourni et extrais les informations structurées.
 
 Retourne un objet JSON avec cette structure EXACTE :
 {
@@ -142,13 +181,14 @@ Règles :
 - Pour le level des compétences, estime en fonction du contexte du CV (années d'expérience, poste)
 - Le bio doit être un résumé professionnel concis basé sur le profil global
 - Si une information n'est pas trouvée, utilise null (pas de chaîne vide)`,
-          },
-          {
-            role: 'user',
-            content: `Voici le texte extrait du CV :\n\n${trimmedText}`,
-          },
-        ],
-      });
+        },
+        {
+          role: 'user',
+          content: `Voici le texte extrait du CV :\n\n${trimmedText}`,
+        },
+      ];
+
+      response = await this.createChatCompletionWithFallback(messagesPayload);
     } catch (err: any) {
       throw new AppError('AI_SERVICE_ERROR', `Erreur du service IA lors de l'analyse du CV : ${err.message || 'service indisponible'}`, 502);
     }
